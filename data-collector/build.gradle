@@ -20,7 +20,6 @@ shadowDistTar.classifier = 'shadow'
 
 dependencies {
 
-    final def springfoxSwagger2Version = '2.9.2'
     final def springBootVersion = '2.1.3.RELEASE'
     final def kotlinVersion = '1.3.10'
 
@@ -44,7 +43,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web:$springBootVersion") {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-        exclude group: 'org.hibernate'
     }
 
     implementation "org.springframework.boot:spring-boot-starter-jetty:$springBootVersion"
