@@ -28,3 +28,7 @@ spring:
     show-sql: true
   liquibase:
     change-log: classpath:liquibase-master.xml
+
+logging:
+  level:
+    org.hibernate.engine.jdbc.env.internal.LobCreatorBuilderImpl: ERROR
