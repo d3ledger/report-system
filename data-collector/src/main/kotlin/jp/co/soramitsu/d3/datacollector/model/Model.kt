@@ -1,4 +1,4 @@
-package jp.co.soramitsu.d3.reportsystem.datacollector.model
+package jp.co.soramitsu.d3.datacollector.model
 
 import javax.persistence.*
 

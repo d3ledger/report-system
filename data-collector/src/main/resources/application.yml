@@ -1,3 +1,6 @@
+iroha:
+  toriiAddress: grpc://localhost:32835
+
 scheduling:
   iroha:
     block:

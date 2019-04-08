@@ -1,4 +1,4 @@
-package jp.co.soramitsu.d3.reportsystem.datacollector
+package jp.co.soramitsu.d3.datacollector
 
 import iroha.protocol.*
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
@@ -28,13 +28,14 @@ class TestIrohaLib {
             .withPeerConfig(peerConfig)
         // start the peer. blocking call
         iroha.start()
-
+        val toriiAddress = iroha.toriiAddress
         // create API wrapper
         val api = IrohaAPI(iroha.toriiAddress)
 
         // transfer 100 usd from user_a to user_b
         val tx = Transaction.builder("user_a@bank")
-            .transferAsset("user_a@bank", "user_b@bank", usd, "For pizza", "10")
+            .transferAsset("user_a@bank", "user_b@bank",
+                usd, "For pizza", "10")
             .sign(useraKeypair)
             .build()
 
@@ -65,19 +66,46 @@ class TestIrohaLib {
             .blockingSubscribe(observer)
 
         /// now lets query balances
-        val balanceUserA = getBalance(api, user("user_a"), useraKeypair)
-        val balanceUserB = getBalance(api, user("user_b"), userbKeypair)
+        val balanceUserA = getBalance(
+            api,
+            user("user_a"),
+            useraKeypair
+        )
+        val balanceUserB = getBalance(
+            api,
+            user("user_b"),
+            userbKeypair
+        )
 
         // ensure we got correct balances
         assert(balanceUserA == 90)
         assert(balanceUserB == 10)
 
         // build protobuf query, sign it
-        val q = Query.builder("user_a@bank", 1)
+        var q = Query.builder("user_a@bank", 1)
             .getBlock(1L)
             .buildSigned(useraKeypair)
 
-        val response = api.query(q)
+        var response = api.query(q)
+
+        if (response.hasBlockResponse() && response.blockResponse.hasBlock()) {
+            val block = response.blockResponse.block
+            if (block.hasBlockV1()) {
+                val a = block.blockV1
+                val payload = a.payload
+                val transactions = payload.transactionsList
+            } else {
+                log.error("Received block has no BlockV1 and no handlers for other block type in application!")
+            }
+            println(block.blockV1)
+            block.blockV1.payload
+        }
+
+        q = Query.builder("user_a@bank", 1)
+            .getBlock(10L)
+            .buildSigned(useraKeypair)
+
+        response = api.query(q)
 
         if (response.hasBlockResponse() && response.blockResponse.hasBlock()) {
             val block = response.blockResponse.block
@@ -112,7 +140,10 @@ class TestIrohaLib {
             return String.format("%s@%s", name, bankDomain)
         }
 
-        private val usd = String.format("%s#%s", usdName, bankDomain)
+        private val usd = String.format("%s#%s",
+            usdName,
+            bankDomain
+        )
 
         /**
          * Custom facade over GRPC Query
@@ -149,7 +180,6 @@ class TestIrohaLib {
                     .genesisBlock(genesisBlock)
                     .build()
                 config.withPeerKeyPair(peerKeypair)
-
                 return config
             }
 
@@ -179,10 +209,17 @@ class TestIrohaLib {
                                 Primitive.RolePermission.can_get_blocks
                             )
                         )
-                        .createDomain(bankDomain, userRole)
-                        .createAccount("user_a", bankDomain, useraKeypair.public)
-                        .createAccount("user_b", bankDomain, userbKeypair.public)
-                        .createAsset(usdName, bankDomain, 2)
+                        .createDomain(
+                            bankDomain,
+                            userRole
+                        )
+                        .createAccount("user_a",
+                            bankDomain, useraKeypair.public)
+                        .createAccount("user_b",
+                            bankDomain, userbKeypair.public)
+                        .createAsset(
+                            usdName,
+                            bankDomain, 2)
                         .build()
                         .build()
                 )

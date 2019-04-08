@@ -24,10 +24,12 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.1'
     compile 'io.github.microutils:kotlin-logging:1.6.24'
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
 
     //Iroha-java related
     implementation('com.github.hyperledger.iroha-java:testcontainers:4.0.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
     }
     // Iroha Pure Java library
     compile 'com.github.hyperledger.iroha-java:client:4.0.0'

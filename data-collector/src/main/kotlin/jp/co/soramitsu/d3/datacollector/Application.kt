@@ -1,7 +1,7 @@
 
 @file:JvmName("CollectorMain")
 
-package jp.co.soramitsu.d3.reportsystem.datacollector
+package jp.co.soramitsu.d3.datacollector
 
 import mu.KLogging
 import org.springframework.boot.SpringApplication
