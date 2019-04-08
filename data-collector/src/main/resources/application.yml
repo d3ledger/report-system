@@ -1,0 +1,27 @@
+scheduling:
+  iroha:
+    block:
+      request: 10000
+
+
+postgres:
+  host:     localhost
+  port:     3306
+  database: datacollector
+
+spring:
+  # Spring JDBC configuration
+  datasource:
+    url:      jdbc:mysql://${postgres.host}:${postgres.port}/${postgres.database}?useSSL=false
+    username: test
+    password: test
+
+  # Spring Data JPA configuration
+  jpa:
+    hibernate:
+      # To be updated in real production usage! Possible values none;update;create
+      ddl-auto: none
+    show-sql: true
+
+
+liquibase.change-log: classpath:liquibase-master.xml
