@@ -6,15 +6,19 @@ scheduling:
 
 postgres:
   host:     localhost
-  port:     3306
-  database: datacollector
+  port:     5432
+  database: data_collector
 
 spring:
   # Spring JDBC configuration
   datasource:
-    url:      jdbc:mysql://${postgres.host}:${postgres.port}/${postgres.database}?useSSL=false
+    driverClassName: org.postgresql.Driver
+    url:      jdbc:postgresql://${postgres.host}:${postgres.port}/${postgres.database}?useSSL=false
     username: test
     password: test
+  h2:
+    console:
+       enabled: true
 
   # Spring Data JPA configuration
   jpa:
@@ -22,6 +26,5 @@ spring:
       # To be updated in real production usage! Possible values none;update;create
       ddl-auto: none
     show-sql: true
-
-
-liquibase.change-log: classpath:liquibase-master.xml
+  liquibase:
+    change-log: classpath:liquibase-master.xml
