@@ -12,4 +12,7 @@ CREATE TABLE state (
 INSERT INTO state VALUES
     (0,'LAST_BLOCK', '0');
 
+INSERT INTO state VALUES
+    (1,'IROHA_REQUEST_COUNTER', '0');
+
 

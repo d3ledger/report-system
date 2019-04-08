@@ -1,5 +1,9 @@
 iroha:
   toriiAddress: grpc://localhost:32835
+  user:
+    privateKeyHex:
+    publicKeyHex:
+    id: data_collector@notary
 
 scheduling:
   iroha:
