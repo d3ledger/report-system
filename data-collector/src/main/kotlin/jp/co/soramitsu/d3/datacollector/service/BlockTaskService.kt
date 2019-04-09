@@ -3,26 +3,23 @@ package jp.co.soramitsu.d3.datacollector.service
 import iroha.protocol.QryResponses
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import jp.co.soramitsu.d3.datacollector.cache.CacheRepository
-import jp.co.soramitsu.d3.datacollector.repository.StateRepository
 import jp.co.soramitsu.d3.datacollector.utils.irohaBinaryKeyfromHex
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.Query
-import org.slf4j.LoggerFactory
+import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.net.URI
-import jp.co.soramitsu.d3.datacollector.model.State
 import java.math.BigDecimal
+import java.net.URI
 
 
 @Service
 class BlockTaskService {
 
-    val log = LoggerFactory.getLogger(BlockTaskService::class.java)
-
+    private val log = KLogging().logger
     @Autowired
-    lateinit var stateRepo: StateRepository
+    lateinit var dbService: DbService
     @Autowired
     lateinit var cache: CacheRepository
 
@@ -46,8 +43,8 @@ class BlockTaskService {
 
     fun processBlockTask() {
 
-        val lastBlockState = stateRepo.findById(LAST_PROCESSED_BLOCK_ROW_ID).get()
-        val lastRequest = stateRepo.findById(LAST_REQUEST_ROW_ID).get()
+        val lastBlockState = dbService.stateRepo.findById(LAST_PROCESSED_BLOCK_ROW_ID).get()
+        val lastRequest = dbService.stateRepo.findById(LAST_REQUEST_ROW_ID).get()
 
         val response = irohaBlockQuery(lastRequest.value.toLong(), lastBlockState.value.toLong())
 
@@ -63,17 +60,17 @@ class BlockTaskService {
                             billingAccountTemplate
                         )
                     }.forEach {
-                            cache.addTransferBilling(
-                                it.setAccountDetail.accountId,
-                                it.setAccountDetail.key,
-                                BigDecimal(it.setAccountDetail.value)
-                            )
-                        }
+                        cache.addTransferBilling(
+                            it.setAccountDetail.accountId,
+                            it.setAccountDetail.key,
+                            BigDecimal(it.setAccountDetail.value)
+                        )
+                    }
                 }
             } else {
                 log.error("Block response of unsupported version: $response")
             }
-            updatePropertiesInDatabase(lastBlockState, lastRequest)
+            dbService.updatePropertiesInDatabase(lastBlockState, lastRequest)
 
         } else if (response.hasErrorResponse()) {
             if (response.errorResponse.errorCode == 3) {
@@ -87,19 +84,6 @@ class BlockTaskService {
         }
     }
 
-    private fun updatePropertiesInDatabase(
-        lastBlockState: State,
-        lastRequest: State
-    ) {
-        var newLastBlock = lastBlockState.value.toLong()
-        newLastBlock++
-        lastBlockState.value = newLastBlock.toString()
-        stateRepo.save(lastBlockState)
-        var newQueryNumber = lastRequest.value.toLong()
-        newQueryNumber++
-        lastRequest.value = newQueryNumber.toString()
-        stateRepo.save(lastRequest)
-    }
 
     fun irohaBlockQuery(
         lastRequest: Long,

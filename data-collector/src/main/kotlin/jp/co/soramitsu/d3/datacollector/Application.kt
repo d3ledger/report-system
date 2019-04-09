@@ -12,7 +12,7 @@ import javax.servlet.annotation.WebServlet
 
 
 @SpringBootApplication
-class Application
+open class Application
 
 private val logger = KLogging().logger
 
