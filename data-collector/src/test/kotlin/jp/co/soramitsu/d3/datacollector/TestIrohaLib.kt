@@ -34,8 +34,10 @@ class TestIrohaLib {
 
         // transfer 100 usd from user_a to user_b
         val tx = Transaction.builder("user_a@bank")
-            .transferAsset("user_a@bank", "user_b@bank",
-                usd, "For pizza", "10")
+            .transferAsset(
+                "user_a@bank", "user_b@bank",
+                usd, "For pizza", "10"
+            )
             .sign(useraKeypair)
             .build()
 
@@ -87,7 +89,7 @@ class TestIrohaLib {
             .buildSigned(useraKeypair)
 
         var response = api.query(q)
-
+        log.info("Response to string: $response")
         if (response.hasBlockResponse() && response.blockResponse.hasBlock()) {
             val block = response.blockResponse.block
             if (block.hasBlockV1()) {
@@ -140,7 +142,8 @@ class TestIrohaLib {
             return String.format("%s@%s", name, bankDomain)
         }
 
-        private val usd = String.format("%s#%s",
+        private val usd = String.format(
+            "%s#%s",
             usdName,
             bankDomain
         )
@@ -213,13 +216,18 @@ class TestIrohaLib {
                             bankDomain,
                             userRole
                         )
-                        .createAccount("user_a",
-                            bankDomain, useraKeypair.public)
-                        .createAccount("user_b",
-                            bankDomain, userbKeypair.public)
+                        .createAccount(
+                            "user_a",
+                            bankDomain, useraKeypair.public
+                        )
+                        .createAccount(
+                            "user_b",
+                            bankDomain, userbKeypair.public
+                        )
                         .createAsset(
                             usdName,
-                            bankDomain, 2)
+                            bankDomain, 2
+                        )
                         .build()
                         .build()
                 )
