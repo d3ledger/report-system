@@ -41,7 +41,7 @@ dependencies {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-    test 'com.h2database:h2:1.4.199'
+    testImplementation 'com.h2database:h2:1.4.199'
     compile 'org.liquibase:liquibase-maven-plugin:3.6.3'
 
     implementation "org.springframework.boot:spring-boot-starter-jetty:$springBootVersion"
