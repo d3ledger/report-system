@@ -4,7 +4,7 @@ iroha:
     privateKeyHex: 37C2070BD7C628B2ABA61F6C353DF06504A92F6997D8658F3EE69DC598B57CA2
     publicKeyHex: 97B888554684FB30F29FAB92991AB7ECEFFFE433AB3AF501E5DEAEE69392518C
     id: data_collector@notary
-  agent_acounts_template: agent
+  transferBillingTemplate: transferBilling@
 
 scheduling:
   iroha:
