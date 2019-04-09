@@ -8,10 +8,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.Bean
+import springfox.documentation.swagger2.annotations.EnableSwagger2
 import javax.servlet.annotation.WebServlet
 
 
 @SpringBootApplication
+@EnableSwagger2
 open class Application
 
 private val logger = KLogging().logger

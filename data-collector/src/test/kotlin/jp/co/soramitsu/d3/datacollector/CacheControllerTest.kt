@@ -40,7 +40,7 @@ class CacheControllerTest {
         cache.addTransferBilling(bittingGlobbaly, someAsset, BigDecimal(fee))
 
         var result: MvcResult = mvc
-            .perform(MockMvcRequestBuilders.get("/get/billing"))
+            .perform(MockMvcRequestBuilders.get("/cache/get/billing"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
         var respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
