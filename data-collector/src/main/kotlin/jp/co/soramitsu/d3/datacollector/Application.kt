@@ -9,7 +9,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication
-@EnableScheduling
 class Application
 
     private val logger = KLogging().logger

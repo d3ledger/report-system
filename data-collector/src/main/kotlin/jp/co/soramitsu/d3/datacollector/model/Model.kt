@@ -6,8 +6,8 @@ import javax.persistence.*
 data class State(
     @Id @GeneratedValue
     val id: Long = 0,
-    val title: String = "",
-    val value: String = ""
+    var title: String = "",
+    var value: String = ""
 ) {
     enum class StateEnum {
         DEFAULT,
