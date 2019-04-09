@@ -12,6 +12,17 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.net.URI
+import com.oracle.util.Checksums.update
+import liquibase.resource.FileSystemResourceAccessor
+import liquibase.Liquibase
+import liquibase.database.DatabaseFactory
+import liquibase.database.jvm.JdbcConnection
+import java.sql.DriverManager
+import liquibase.exception.LiquibaseException
+import org.junit.BeforeClass
+import java.sql.SQLException
+
+
 
 @Service
 class BlockTaskService {
@@ -28,13 +39,14 @@ class BlockTaskService {
     lateinit var privateKey: String
     @Value("\${iroha.user.publicKeyHex}")
     lateinit var publicKey: String
-    @Value("iroha.user.id")
+    @Value("\${iroha.user.id}")
     lateinit var userId: String
 
     val LAST_PROCESSED_BLOCK_ROW_ID = 0L
     val LAST_REQUEST_ROW_ID = 1L
 
     private var api: IrohaAPI? = null
+
 
     fun processBlockTask() {
 

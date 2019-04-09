@@ -3,9 +3,10 @@ package jp.co.soramitsu.d3.datacollector.model
 import javax.persistence.*
 
 @Entity
+@Table(name = "state")
 data class State(
-    @Id @GeneratedValue
-    val id: Long = 0,
+    @Id  @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
     var title: String = "",
     var value: String = ""
 ) {

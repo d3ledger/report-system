@@ -11,7 +11,13 @@ import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
 import junit.framework.TestCase.assertTrue
+import liquibase.Liquibase
+import liquibase.database.DatabaseFactory
+import liquibase.database.jvm.JdbcConnection
+import liquibase.exception.LiquibaseException
+import liquibase.resource.FileSystemResourceAccessor
 import mu.KLogging
+import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.jupiter.api.BeforeAll
@@ -20,6 +26,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestPropertySource
@@ -27,6 +34,9 @@ import org.springframework.test.context.junit4.SpringRunner
 
 import java.math.BigDecimal
 import java.security.KeyPair
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.SQLException
 import java.util.Arrays
 import java.util.Optional
 
@@ -109,7 +119,6 @@ class TestGetBlockService {
         blockTaskService.processBlockTask()
         val lastProcessedBlock = stateRepo.findById(blockTaskService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
         assertTrue(lastProcessedBlock.toLong() > 0L)
-
     }
 
     private val bankDomain = "bank"
