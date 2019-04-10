@@ -43,7 +43,7 @@ class CacheController {
         @PathVariable("billingType") billingType: Billing.BillingTypeEnum
         ): ResponseEntity<SingleBillingResponse> {
         try {
-            if(billingType.equals(Billing.BillingTypeEnum.TRANSFER)) {
+            if(billingType == Billing.BillingTypeEnum.TRANSFER) {
                 return ResponseEntity.ok<SingleBillingResponse>(SingleBillingResponse(cache.getTransferBilling(domain, asset)))
             } else {
                 throw RuntimeException("Unsupported Billing type")

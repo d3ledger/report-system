@@ -212,22 +212,8 @@ class TestGetBlockService {
             config.withPeerKeyPair(peerKeypair)
             return config
         }
-
-    private// first transaction
-    // transactions in genesis block can have no creator
-    // by default peer is listening on port 10001
-    // create default "user" role
-    // create transferBillingAccountId role
-    // create transferBillingAccountId account
-    // create data_collector@notary account
-    // create user A
-    // create user B
-    // create usd#bank with precision 2
-    // transactions in genesis block can be unsigned
-    // returns ipj model Transaction
-    // returns unsigned protobuf Transaction
-    // we want to increase user_a balance by 100 usd
-    val genesisBlock: BlockOuterClass.Block
+    
+    private val genesisBlock: BlockOuterClass.Block
         get() = GenesisBlockBuilder()
             .addTransaction(
                 Transaction.builder(null)

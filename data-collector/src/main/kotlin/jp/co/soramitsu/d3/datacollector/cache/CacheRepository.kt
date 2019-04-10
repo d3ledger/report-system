@@ -8,10 +8,9 @@ import org.springframework.stereotype.Component
 @Component
 class CacheRepository {
 
-
     private val transferBilling = HashMap<String, HashMap<String, Billing>>()
     @Autowired
-    lateinit var dbService:DbService
+    private lateinit var dbService:DbService
 
     @Synchronized
     fun addTransferBilling(billing: Billing) {
@@ -38,6 +37,6 @@ class CacheRepository {
                 return transferBilling.get(domain)!![asset]!!
             }
         }
-        throw RuntimeException()
+        throw RuntimeException("No billing found for: $domain, $asset")
     }
 }

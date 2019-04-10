@@ -97,11 +97,10 @@ class BlockTaskService {
         lastRequest: Long,
         lastBlock: Long
     ): QryResponses.QueryResponse {
-        var lastRequest1 = lastRequest
-        var lastBlock1 = lastBlock
 
-        val q = Query.builder(userId, ++lastRequest1)
-            .getBlock(++lastBlock1)
+
+        val q = Query.builder(userId, lastRequest+1)
+            .getBlock(lastBlock + 1)
             .buildSigned(
                 Ed25519Sha3.keyPairFromBytes(
                     irohaBinaryKeyfromHex(privateKey),
