@@ -1,13 +1,16 @@
 package jp.co.soramitsu.d3.datacollector.controllers
 
 import jp.co.soramitsu.d3.datacollector.cache.CacheRepository
+import jp.co.soramitsu.d3.datacollector.model.Billing
 import jp.co.soramitsu.d3.datacollector.model.BillingResponse
+import jp.co.soramitsu.d3.datacollector.model.SingleBillingResponse
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 
 @Controller
@@ -33,13 +36,21 @@ class CacheController {
         }
     }
 
-    @GetMapping("/get/abilling/{domain}/{asset}/{billingType}")
-    fun getBillingForTransfer(): ResponseEntity<BillingResponse> {
+    @GetMapping("/get/billing/{domain}/{asset}/{billingType}")
+    fun getBillingForTransfer(
+        @PathVariable("domain") domain:String,
+        @PathVariable("asset") asset:String,
+        @PathVariable("billingType") billingType: Billing.BillingTypeEnum
+        ): ResponseEntity<SingleBillingResponse> {
         try {
-            return ResponseEntity.ok<BillingResponse>(BillingResponse(cache.getTransferBilling()))
+            if(billingType.equals(Billing.BillingTypeEnum.TRANSFER)) {
+                return ResponseEntity.ok<SingleBillingResponse>(SingleBillingResponse(cache.getTransferBilling(domain, asset)))
+            } else {
+                throw RuntimeException("Unsupported Billing type")
+            }
         } catch (e: Exception) {
             log.error("Error getting Billing data", e)
-            val response = BillingResponse()
+            val response = SingleBillingResponse()
             response.errorCode = e.javaClass.simpleName
             response.message = e.message
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)

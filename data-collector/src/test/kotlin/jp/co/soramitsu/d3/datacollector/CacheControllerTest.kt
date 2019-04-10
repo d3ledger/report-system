@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import jp.co.soramitsu.d3.datacollector.cache.CacheRepository
 import jp.co.soramitsu.d3.datacollector.model.Billing
 import jp.co.soramitsu.d3.datacollector.model.BillingResponse
+import jp.co.soramitsu.d3.datacollector.model.SingleBillingResponse
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -51,5 +52,26 @@ class CacheControllerTest {
         val domain = bittingGlobbaly.substring(bittingGlobbaly.indexOf('@') + 1)
         assertEquals(BigDecimal(fee),
             respBody.transferBilling.get(domain)!!.get(someAsset)!!.feeFraction)
+    }
+
+    @Test
+    fun testGetSingleBillling() {
+        val domain = "globbaly"
+        val bittingGlobbaly = "bitting@$domain"
+        val someAsset = "someAsset"
+        val fee = "0.5"
+
+        cache.addTransferBilling(
+            Billing(accountId = bittingGlobbaly, asset = someAsset, feeFraction = BigDecimal(fee)))
+
+        var result: MvcResult = mvc
+            .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$someAsset/TRANSFER"))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        var respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
+        assertNull(respBody.errorCode)
+        assertNull(respBody.message)
+        assertEquals(BigDecimal(fee),
+            respBody.billing.feeFraction)
     }
 }
