@@ -154,7 +154,7 @@ class TestGetBlockService {
      */
     private fun inlineTransactionStatusObserver(): InlineTransactionStatusObserver? {
 
-        val observer = TransactionStatusObserver.builder()
+        return TransactionStatusObserver.builder()
             // executed when stateless or stateful validation is failed
             .onTransactionFailed { t ->
                 println(
@@ -168,11 +168,10 @@ class TestGetBlockService {
             // executed when got any exception in handlers or grpc
             .onError { e -> println("Failed with exception: $e") }
             // executed when we receive "committed" status
-            .onTransactionCommitted { t -> println("Committed :)") }
+            .onTransactionCommitted { println("Committed :)") }
             // executed when transfer is complete (failed or succeed) and observable is closed
             .onComplete { println("Complete") }
             .build()
-        return observer
     }
 
     /**

@@ -3,7 +3,6 @@ package jp.co.soramitsu.d3.datacollector
 import jp.co.soramitsu.d3.datacollector.model.Billing
 import jp.co.soramitsu.d3.datacollector.repository.BillingRepository
 import jp.co.soramitsu.d3.datacollector.service.DbService
-import junit.framework.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,6 +13,7 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 import java.math.BigDecimal
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -30,10 +30,10 @@ class DbServiceTest {
     fun testSaveUpdateBillingData() {
         val billing = Billing()
         dbService.updateBillingInDb(billing)
-        assertTrue(billingRepo.findById(billing.id).isPresent)
+        assertTrue(billingRepo.findById(billing.id!!).isPresent)
         val updated = Billing(feeFraction = BigDecimal("0.12"))
         dbService.updateBillingInDb(updated)
         assertEquals(1, billingRepo.count())
-        assertEquals(updated.feeFraction, billingRepo.findById(billing.id).get().feeFraction.stripTrailingZeros())
+        assertEquals(updated.feeFraction, billingRepo.findById(billing.id!!).get().feeFraction.stripTrailingZeros())
     }
 }

@@ -39,7 +39,7 @@ class DataJpaTest {
         em.persist(billing)
         em.flush()
 
-        var found = billingRepo.findById(billing.id)
+        var found = billingRepo.findById(billing.id!!)
 
         assertTrue(found.isPresent)
 
@@ -52,7 +52,7 @@ class DataJpaTest {
         billingRepo.save(updated)
         em.flush()
 
-        found = billingRepo.findById(billing.id)
+        found = billingRepo.findById(billing.id!!)
         assertEquals(updated.feeFraction, found.get().feeFraction)
         assertEquals(billing.id, found.get().id)
     }
@@ -65,7 +65,7 @@ class DataJpaTest {
         em.flush()
 
         // when
-        val found = stateRepo.findById(state1.id)
+        val found = stateRepo.findById(state1.id!!)
 
         // then
         assertThat(found.get().value)
