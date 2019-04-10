@@ -21,7 +21,20 @@ class CacheController {
     lateinit var cache: CacheRepository
 
     @GetMapping("/get/billing")
-    fun createWallet(): ResponseEntity<BillingResponse> {
+    fun getAllBilling(): ResponseEntity<BillingResponse> {
+        try {
+            return ResponseEntity.ok<BillingResponse>(BillingResponse(cache.getTransferBilling()))
+        } catch (e: Exception) {
+            log.error("Error getting Billing data", e)
+            val response = BillingResponse()
+            response.errorCode = e.javaClass.simpleName
+            response.message = e.message
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
+        }
+    }
+
+    @GetMapping("/get/abilling/{domain}/{asset}/{billingType}")
+    fun getBillingForTransfer(): ResponseEntity<BillingResponse> {
         try {
             return ResponseEntity.ok<BillingResponse>(BillingResponse(cache.getTransferBilling()))
         } catch (e: Exception) {

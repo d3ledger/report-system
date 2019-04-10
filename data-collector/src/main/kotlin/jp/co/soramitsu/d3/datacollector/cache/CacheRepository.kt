@@ -4,8 +4,6 @@ import jp.co.soramitsu.d3.datacollector.model.Billing
 import jp.co.soramitsu.d3.datacollector.service.DbService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
-import java.util.concurrent.ConcurrentHashMap
 
 @Component
 class CacheRepository {
@@ -17,11 +15,12 @@ class CacheRepository {
 
     @Synchronized
     fun addTransferBilling(billing: Billing) {
-        if (transferBilling.contains(billing.accountId)) {
-            transferBilling.get(billing.accountId)?.put(billing.asset, billing)
+        val domain = billing.accountId.substring(billing.accountId.indexOf('@') + 1)
+        if (transferBilling.contains(domain)) {
+            transferBilling.get(domain)?.put(billing.asset, billing)
         } else {
-            transferBilling.put(billing.accountId, HashMap())
-            transferBilling.get(billing.accountId)!!.put(billing.asset, billing)
+            transferBilling.put(domain, HashMap())
+            transferBilling.get(domain)!!.put(billing.asset, billing)
         }
     }
 
@@ -33,10 +32,10 @@ class CacheRepository {
     }
 
     @Synchronized
-    fun getTransferBilling(id: String, asset: String): Billing {
-        if (transferBilling.contains(id)) {
-            if(transferBilling.get(id)!!.contains(asset)) {
-                return transferBilling.get(id)!![asset]!!
+    fun getTransferBilling(domain: String, asset: String): Billing {
+        if (transferBilling.contains(domain)) {
+            if(transferBilling.get(domain)!!.contains(asset)) {
+                return transferBilling.get(domain)!![asset]!!
             }
         }
         throw RuntimeException()

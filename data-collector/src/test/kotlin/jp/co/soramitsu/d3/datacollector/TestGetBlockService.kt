@@ -72,7 +72,7 @@ class TestGetBlockService {
 
 
     @Test
-    fun testSomethingWithIroha() {
+    fun testGetBlockWithIroha() {
         val iroha = IrohaContainer()
             .withPeerConfig(peerConfig)
         // start the peer. blocking call
@@ -114,7 +114,8 @@ class TestGetBlockService {
         assertTrue(lastProcessedBlock.toLong() == 2L)
         val usd_ = usd.replace('#','_')
         try {
-            val billing = cache.getTransferBilling(transferBillingAccountId, usd_)
+            val domain = transferBillingAccountId.substring(transferBillingAccountId.indexOf('@')+1)
+            val billing = cache.getTransferBilling(domain, usd_)
             assertEquals(BigDecimal("0.5"), billing.feeFraction)
         } catch (e: RuntimeException) {
             fail()

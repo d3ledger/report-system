@@ -48,6 +48,8 @@ class CacheControllerTest {
         var respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        assertEquals(BigDecimal(fee),respBody.transferBilling.get(bittingGlobbaly)!!.get(someAsset)!!.feeFraction)
+        val domain = bittingGlobbaly.substring(bittingGlobbaly.indexOf('@') + 1)
+        assertEquals(BigDecimal(fee),
+            respBody.transferBilling.get(domain)!!.get(someAsset)!!.feeFraction)
     }
 }

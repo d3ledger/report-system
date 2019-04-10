@@ -6,7 +6,6 @@ import jp.co.soramitsu.d3.datacollector.repository.BillingRepository
 import jp.co.soramitsu.d3.datacollector.repository.StateRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import javax.transaction.Transactional
 
 @Service
