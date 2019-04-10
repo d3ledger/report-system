@@ -5,6 +5,7 @@ import jp.co.soramitsu.d3.datacollector.cache.CacheRepository
 import jp.co.soramitsu.d3.datacollector.model.Billing
 import jp.co.soramitsu.d3.datacollector.model.BillingResponse
 import jp.co.soramitsu.d3.datacollector.model.SingleBillingResponse
+import jp.co.soramitsu.d3.datacollector.utils.getDomainFromAccountId
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -49,9 +50,9 @@ class CacheControllerTest {
         var respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        val domain = bittingGlobbaly.substring(bittingGlobbaly.indexOf('@') + 1)
+        val domain = getDomainFromAccountId(bittingGlobbaly)
         assertEquals(BigDecimal(fee),
-            respBody.transferBilling.get(domain)!!.get(someAsset)!!.feeFraction)
+            respBody.transferBilling[domain]!![someAsset]!!.feeFraction)
     }
 
     @Test

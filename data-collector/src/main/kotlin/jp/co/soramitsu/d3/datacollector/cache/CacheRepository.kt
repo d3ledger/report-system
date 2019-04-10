@@ -2,6 +2,7 @@ package jp.co.soramitsu.d3.datacollector.cache
 
 import jp.co.soramitsu.d3.datacollector.model.Billing
 import jp.co.soramitsu.d3.datacollector.service.DbService
+import jp.co.soramitsu.d3.datacollector.utils.getDomainFromAccountId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
@@ -9,17 +10,18 @@ import org.springframework.stereotype.Component
 class CacheRepository {
 
     private val transferBilling = HashMap<String, HashMap<String, Billing>>()
+
     @Autowired
     private lateinit var dbService:DbService
 
     @Synchronized
     fun addTransferBilling(billing: Billing) {
-        val domain = billing.accountId.substring(billing.accountId.indexOf('@') + 1)
+        val domain = getDomainFromAccountId(billing.accountId)
         if (transferBilling.contains(domain)) {
-            transferBilling.get(domain)?.put(billing.asset, billing)
+            transferBilling[domain]!![billing.asset] = billing
         } else {
-            transferBilling.put(domain, HashMap())
-            transferBilling.get(domain)!!.put(billing.asset, billing)
+            transferBilling[domain] = HashMap()
+            transferBilling[domain]!![billing.asset] = billing
         }
     }
 
@@ -33,8 +35,8 @@ class CacheRepository {
     @Synchronized
     fun getTransferBilling(domain: String, asset: String): Billing {
         if (transferBilling.contains(domain)) {
-            if(transferBilling.get(domain)!!.contains(asset)) {
-                return transferBilling.get(domain)!![asset]!!
+            if(transferBilling[domain]!!.contains(asset)) {
+                return transferBilling[domain]!![asset]!!
             }
         }
         throw RuntimeException("No billing found for: $domain, $asset")

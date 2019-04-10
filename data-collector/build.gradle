@@ -15,7 +15,6 @@ buildscript {
 apply plugin: 'application'
 apply plugin: "kotlin-spring" // See https://kotlinlang.org/docs/reference/compiler-plugins.html#kotlin-spring-compiler-plugin
 apply plugin: 'io.spring.dependency-management'
-apply plugin: "kotlin-allopen"
 
 dependencies {
 
@@ -24,21 +23,17 @@ dependencies {
     final def springfoxSwagger2Version = '2.9.2'
 
     // kotlin related
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.1'
-    compile 'io.github.microutils:kotlin-logging:1.6.24'
-    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
-    testCompile "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
+    implementation 'io.github.microutils:kotlin-logging:1.6.24'
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
 
     implementation "io.springfox:springfox-swagger2:$springfoxSwagger2Version"
     implementation "io.springfox:springfox-swagger-ui:$springfoxSwagger2Version"
 
-    //Iroha-java related
-    implementation('com.github.hyperledger.iroha-java:testcontainers:4.0.0') {
-        exclude group: 'org.slf4j', module: 'slf4j-simple'
-    }
+
     // Iroha Pure Java library
-    compile 'com.github.hyperledger.iroha-java:client:4.0.0'
+    implementation 'com.github.hyperledger.iroha-java:client:4.0.0'
 
     //Spring-boot
     implementation("org.springframework.boot:spring-boot-starter-web:$springBootVersion") {
@@ -46,19 +41,23 @@ dependencies {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
-    testImplementation 'com.h2database:h2:1.4.199'
-    compile 'org.liquibase:liquibase-maven-plugin:3.6.3'
+    implementation 'org.liquibase:liquibase-maven-plugin:3.6.3'
 
     implementation "org.springframework.boot:spring-boot-starter-jetty:$springBootVersion"
 
-    compile 'org.postgresql:postgresql:42.2.5'
+    implementation 'org.postgresql:postgresql:42.2.5'
 
-    compile 'org.slf4j:slf4j-api:1.7.5'
-    compile 'ch.qos.logback:logback-classic:1.2.3'
-    compile 'ch.qos.logback:logback-core:1.2.3'
+    implementation 'org.slf4j:slf4j-api:1.7.5'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
+    implementation 'ch.qos.logback:logback-core:1.2.3'
 
-    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
-
+    testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testImplementation 'com.h2database:h2:1.4.199'
+    //Iroha-java related
+    testImplementation('com.github.hyperledger.iroha-java:testcontainers:4.0.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
+    }
+    testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
 
 
 }

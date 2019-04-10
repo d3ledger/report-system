@@ -14,7 +14,7 @@ import javax.servlet.annotation.WebServlet
 
 @SpringBootApplication
 @EnableSwagger2
-open class Application
+class Application
 
 private val logger = KLogging().logger
 

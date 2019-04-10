@@ -212,7 +212,7 @@ class TestGetBlockService {
             config.withPeerKeyPair(peerKeypair)
             return config
         }
-    
+
     private val genesisBlock: BlockOuterClass.Block
         get() = GenesisBlockBuilder()
             .addTransaction(
