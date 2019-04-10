@@ -114,8 +114,8 @@ class TestGetBlockService {
         assertTrue(lastProcessedBlock.toLong() == 2L)
         val usd_ = usd.replace('#','_')
         try {
-            val fee = cache.getTransferBilling(transferBillingAccountId, usd_)
-            assertEquals(BigDecimal("0.5"), fee)
+            val billing = cache.getTransferBilling(transferBillingAccountId, usd_)
+            assertEquals(BigDecimal("0.5"), billing.feeFraction)
         } catch (e: RuntimeException) {
             fail()
         }

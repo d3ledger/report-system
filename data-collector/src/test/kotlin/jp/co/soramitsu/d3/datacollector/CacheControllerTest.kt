@@ -2,6 +2,7 @@ package jp.co.soramitsu.d3.datacollector
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import jp.co.soramitsu.d3.datacollector.cache.CacheRepository
+import jp.co.soramitsu.d3.datacollector.model.Billing
 import jp.co.soramitsu.d3.datacollector.model.BillingResponse
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,7 +38,8 @@ class CacheControllerTest {
         val someAsset = "someAsset"
         val fee = "0.5"
 
-        cache.addTransferBilling(bittingGlobbaly, someAsset, BigDecimal(fee))
+        cache.addTransferBilling(
+            Billing(accountId = bittingGlobbaly, asset = someAsset, feeFraction = BigDecimal(fee)))
 
         var result: MvcResult = mvc
             .perform(MockMvcRequestBuilders.get("/cache/get/billing"))
@@ -46,6 +48,6 @@ class CacheControllerTest {
         var respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        assertEquals(BigDecimal(fee),respBody.transferBilling.get(bittingGlobbaly)!!.get(someAsset))
+        assertEquals(BigDecimal(fee),respBody.transferBilling.get(bittingGlobbaly)!!.get(someAsset)!!.feeFraction)
     }
 }

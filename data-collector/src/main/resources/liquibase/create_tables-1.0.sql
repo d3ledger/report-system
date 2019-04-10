@@ -20,8 +20,9 @@ CREATE TABLE billing (
 	id bigserial NOT NULL,
 	billing_type varchar(64) NULL,
 	account_id varchar(128) NULL,
+	asset varchar(128) NULL,
+	fee_fraction numeric(8,6) NULL,
 	created timestamp NOT NULL DEFAULT NOW(),
-	fee_fraction numeric(19,16) NULL,
 	updated timestamp NULL,
 	CONSTRAINT billing_pkey PRIMARY KEY (id)
 );

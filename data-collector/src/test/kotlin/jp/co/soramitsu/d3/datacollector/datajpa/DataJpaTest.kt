@@ -10,14 +10,18 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 import java.math.BigDecimal
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 
 @RunWith(SpringRunner::class)
 @DataJpaTest
+@TestPropertySource(properties = arrayOf(
+    "spring.jpa.hibernate.ddl-auto=validate"))
 class DataJpaTest {
 
     @Autowired
@@ -36,10 +40,22 @@ class DataJpaTest {
         em.persist(billing)
         em.flush()
 
-        val found = billingRepo.findById(billing.id)
+        var found = billingRepo.findById(billing.id)
 
         assertTrue(found.isPresent)
 
+        found = billingRepo.selectByAccountIdBillingTypeAndAsset(billing.accountId, billing.asset,billing.billingType)
+        assertTrue(found.isPresent)
+        assertEquals(billing.id, found.get().id)
+
+        val updated = Billing(id = found.get().id, feeFraction = BigDecimal("0.15"),created = billing.created)
+
+        billingRepo.save(updated)
+        em.flush()
+
+        found = billingRepo.findById(billing.id)
+        assertEquals(updated.feeFraction, found.get().feeFraction)
+        assertEquals(billing.id, found.get().id)
     }
 
     @Test

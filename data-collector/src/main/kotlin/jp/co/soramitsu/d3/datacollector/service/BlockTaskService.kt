@@ -3,6 +3,7 @@ package jp.co.soramitsu.d3.datacollector.service
 import iroha.protocol.QryResponses
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import jp.co.soramitsu.d3.datacollector.cache.CacheRepository
+import jp.co.soramitsu.d3.datacollector.model.Billing
 import jp.co.soramitsu.d3.datacollector.utils.irohaBinaryKeyfromHex
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.Query
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.net.URI
+import javax.transaction.Transactional
 
 
 @Service
@@ -33,15 +35,15 @@ class BlockTaskService {
     @Value("\${iroha.user.id}")
     lateinit var userId: String
     @Value("\${iroha.transferBillingTemplate}")
-    lateinit var billingAccountTemplate: String
+    lateinit var transferBillingTemplate: String
 
     val LAST_PROCESSED_BLOCK_ROW_ID = 0L
     val LAST_REQUEST_ROW_ID = 1L
 
     private var api: IrohaAPI? = null
 
-
-    fun processBlockTask() {
+    @Transactional
+    fun processBlockTask(): Boolean {
 
         val lastBlockState = dbService.stateRepo.findById(LAST_PROCESSED_BLOCK_ROW_ID).get()
         val lastRequest = dbService.stateRepo.findById(LAST_REQUEST_ROW_ID).get()
@@ -57,21 +59,25 @@ class BlockTaskService {
                 blockV1.payload.transactionsList.forEach { transaction ->
                     transaction.payload.reducedPayload.commandsList.filter {
                         it.hasSetAccountDetail() && it.setAccountDetail.accountId.contains(
-                            billingAccountTemplate
+                            transferBillingTemplate
                         )
                     }.forEach {
-                        cache.addTransferBilling(
+                        val billing = Billing(
+                            null,
                             it.setAccountDetail.accountId,
+                            Billing.BillingTypeEnum.TRANSFER,
                             it.setAccountDetail.key,
                             BigDecimal(it.setAccountDetail.value)
                         )
+                        dbService.updateBillingInDb(billing)
+                        cache.addTransferBilling(billing)
                     }
                 }
             } else {
                 log.error("Block response of unsupported version: $response")
             }
-            dbService.updatePropertiesInDatabase(lastBlockState, lastRequest)
-
+            dbService.updateStateInDb(lastBlockState, lastRequest)
+            return true
         } else if (response.hasErrorResponse()) {
             if (response.errorResponse.errorCode == 3) {
                 log.debug("Highest block riched. Finishing blocks downloading job execution")
@@ -79,8 +85,10 @@ class BlockTaskService {
                 val error = response.errorResponse
                 log.error("Blocks querying job error: errorCode: ${error.errorCode}, message: ${error.message}")
             }
+            return true
         } else {
-            log.error("No block or error response catched from Iroha: $response")
+            log.error("No block or error response caught from Iroha: $response")
+            return false
         }
     }
 

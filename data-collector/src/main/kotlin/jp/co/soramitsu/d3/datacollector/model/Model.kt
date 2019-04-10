@@ -28,8 +28,9 @@ data class Billing(
     val id: Long? = null,
     val accountId: String = "",
     @Enumerated(EnumType.STRING)
-    val BillingType: BillingTypeEnum = BillingTypeEnum.TRANSFER,
-    val feeFraction: BigDecimal = BigDecimal("0.015"),
+    val billingType: BillingTypeEnum = BillingTypeEnum.TRANSFER,
+    val asset:String = "",
+    var feeFraction: BigDecimal = BigDecimal("0.015"),
     var created: Date? = null,
     var updated: Date? = null
 ) {
