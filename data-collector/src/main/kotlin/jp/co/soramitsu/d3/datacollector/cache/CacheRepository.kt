@@ -20,6 +20,7 @@ class CacheRepository {
         }
     }
 
+    @Synchronized
     fun getTransferBilling(): HashMap<String, HashMap<String, BigDecimal>> {
         val copy = HashMap<String, HashMap<String, BigDecimal>>()
         copy.putAll(transferBilling)
