@@ -59,7 +59,7 @@ class CacheControllerTest {
         assertNull(respBody.message)
         val domain = getDomainFromAccountId(bittingGlobbaly)
         assertEquals(BigDecimal(fee),
-            respBody.transferBilling[domain]!![someAsset]!!.feeFraction)
+            respBody.transfer[domain]!![someAsset]!!.feeFraction)
     }
 
     @Test
