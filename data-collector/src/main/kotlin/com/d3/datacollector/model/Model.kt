@@ -46,7 +46,8 @@ data class Billing(
         CUSTODY,
         ACCOUNT_CREATION,
         EXCHANGE,
-        WITHDRAWAL
+        WITHDRAWAL,
+        NOT_FOUND
     }
 
     @PrePersist

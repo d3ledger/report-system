@@ -6,6 +6,7 @@ import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.model.Billing
 import com.d3.datacollector.model.BillingMqDto
 import com.d3.datacollector.utils.irohaBinaryKeyfromHex
+import iroha.protocol.Commands
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.Query
 import mu.KLogging
@@ -37,6 +38,14 @@ class BlockTaskService {
     lateinit var userId: String
     @Value("\${iroha.transferBillingTemplate}")
     lateinit var transferBillingTemplate: String
+    @Value("\${iroha.custodyBillingTemplate}")
+    lateinit var custodyBillingTemplate: String
+    @Value("\${iroha.accountCreationBillingTemplate}")
+    lateinit var accountCreationBillingTemplate: String
+    @Value("\${iroha.exchangeBillingTemplate}")
+    lateinit var exchangeBillingTemplate: String
+    @Value("\${iroha.withdrawalBillingTemplate}")
+    lateinit var withdrawalBillingTemplate: String
 
     val LAST_PROCESSED_BLOCK_ROW_ID = 0L
     val LAST_REQUEST_ROW_ID = 1L
@@ -56,35 +65,26 @@ class BlockTaskService {
 
 
         if (response.hasBlockResponse()) {
-            log.info("Successful Iroha block query: $response")
+            log.debug("Successful Iroha block query: $response")
 
             if (response.blockResponse.block.hasBlockV1()) {
                 val blockV1 = response.blockResponse.block.blockV1
                 blockV1.payload.transactionsList.forEach { transaction ->
-                    transaction.payload.reducedPayload.commandsList.filter {
-                        it.hasSetAccountDetail() && it.setAccountDetail.accountId.contains(
-                            transferBillingTemplate
-                        )
-                    }.forEach {
-                        val billing = Billing(
-                            null,
-                            it.setAccountDetail.accountId,
-                            Billing.BillingTypeEnum.TRANSFER,
-                            it.setAccountDetail.key,
-                            BigDecimal(it.setAccountDetail.value)
-                        )
-                        dbService.updateBillingInDb(billing)
-                        cache.addTransferBilling(billing)
-                        rabbitService.sendBillingUpdate(
-                            BillingMqDto(
-                                billing.accountId,
-                                billing.billingType,
-                                billing.asset,
-                                billing.feeFraction,
-                                billing.updated
+                    transaction
+                        .payload
+                        .reducedPayload
+                        .commandsList
+                        .filter { filterBillingAccounts(it) }
+                        .forEach {
+                            val billing = Billing(
+                                null,
+                                it.setAccountDetail.accountId,
+                                defineBillingType(it.setAccountDetail.accountId),
+                                it.setAccountDetail.key,
+                                BigDecimal(it.setAccountDetail.value)
                             )
-                        )
-                    }
+                            performUpdates(billing)
+                        }
                 }
             } else {
                 log.error("Block response of unsupported version: $response")
@@ -103,6 +103,45 @@ class BlockTaskService {
             log.error("No block or error response caught from Iroha: $response")
             return false
         }
+    }
+
+    private fun performUpdates(billing: Billing) {
+        dbService.updateBillingInDb(billing)
+        cache.addTransferBilling(billing)
+        rabbitService.sendBillingUpdate(
+            BillingMqDto(
+                billing.accountId,
+                billing.billingType,
+                billing.asset,
+                billing.feeFraction,
+                billing.updated
+            )
+        )
+    }
+
+    private fun filterBillingAccounts(it: Commands.Command): Boolean {
+        val accountId = it.setAccountDetail.accountId
+        return it.hasSetAccountDetail() && (
+                accountId.contains(
+                    transferBillingTemplate
+                ) || accountId.contains(
+                    custodyBillingTemplate
+                ) || accountId.contains(
+                    accountCreationBillingTemplate
+                ) || accountId.contains(
+                    exchangeBillingTemplate
+                ) || accountId.contains(
+                    withdrawalBillingTemplate
+                ))
+    }
+
+    private fun defineBillingType(accountId: String): Billing.BillingTypeEnum = when {
+        accountId.contains(transferBillingTemplate) -> Billing.BillingTypeEnum.TRANSFER
+        accountId.contains(custodyBillingTemplate) -> Billing.BillingTypeEnum.CUSTODY
+        accountId.contains(accountCreationBillingTemplate) -> Billing.BillingTypeEnum.ACCOUNT_CREATION
+        accountId.contains(exchangeBillingTemplate) -> Billing.BillingTypeEnum.EXCHANGE
+        accountId.contains(withdrawalBillingTemplate) -> Billing.BillingTypeEnum.WITHDRAWAL
+        else -> Billing.BillingTypeEnum.NOT_FOUND
     }
 
 
