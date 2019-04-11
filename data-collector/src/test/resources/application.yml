@@ -6,7 +6,7 @@ iroha:
     id: data_collector@notary
   transferBillingTemplate: transfer_billing@
   custodyBillingTemplate: custody_billing@
-  accountCreationBillingTemplate: accountCreation_billing@
+  accountCreationBillingTemplate: account_creation_billing@
   exchangeBillingTemplate: exchange_billing@
   withdrawalBillingTemplate: withdrawal_billing@
 

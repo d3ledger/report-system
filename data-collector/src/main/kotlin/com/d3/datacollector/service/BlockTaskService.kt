@@ -107,7 +107,7 @@ class BlockTaskService {
 
     private fun performUpdates(billing: Billing) {
         dbService.updateBillingInDb(billing)
-        cache.addTransferBilling(billing)
+        cache.funAddFeebyType(billing)
         rabbitService.sendBillingUpdate(
             BillingMqDto(
                 billing.accountId,

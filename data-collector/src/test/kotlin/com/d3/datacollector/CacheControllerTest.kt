@@ -36,13 +36,16 @@ class CacheControllerTest {
     @Autowired
     lateinit var cache: CacheRepository
 
+    /**
+     * TODO Update test. Add all type of fees testing
+     */
     @Test
     fun testGetBillling() {
         val bittingGlobbaly = "bitting@globbaly"
         val someAsset = "someAsset"
         val fee = "0.5"
 
-        cache.addTransferBilling(
+        cache.funAddFeebyType(
             Billing(
                 accountId = bittingGlobbaly,
                 asset = someAsset,
@@ -69,7 +72,7 @@ class CacheControllerTest {
         val someAsset = "someAsset"
         val fee = "0.5"
 
-        cache.addTransferBilling(
+        cache.funAddFeebyType(
             Billing(
                 accountId = bittingGlobbaly,
                 asset = someAsset,

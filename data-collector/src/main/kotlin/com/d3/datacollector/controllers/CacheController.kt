@@ -27,7 +27,11 @@ class CacheController {
         try {
             return ResponseEntity.ok<BillingResponse>(
                 BillingResponse(
-                    cache.getTransferBilling()
+                    cache.getTransferFee(),
+                    cache.getCustodyFee(),
+                    cache.getAccountCreationFee(),
+                    cache.getExchangeFee(),
+                    cache.getWithdrawalFee()
                 )
             )
         } catch (e: Exception) {
@@ -41,20 +45,25 @@ class CacheController {
 
     @GetMapping("/get/billing/{domain}/{asset}/{billingType}")
     fun getBillingForTransfer(
-        @PathVariable("domain") domain:String,
-        @PathVariable("asset") asset:String,
+        @PathVariable("domain") domain: String,
+        @PathVariable("asset") asset: String,
         @PathVariable("billingType") billingType: Billing.BillingTypeEnum
-        ): ResponseEntity<SingleBillingResponse> {
+    ): ResponseEntity<SingleBillingResponse> {
         try {
-            if(billingType == Billing.BillingTypeEnum.TRANSFER) {
-                return ResponseEntity.ok<SingleBillingResponse>(
-                    SingleBillingResponse(
-                        cache.getTransferBilling(domain, asset)
-                    )
-                )
-            } else {
-                throw RuntimeException("Unsupported Billing type")
+            val billing: Billing
+            when (billingType) {
+                Billing.BillingTypeEnum.TRANSFER -> billing = cache.getTransferFee(domain, asset)
+                Billing.BillingTypeEnum.CUSTODY -> billing = cache.getCustodyFee(domain, asset)
+                Billing.BillingTypeEnum.ACCOUNT_CREATION -> billing = cache.getAccountCreationFee(domain, asset)
+                Billing.BillingTypeEnum.EXCHANGE -> billing = cache.getExchangeFee(domain, asset)
+                Billing.BillingTypeEnum.WITHDRAWAL -> billing = cache.getWithdrawalFee(domain, asset)
+                else -> throw RuntimeException("Unsupported Billing type")
             }
+            return ResponseEntity.ok<SingleBillingResponse>(
+                SingleBillingResponse(
+                    billing
+                )
+            )
         } catch (e: Exception) {
             log.error("Error getting Billing data", e)
             val response = SingleBillingResponse()

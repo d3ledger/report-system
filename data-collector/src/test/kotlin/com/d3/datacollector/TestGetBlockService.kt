@@ -50,6 +50,15 @@ class TestGetBlockService {
     private val dataCollectorRole = "dataCollector"
     private val transferBillingAccountName = "transfer_billing"
     private val transferBillingAccountId = "$transferBillingAccountName@$bankDomain"
+    private val custodyAccountName = "custody_billing"
+    private val custodyBillingAccountId = "$custodyAccountName@$bankDomain"
+    private val accountCreationBillingAccountName = "account_creation_billing"
+    private val accountCreationBillingAccountId = "$accountCreationBillingAccountName@$bankDomain"
+    private val exchangeBillingAccountName = "exchange_billing"
+    private val exchangeBillingAccountId = "$exchangeBillingAccountName@$bankDomain"
+    private val withdrawalBillingAccountName = "withdrawal_billing"
+    private val withdrawalBillingAccountId = "$withdrawalBillingAccountName@$bankDomain"
+
 
     private val crypto = Ed25519Sha3()
 
@@ -58,6 +67,11 @@ class TestGetBlockService {
     private val useraKeypair = crypto.generateKeypair()
     private val userbKeypair = crypto.generateKeypair()
     private val transaferBillingKeyPair = crypto.generateKeypair()
+    private val custodyKeyPair = crypto.generateKeypair()
+    private val accountCreationKeyPair = crypto.generateKeypair()
+    private val exchangeKeyPair = crypto.generateKeypair()
+    private val withdrawalKeyPair = crypto.generateKeypair()
+
 
     private fun user(name: String): String {
         return String.format("%s@%s", name, bankDomain)
@@ -93,44 +107,62 @@ class TestGetBlockService {
             .setAccountDetail(transferBillingAccountId, usd.replace('#','_'), "0.5")
             .sign(transaferBillingKeyPair)
             .build()
+        val tx3 = Transaction.builder(custodyBillingAccountId)
+            .setAccountDetail(custodyBillingAccountId, usd.replace('#','_'), "0.1")
+            .sign(custodyKeyPair)
+            .build()
+        val tx4 = Transaction.builder(accountCreationBillingAccountId)
+            .setAccountDetail(accountCreationBillingAccountId, usd.replace('#','_'), "0.2")
+            .sign(accountCreationKeyPair)
+            .build()
+        val tx5 = Transaction.builder(exchangeBillingAccountId)
+            .setAccountDetail(exchangeBillingAccountId, usd.replace('#','_'), "0.3")
+            .sign(exchangeKeyPair)
+            .build()
+        val tx6 = Transaction.builder(withdrawalBillingAccountId)
+            .setAccountDetail(withdrawalBillingAccountId, usd.replace('#','_'), "0.4")
+            .sign(withdrawalKeyPair)
+            .build()
 
-        val observer = inlineTransactionStatusObserver()
+        prepareState(api, listOf(tx,tx2,tx3,tx4,tx5,tx6))
 
-        val (balanceUserA, balanceUserB) = checkBalancesTransactions(api, tx2, observer, tx)
+        for(i in 1L..7L) {
+            getBlockAndCheck(i)
+        }
 
-        // ensure we got correct balances
-        assert(balanceUserA == 90)
-        assert(balanceUserB == 10)
-
-
-        blockTaskService.processBlockTask()
-        var lastProcessedBlock = stateRepo.findById(blockTaskService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
-        assertTrue(lastProcessedBlock.toLong() == 1L)
-
-        blockTaskService.processBlockTask()
-        lastProcessedBlock = stateRepo.findById(blockTaskService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
-        assertTrue(lastProcessedBlock.toLong() == 2L)
         val usd_ = usd.replace('#','_')
         try {
-            val domain = transferBillingAccountId.substring(transferBillingAccountId.indexOf('@')+1)
-            val billing = cache.getTransferBilling(domain, usd_)
-            assertEquals(BigDecimal("0.5"), billing.feeFraction)
+            val transaferBilling = cache.getTransferFee(bankDomain, usd_)
+            assertEquals(BigDecimal("0.5"), transaferBilling.feeFraction)
+            val custody = cache.getCustodyFee(bankDomain, usd_)
+            assertEquals(BigDecimal("0.1"), custody.feeFraction)
+            val accountFee = cache.getAccountCreationFee(bankDomain, usd_)
+            assertEquals(BigDecimal("0.2"), accountFee.feeFraction)
+            val exchangeFee = cache.getExchangeFee(bankDomain, usd_)
+            assertEquals(BigDecimal("0.3"), exchangeFee.feeFraction)
+            val withdrawalFee = cache.getWithdrawalFee(bankDomain, usd_)
+            assertEquals(BigDecimal("0.4"), withdrawalFee.feeFraction)
         } catch (e: RuntimeException) {
+            log.error("Error getting billing",e)
             fail()
         }
     }
 
-    private fun checkBalancesTransactions(
+    private fun getBlockAndCheck(number: Long): String {
+        blockTaskService.processBlockTask()
+        var lastProcessedBlock = stateRepo.findById(blockTaskService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
+        assertTrue(lastProcessedBlock.toLong() == number)
+        return lastProcessedBlock
+    }
+
+    private fun prepareState(
         api: IrohaAPI,
-        tx2: TransactionOuterClass.Transaction?,
-        observer: InlineTransactionStatusObserver?,
-        tx: TransactionOuterClass.Transaction?
-    ): Pair<Int, Int> {
-        api.transaction(tx2).blockingSubscribe(observer)
+        txs: List<TransactionOuterClass.Transaction?>
+    ) {
+        val observer = inlineTransactionStatusObserver()
         // blocking send.
         // use .subscribe() for async sending
-        api.transaction(tx)
-            .blockingSubscribe(observer)
+        txs.forEach { api.transaction(it).blockingSubscribe(observer) }
 
         /// now lets query balances
         val balanceUserA = getBalance(
@@ -143,7 +175,9 @@ class TestGetBlockService {
             user("user_b"),
             userbKeypair
         )
-        return Pair(balanceUserA, balanceUserB)
+        // ensure we got correct balances
+        assert(balanceUserA == 90)
+        assert(balanceUserB == 10)
     }
 
     /**
@@ -233,6 +267,10 @@ class TestGetBlockService {
                     .createDomain(bankDomain, userRole)
                     .createDomain(notaryDomain, dataCollectorRole)
                     .createAccount(transferBillingAccountName, bankDomain, transaferBillingKeyPair.public)
+                    .createAccount(custodyAccountName,bankDomain,custodyKeyPair.public)
+                    .createAccount(exchangeBillingAccountName,bankDomain,exchangeKeyPair.public)
+                    .createAccount(withdrawalBillingAccountName,bankDomain,withdrawalKeyPair.public)
+                    .createAccount(accountCreationBillingAccountName,bankDomain,accountCreationKeyPair.public)
                     .createAccount("data_collector", notaryDomain, Utils.parseHexPublicKey(dataCollectorPublicKey))
                     .createAccount("user_a", bankDomain, useraKeypair.public)
                     .createAccount("user_b", bankDomain, userbKeypair.public)
