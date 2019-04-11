@@ -20,7 +20,7 @@ class DbService {
     @Transactional
     fun updateBillingInDb(
         billing: Billing
-    ) {
+    ):Billing {
         val found =
             billingRepo.selectByAccountIdBillingTypeAndAsset(billing.accountId, billing.asset, billing.billingType)
         if (found.isPresent) {
@@ -29,10 +29,9 @@ class DbService {
                 feeFraction = billing.feeFraction,
                 created = found.get().created
             )
-            billingRepo.save(updated)
+            return billingRepo.save(updated)
         } else {
-            billingRepo.save(billing)
-
+            return billingRepo.save(billing)
         }
     }
 

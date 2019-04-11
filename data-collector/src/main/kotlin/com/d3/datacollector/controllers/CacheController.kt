@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 
 @Controller
 @RequestMapping("/cache")
-
 class CacheController {
 
     private val log = KLogging().logger

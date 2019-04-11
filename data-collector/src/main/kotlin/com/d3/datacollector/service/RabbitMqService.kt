@@ -1,11 +1,8 @@
 package com.d3.datacollector.service
 
-import org.springframework.amqp.rabbit.core.RabbitTemplate
+import com.d3.datacollector.model.BillingMqDto
 
+interface RabbitMqService {
 
-
-class RabbitMqService {
-
-    private val rabbitTemplate: RabbitTemplate? = null
-
+    fun sendBillingUpdate(update: BillingMqDto)
 }

@@ -37,8 +37,8 @@ data class Billing(
     @JsonIgnore
     val asset:String = "",
     var feeFraction: BigDecimal = BigDecimal("0.015"),
-    @JsonIgnore
     var created: Date? = null,
+    @JsonIgnore
     var updated: Date? = null
 ) {
     enum class BillingTypeEnum {

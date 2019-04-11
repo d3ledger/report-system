@@ -17,12 +17,10 @@ class CacheRepository {
     @Synchronized
     fun addTransferBilling(billing: Billing) {
         val domain = getDomainFromAccountId(billing.accountId)
-        if (transferBilling.contains(domain)) {
-            transferBilling[domain]!![billing.asset] = billing
-        } else {
+        if (!transferBilling.contains(domain)) {
             transferBilling[domain] = HashMap()
-            transferBilling[domain]!![billing.asset] = billing
         }
+        transferBilling[domain]!![billing.asset] = billing
     }
 
     @Synchronized

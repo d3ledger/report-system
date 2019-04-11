@@ -4,10 +4,10 @@ import iroha.protocol.QryResponses
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.model.Billing
+import com.d3.datacollector.model.BillingMqDto
 import com.d3.datacollector.utils.irohaBinaryKeyfromHex
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.Query
-import jp.co.soramitsu.iroha.java.Utils
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -43,6 +43,9 @@ class BlockTaskService {
 
     private var api: IrohaAPI? = null
 
+    @Autowired
+    lateinit var rabbitService: RabbitMqService
+
     @Transactional
     fun processBlockTask(): Boolean {
 
@@ -72,6 +75,15 @@ class BlockTaskService {
                         )
                         dbService.updateBillingInDb(billing)
                         cache.addTransferBilling(billing)
+                        rabbitService.sendBillingUpdate(
+                            BillingMqDto(
+                                billing.accountId,
+                                billing.billingType,
+                                billing.asset,
+                                billing.feeFraction,
+                                billing.updated
+                            )
+                        )
                     }
                 }
             } else {
@@ -100,7 +112,7 @@ class BlockTaskService {
     ): QryResponses.QueryResponse {
 
 
-        val q = Query.builder(userId, lastRequest+1)
+        val q = Query.builder(userId, lastRequest + 1)
             .getBlock(lastBlock + 1)
             .buildSigned(
                 Ed25519Sha3.keyPairFromBytes(
