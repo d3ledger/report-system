@@ -1,5 +1,6 @@
 package com.d3.datacollector.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.math.BigDecimal
 import java.util.*
 import javax.persistence.*
@@ -24,13 +25,19 @@ data class State(
 @Entity
 @Table(name = "billing")
 data class Billing(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonIgnore
     val id: Long? = null,
+    @JsonIgnore
     val accountId: String = "",
+    @JsonIgnore
     @Enumerated(EnumType.STRING)
     val billingType: BillingTypeEnum = BillingTypeEnum.TRANSFER,
+    @JsonIgnore
     val asset:String = "",
     var feeFraction: BigDecimal = BigDecimal("0.015"),
+    @JsonIgnore
     var created: Date? = null,
     var updated: Date? = null
 ) {

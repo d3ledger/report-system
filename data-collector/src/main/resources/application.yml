@@ -24,8 +24,6 @@ spring:
     url:      jdbc:postgresql://${postgres.host}:${postgres.port}/${postgres.database}?useSSL=false
     username: test
     password: test
-
-
   # Spring Data JPA configuration
   jpa:
     hibernate:
@@ -34,6 +32,12 @@ spring:
     show-sql: true
   liquibase:
     change-log: classpath:liquibase-master.xml
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+//    virtual-host:
 
 logging:
   level:
