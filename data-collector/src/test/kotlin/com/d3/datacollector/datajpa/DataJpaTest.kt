@@ -61,7 +61,7 @@ class DataJpaTest {
         assertEquals(updated.feeFraction, found.get().feeFraction)
         assertEquals(billing.id, found.get().id)
         assertNotNull(billing.created)
-        assertNotNull(updated.updated)
+        assertNotNull(found.get().updated)
     }
 
     @Test
@@ -78,5 +78,4 @@ class DataJpaTest {
         assertThat(found.get().value)
             .isEqualTo(state1.value)
     }
-
 }

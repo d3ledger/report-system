@@ -25,27 +25,27 @@ class BlockTaskService {
     @Autowired
     lateinit var dbService: DbService
     @Autowired
-    lateinit var cache: CacheRepository
+    private lateinit var cache: CacheRepository
 
     @Value("\${iroha.toriiAddress}")
     lateinit var toriiAddress: String
 
     @Value("\${iroha.user.privateKeyHex}")
-    lateinit var privateKey: String
+    private lateinit var privateKey: String
     @Value("\${iroha.user.publicKeyHex}")
-    lateinit var publicKey: String
+    private lateinit var publicKey: String
     @Value("\${iroha.user.id}")
-    lateinit var userId: String
+    private lateinit var userId: String
     @Value("\${iroha.transferBillingTemplate}")
-    lateinit var transferBillingTemplate: String
+    private lateinit var transferBillingTemplate: String
     @Value("\${iroha.custodyBillingTemplate}")
-    lateinit var custodyBillingTemplate: String
+    private lateinit var custodyBillingTemplate: String
     @Value("\${iroha.accountCreationBillingTemplate}")
-    lateinit var accountCreationBillingTemplate: String
+    private lateinit var accountCreationBillingTemplate: String
     @Value("\${iroha.exchangeBillingTemplate}")
-    lateinit var exchangeBillingTemplate: String
+    private lateinit var exchangeBillingTemplate: String
     @Value("\${iroha.withdrawalBillingTemplate}")
-    lateinit var withdrawalBillingTemplate: String
+    private lateinit var withdrawalBillingTemplate: String
 
     val LAST_PROCESSED_BLOCK_ROW_ID = 0L
     val LAST_REQUEST_ROW_ID = 1L

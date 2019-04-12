@@ -59,7 +59,6 @@ class TestGetBlockService {
     private val withdrawalBillingAccountName = "withdrawal_billing"
     private val withdrawalBillingAccountId = "$withdrawalBillingAccountName@$bankDomain"
 
-
     private val crypto = Ed25519Sha3()
 
     private val peerKeypair = crypto.generateKeypair()
@@ -71,7 +70,6 @@ class TestGetBlockService {
     private val accountCreationKeyPair = crypto.generateKeypair()
     private val exchangeKeyPair = crypto.generateKeypair()
     private val withdrawalKeyPair = crypto.generateKeypair()
-
 
     private fun user(name: String): String {
         return String.format("%s@%s", name, bankDomain)

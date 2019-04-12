@@ -10,8 +10,6 @@ import javax.transaction.Transactional
 
 @Service
 class DbService {
-
-
     @Autowired
     lateinit var stateRepo: StateRepository
     @Autowired
@@ -20,18 +18,18 @@ class DbService {
     @Transactional
     fun updateBillingInDb(
         billing: Billing
-    ):Billing {
+    ): Billing {
         val found =
             billingRepo.selectByAccountIdBillingTypeAndAsset(billing.accountId, billing.asset, billing.billingType)
-        if (found.isPresent) {
+        return if (found.isPresent) {
             val updated = Billing(
                 id = found.get().id,
                 feeFraction = billing.feeFraction,
                 created = found.get().created
             )
-            return billingRepo.save(updated)
+            billingRepo.save(updated)
         } else {
-            return billingRepo.save(billing)
+            billingRepo.save(billing)
         }
     }
 

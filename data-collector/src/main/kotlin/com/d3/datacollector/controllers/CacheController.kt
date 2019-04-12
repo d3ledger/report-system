@@ -49,7 +49,7 @@ class CacheController {
         @PathVariable("asset") asset: String,
         @PathVariable("billingType") billingType: Billing.BillingTypeEnum
     ): ResponseEntity<SingleBillingResponse> {
-        try {
+        return try {
             val billing = when (billingType) {
                 Billing.BillingTypeEnum.TRANSFER -> cache.getTransferFee(domain, asset)
                 Billing.BillingTypeEnum.CUSTODY -> cache.getCustodyFee(domain, asset)
@@ -58,7 +58,7 @@ class CacheController {
                 Billing.BillingTypeEnum.WITHDRAWAL -> cache.getWithdrawalFee(domain, asset)
                 else -> throw RuntimeException("Unsupported Billing type")
             }
-            return ResponseEntity.ok<SingleBillingResponse>(
+             ResponseEntity.ok<SingleBillingResponse>(
                 SingleBillingResponse(
                     billing
                 )
@@ -68,7 +68,7 @@ class CacheController {
             val response = SingleBillingResponse()
             response.errorCode = e.javaClass.simpleName
             response.message = e.message
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
         }
     }
 }

@@ -7,7 +7,6 @@ import java.util.*
 
 interface BillingRepository : CrudRepository<Billing, Long> {
 
-
     @Query("SELECT b FROM Billing b WHERE b.accountId = ?1 and b.asset = ?2 and b.billingType = ?3")
     fun selectByAccountIdBillingTypeAndAsset(
         accountId: String,

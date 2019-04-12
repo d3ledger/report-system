@@ -15,7 +15,7 @@ data class State(
     val id: Long? = null,
     var title: String = "",
     var value: String = ""
-) 
+)
 
 @Entity
 @Table(name = "billing")
