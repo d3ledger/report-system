@@ -14,6 +14,7 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 import java.math.BigDecimal
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 
@@ -59,6 +60,8 @@ class DataJpaTest {
         found = billingRepo.findById(billing.id!!)
         assertEquals(updated.feeFraction, found.get().feeFraction)
         assertEquals(billing.id, found.get().id)
+        assertNotNull(billing.created)
+        assertNotNull(updated.updated)
     }
 
     @Test

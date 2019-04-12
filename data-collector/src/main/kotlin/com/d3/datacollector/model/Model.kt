@@ -15,12 +15,7 @@ data class State(
     val id: Long? = null,
     var title: String = "",
     var value: String = ""
-) {
-    enum class StateEnum {
-        DEFAULT,
-        LAST_PROCESSED_BLOCK_ID,
-    }
-}
+) 
 
 @Entity
 @Table(name = "billing")

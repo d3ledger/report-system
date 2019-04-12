@@ -14,10 +14,8 @@ buildscript {
     }
 }
 
-
 group = 'd3'
 version = '1.0-SNAPSHOT'
-
 
 apply plugin: 'com.github.johnrengelman.shadow'
 

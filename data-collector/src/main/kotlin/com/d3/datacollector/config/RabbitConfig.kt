@@ -13,12 +13,10 @@ import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Primary
 
 @ConditionalOnProperty(value = ["app.rabbitmq.enable"], havingValue = "true", matchIfMissing = true)
 @Configuration
 class RabbitConfig {
-
     val queueName = "data-collector-queue"
     val outRoutingKeyPrefix = "d3.data-collector"
     val transaferBillingUdateRoutingKey = "$outRoutingKeyPrefix.transfer-billing.update"
@@ -65,5 +63,4 @@ class RabbitConfig {
     fun rabbitService(): RabbitMqService {
         return RabbitMqServiceImpl()
     }
-
 }

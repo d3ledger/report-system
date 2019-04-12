@@ -24,8 +24,8 @@ class CacheController {
 
     @GetMapping("/get/billing")
     fun getAllBilling(): ResponseEntity<BillingResponse> {
-        try {
-            return ResponseEntity.ok<BillingResponse>(
+        return try {
+            ResponseEntity.ok<BillingResponse>(
                 BillingResponse(
                     cache.getTransferFee(),
                     cache.getCustodyFee(),
@@ -39,7 +39,7 @@ class CacheController {
             val response = BillingResponse()
             response.errorCode = e.javaClass.simpleName
             response.message = e.message
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
         }
     }
 
@@ -50,13 +50,12 @@ class CacheController {
         @PathVariable("billingType") billingType: Billing.BillingTypeEnum
     ): ResponseEntity<SingleBillingResponse> {
         try {
-            val billing: Billing
-            when (billingType) {
-                Billing.BillingTypeEnum.TRANSFER -> billing = cache.getTransferFee(domain, asset)
-                Billing.BillingTypeEnum.CUSTODY -> billing = cache.getCustodyFee(domain, asset)
-                Billing.BillingTypeEnum.ACCOUNT_CREATION -> billing = cache.getAccountCreationFee(domain, asset)
-                Billing.BillingTypeEnum.EXCHANGE -> billing = cache.getExchangeFee(domain, asset)
-                Billing.BillingTypeEnum.WITHDRAWAL -> billing = cache.getWithdrawalFee(domain, asset)
+            val billing = when (billingType) {
+                Billing.BillingTypeEnum.TRANSFER -> cache.getTransferFee(domain, asset)
+                Billing.BillingTypeEnum.CUSTODY -> cache.getCustodyFee(domain, asset)
+                Billing.BillingTypeEnum.ACCOUNT_CREATION -> cache.getAccountCreationFee(domain, asset)
+                Billing.BillingTypeEnum.EXCHANGE -> cache.getExchangeFee(domain, asset)
+                Billing.BillingTypeEnum.WITHDRAWAL -> cache.getWithdrawalFee(domain, asset)
                 else -> throw RuntimeException("Unsupported Billing type")
             }
             return ResponseEntity.ok<SingleBillingResponse>(
