@@ -26,7 +26,7 @@ class RabbitConfig {
 
     @Bean
     fun queue(): Queue {
-        return Queue(queueName, false)
+        return Queue(queueName, true)
     }
 
     @Bean
