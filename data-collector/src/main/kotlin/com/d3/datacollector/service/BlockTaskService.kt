@@ -74,14 +74,17 @@ class BlockTaskService {
                         .payload
                         .reducedPayload
                         .commandsList
+                        .stream()
+                        .filter { it.hasSetAccountDetail() }
+                        .map { it.setAccountDetail }
                         .filter { filterBillingAccounts(it) }
                         .forEach {
                             val billing = Billing(
                                 null,
-                                it.setAccountDetail.accountId,
-                                defineBillingType(it.setAccountDetail.accountId),
-                                it.setAccountDetail.key,
-                                BigDecimal(it.setAccountDetail.value)
+                                it.accountId,
+                                defineBillingType(it.accountId),
+                                it.key,
+                                BigDecimal(it.value)
                             )
                             performUpdates(billing)
                         }
@@ -119,10 +122,9 @@ class BlockTaskService {
         )
     }
 
-    private fun filterBillingAccounts(it: Commands.Command): Boolean {
-        val accountId = it.setAccountDetail.accountId
-        return it.hasSetAccountDetail() && (
-                accountId.contains(
+    private fun filterBillingAccounts(it: Commands.SetAccountDetail): Boolean {
+        val accountId = it.accountId
+        return accountId.contains(
                     transferBillingTemplate
                 ) || accountId.contains(
                     custodyBillingTemplate
@@ -132,7 +134,7 @@ class BlockTaskService {
                     exchangeBillingTemplate
                 ) || accountId.contains(
                     withdrawalBillingTemplate
-                ))
+                )
     }
 
     private fun defineBillingType(accountId: String): Billing.BillingTypeEnum = when {
