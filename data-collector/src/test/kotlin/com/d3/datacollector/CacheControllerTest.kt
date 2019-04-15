@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @RunWith(SpringRunner::class)
@@ -45,7 +44,7 @@ class CacheControllerTest {
         val someAsset = "someAsset"
         val fee = "0.5"
 
-        cache.funAddFeebyType(
+        cache.addFeeByType(
             Billing(
                 accountId = bittingGlobbaly,
                 asset = someAsset,
@@ -72,7 +71,7 @@ class CacheControllerTest {
         val someAsset = "someAsset"
         val fee = "0.5"
 
-        cache.funAddFeebyType(
+        cache.addFeeByType(
             Billing(
                 accountId = bittingGlobbaly,
                 asset = someAsset,

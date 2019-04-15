@@ -17,19 +17,15 @@ import java.math.BigDecimal
 import java.net.URI
 import javax.transaction.Transactional
 
-
 @Service
 class BlockTaskService {
-
     private val log = KLogging().logger
     @Autowired
     lateinit var dbService: DbService
     @Autowired
     private lateinit var cache: CacheRepository
-
     @Value("\${iroha.toriiAddress}")
     lateinit var toriiAddress: String
-
     @Value("\${iroha.user.privateKeyHex}")
     private lateinit var privateKey: String
     @Value("\${iroha.user.publicKeyHex}")
@@ -46,21 +42,16 @@ class BlockTaskService {
     private lateinit var exchangeBillingTemplate: String
     @Value("\${iroha.withdrawalBillingTemplate}")
     private lateinit var withdrawalBillingTemplate: String
-
     val LAST_PROCESSED_BLOCK_ROW_ID = 0L
     val LAST_REQUEST_ROW_ID = 1L
-
     private var api: IrohaAPI? = null
-
     @Autowired
     lateinit var rabbitService: RabbitMqService
 
     @Transactional
     fun processBlockTask(): Boolean {
-
         val lastBlockState = dbService.stateRepo.findById(LAST_PROCESSED_BLOCK_ROW_ID).get()
         val lastRequest = dbService.stateRepo.findById(LAST_REQUEST_ROW_ID).get()
-
         val response = irohaBlockQuery(lastRequest.value.toLong(), lastBlockState.value.toLong())
 
 
@@ -110,7 +101,7 @@ class BlockTaskService {
 
     private fun performUpdates(billing: Billing) {
         dbService.updateBillingInDb(billing)
-        cache.funAddFeebyType(billing)
+        cache.addFeeByType(billing)
         rabbitService.sendBillingUpdate(
             BillingMqDto(
                 billing.accountId,
@@ -125,16 +116,16 @@ class BlockTaskService {
     private fun filterBillingAccounts(it: Commands.SetAccountDetail): Boolean {
         val accountId = it.accountId
         return accountId.contains(
-                    transferBillingTemplate
-                ) || accountId.contains(
-                    custodyBillingTemplate
-                ) || accountId.contains(
-                    accountCreationBillingTemplate
-                ) || accountId.contains(
-                    exchangeBillingTemplate
-                ) || accountId.contains(
-                    withdrawalBillingTemplate
-                )
+            transferBillingTemplate
+        ) || accountId.contains(
+            custodyBillingTemplate
+        ) || accountId.contains(
+            accountCreationBillingTemplate
+        ) || accountId.contains(
+            exchangeBillingTemplate
+        ) || accountId.contains(
+            withdrawalBillingTemplate
+        )
     }
 
     private fun defineBillingType(accountId: String): Billing.BillingTypeEnum = when {
@@ -146,13 +137,10 @@ class BlockTaskService {
         else -> Billing.BillingTypeEnum.NOT_FOUND
     }
 
-
     fun irohaBlockQuery(
         lastRequest: Long,
         lastBlock: Long
     ): QryResponses.QueryResponse {
-
-
         val q = Query.builder(userId, lastRequest + 1)
             .getBlock(lastBlock + 1)
             .buildSigned(

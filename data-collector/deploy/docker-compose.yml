@@ -17,6 +17,8 @@ services:
       POSTGRES_HOST: dc-postgres
       POSTGRES_DATABASE: postgres
       SPRING_RABBITMQ_HOST: brvs-rmq
+      IROHA_HOST: brvs-iroha
+      IROHA_PORT: 50051
 
   dc-postgres:
     image: postgres
