@@ -53,6 +53,5 @@ class CacheTest {
 
         assertEquals(2, cache.getTransferFee().size)
         assertEquals(1, cache.getWithdrawalFee().size)
-
     }
 }
