@@ -6,6 +6,7 @@ import com.d3.datacollector.repository.BillingRepository
 import com.d3.datacollector.repository.StateRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.util.*
 import javax.transaction.Transactional
 
 @Service
@@ -22,10 +23,15 @@ class DbService {
         val found =
             billingRepo.selectByAccountIdBillingTypeAndAsset(billing.accountId, billing.asset, billing.billingType)
         return if (found.isPresent) {
+            val toUpdate = found.get()
             val updated = Billing(
-                id = found.get().id,
+                id = toUpdate.id,
+                accountId = toUpdate.accountId,
+                billingType = toUpdate.billingType,
+                asset = toUpdate.asset,
                 feeFraction = billing.feeFraction,
-                created = found.get().created
+                created = toUpdate.created,
+                updated = Date()
             )
             billingRepo.save(updated)
         } else {

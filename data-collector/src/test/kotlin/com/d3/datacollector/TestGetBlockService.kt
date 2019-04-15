@@ -11,8 +11,7 @@ import jp.co.soramitsu.iroha.java.detail.InlineTransactionStatusObserver
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
-import junit.framework.TestCase.assertTrue
-import junit.framework.TestCase.fail
+import junit.framework.TestCase.*
 import mu.KLogging
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -107,7 +106,7 @@ class TestGetBlockService {
             .build()
 
         val tx2 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace('#','_'), "0.5")
+            .setAccountDetail(transferBillingAccountId, usd.replace('#','_'), "0.6")
             .sign(transaferBillingKeyPair)
             .build()
         val tx3 = Transaction.builder(custodyBillingAccountId)
@@ -126,10 +125,14 @@ class TestGetBlockService {
             .setAccountDetail(withdrawalBillingAccountId, usd.replace('#','_'), "0.4")
             .sign(withdrawalKeyPair)
             .build()
+        val tx7 = Transaction.builder(transferBillingAccountId)
+            .setAccountDetail(transferBillingAccountId, usd.replace('#','_'), "0.5")
+            .sign(transaferBillingKeyPair)
+            .build()
 
-        prepareState(api, listOf(tx,tx2,tx3,tx4,tx5,tx6))
+        prepareState(api, listOf(tx,tx2,tx3,tx4,tx5,tx6,tx7))
 
-        for(i in 1L..7L) {
+        for(i in 1L..8L) {
             getBlockAndCheck(i)
         }
 
@@ -145,7 +148,12 @@ class TestGetBlockService {
             assertEquals(BigDecimal("0.3"), exchangeFee.feeFraction)
             val withdrawalFee = cache.getWithdrawalFee(bankDomain, usd)
             assertEquals(BigDecimal("0.4"), withdrawalFee.feeFraction)
-            billingRepo.findAll().forEach { assertTrue(it.asset.contains('#')) }
+            billingRepo.findAll().forEach {
+                log.info("Received asset: ${it.asset}")
+                assertTrue(it.asset.contains('#'))
+                assertFalse(it.accountId.isNullOrEmpty())
+                assertNotNull(it.billingType)
+            }
         } catch (e: RuntimeException) {
             log.error("Error getting billing",e)
             fail()

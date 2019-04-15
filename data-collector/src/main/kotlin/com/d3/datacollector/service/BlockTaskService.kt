@@ -100,16 +100,16 @@ class BlockTaskService {
     }
 
     private fun performUpdates(billing: Billing) {
-        dbService.updateBillingInDb(billing)
-        cache.addFeeByType(billing)
+        val updated = dbService.updateBillingInDb(billing)
+        cache.addFeeByType(updated)
         rabbitService.sendBillingUpdate(
             BillingMqDto(
-                billing.accountId,
-                billing.billingType,
-                billing.asset,
-                billing.feeFraction,
-                updated = billing.updated,
-                created = billing.created
+                updated.accountId,
+                updated.billingType,
+                updated.asset,
+                updated.feeFraction,
+                updated = updated.updated,
+                created = updated.created
             )
         )
     }
