@@ -1,0 +1,39 @@
+version: '3.1'
+
+services:
+  data-collector:
+    container_name: "data-collector"
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      - dc-postgres
+      - brvs-rmq
+    environment:
+      WAIT_HOSTS:  dc-postgres:5432, brvs-rmq:5672
+      WAIT_BEFORE_HOSTS: 10
+      POSTGRES_HOST: dc-postgres
+      POSTGRES_DATABASE: postgres
+      SPRING_RABBITMQ_HOST: brvs-rmq
+      IROHA_HOST: brvs-iroha
+      IROHA_PORT: 50051
+
+  dc-postgres:
+    image: postgres
+    container_name: "dc-postgres"
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_USER: test
+
+  brvs-rmq:
+    image: rabbitmq:3-management
+    container_name: "brvs-rmq"
+
+
+networks:
+  # Specify the network Iroha is present in if needed
+  default:
+    external:
+      name: deploy_d3-network

@@ -3,6 +3,7 @@ package com.d3.datacollector
 import iroha.protocol.*
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import com.d3.datacollector.cache.CacheRepository
+import com.d3.datacollector.repository.BillingRepository
 import com.d3.datacollector.repository.StateRepository
 import com.d3.datacollector.service.BlockTaskService
 import jp.co.soramitsu.iroha.java.*
@@ -10,8 +11,7 @@ import jp.co.soramitsu.iroha.java.detail.InlineTransactionStatusObserver
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
-import junit.framework.TestCase.assertTrue
-import junit.framework.TestCase.fail
+import junit.framework.TestCase.*
 import mu.KLogging
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,6 +25,7 @@ import org.springframework.test.context.junit4.SpringRunner
 import java.math.BigDecimal
 import java.security.KeyPair
 import java.util.Arrays
+import javax.transaction.Transactional
 import kotlin.test.assertEquals
 
 @RunWith(SpringRunner::class)
@@ -42,6 +43,8 @@ class TestGetBlockService {
     lateinit var stateRepo: StateRepository
     @Autowired
     lateinit var cache: CacheRepository
+    @Autowired
+    lateinit var billingRepo: BillingRepository
 
     private val bankDomain = "bank"
     private val notaryDomain = "notary"
@@ -82,6 +85,7 @@ class TestGetBlockService {
     )
 
     @Test
+    @Transactional
     fun testGetBlockWithIroha() {
         val iroha = IrohaContainer()
             .withPeerConfig(peerConfig)
@@ -102,7 +106,7 @@ class TestGetBlockService {
             .build()
 
         val tx2 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace('#','_'), "0.5")
+            .setAccountDetail(transferBillingAccountId, usd.replace('#','_'), "0.6")
             .sign(transaferBillingKeyPair)
             .build()
         val tx3 = Transaction.builder(custodyBillingAccountId)
@@ -121,25 +125,35 @@ class TestGetBlockService {
             .setAccountDetail(withdrawalBillingAccountId, usd.replace('#','_'), "0.4")
             .sign(withdrawalKeyPair)
             .build()
+        val tx7 = Transaction.builder(transferBillingAccountId)
+            .setAccountDetail(transferBillingAccountId, usd.replace('#','_'), "0.5")
+            .sign(transaferBillingKeyPair)
+            .build()
 
-        prepareState(api, listOf(tx,tx2,tx3,tx4,tx5,tx6))
+        prepareState(api, listOf(tx,tx2,tx3,tx4,tx5,tx6,tx7))
 
-        for(i in 1L..7L) {
+        for(i in 1L..8L) {
             getBlockAndCheck(i)
         }
 
-        val usd_ = usd.replace('#','_')
+
         try {
-            val transaferBilling = cache.getTransferFee(bankDomain, usd_)
+            val transaferBilling = cache.getTransferFee(bankDomain, usd)
             assertEquals(BigDecimal("0.5"), transaferBilling.feeFraction)
-            val custody = cache.getCustodyFee(bankDomain, usd_)
+            val custody = cache.getCustodyFee(bankDomain, usd)
             assertEquals(BigDecimal("0.1"), custody.feeFraction)
-            val accountFee = cache.getAccountCreationFee(bankDomain, usd_)
+            val accountFee = cache.getAccountCreationFee(bankDomain, usd)
             assertEquals(BigDecimal("0.2"), accountFee.feeFraction)
-            val exchangeFee = cache.getExchangeFee(bankDomain, usd_)
+            val exchangeFee = cache.getExchangeFee(bankDomain, usd)
             assertEquals(BigDecimal("0.3"), exchangeFee.feeFraction)
-            val withdrawalFee = cache.getWithdrawalFee(bankDomain, usd_)
+            val withdrawalFee = cache.getWithdrawalFee(bankDomain, usd)
             assertEquals(BigDecimal("0.4"), withdrawalFee.feeFraction)
+            billingRepo.findAll().forEach {
+                log.info("Received asset: ${it.asset}")
+                assertTrue(it.asset.contains('#'))
+                assertFalse(it.accountId.isNullOrEmpty())
+                assertNotNull(it.billingType)
+            }
         } catch (e: RuntimeException) {
             log.error("Error getting billing",e)
             fail()
