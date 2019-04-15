@@ -86,3 +86,8 @@ jar {
         )
     }
 }
+
+tasks.withType(Test)  {
+    maxParallelForks = 1
+}
+

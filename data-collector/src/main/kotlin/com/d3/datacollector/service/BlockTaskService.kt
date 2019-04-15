@@ -74,7 +74,7 @@ class BlockTaskService {
                                 null,
                                 it.accountId,
                                 defineBillingType(it.accountId),
-                                it.key,
+                                it.key.replace("_","#"),
                                 BigDecimal(it.value)
                             )
                             performUpdates(billing)
@@ -108,7 +108,8 @@ class BlockTaskService {
                 billing.billingType,
                 billing.asset,
                 billing.feeFraction,
-                billing.updated
+                updated = billing.updated,
+                created = billing.created
             )
         )
     }

@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
+import javax.transaction.Transactional
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -39,6 +40,7 @@ class CacheControllerTest {
      * TODO Update test. Add all type of fees testing
      */
     @Test
+    @Transactional
     fun testGetBillling() {
         val bittingGlobbaly = "bitting@globbaly"
         val someAsset = "someAsset"
@@ -65,6 +67,7 @@ class CacheControllerTest {
     }
 
     @Test
+    @Transactional
     fun testGetSingleBillling() {
         val domain = "globbaly"
         val bittingGlobbaly = "bitting@$domain"
