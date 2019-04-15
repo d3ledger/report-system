@@ -1,6 +1,7 @@
 package com.d3.datacollector.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.math.BigDecimal
 import java.util.*
 import javax.persistence.*
@@ -37,11 +38,17 @@ data class Billing(
     var updated: Date? = null
 ) {
     enum class BillingTypeEnum {
+        @JsonProperty("transfer")
         TRANSFER,
+        @JsonProperty("custody")
         CUSTODY,
+        @JsonProperty("account_creation")
         ACCOUNT_CREATION,
+        @JsonProperty("exchange")
         EXCHANGE,
+        @JsonProperty("withdrawal")
         WITHDRAWAL,
+        @JsonProperty("not_found")
         NOT_FOUND
     }
 

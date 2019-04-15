@@ -8,9 +8,9 @@ import org.springframework.context.annotation.Primary
 @Configuration
 class TestConfig {
 
-    @Bean
+  /*  @Bean
     @Primary
     fun rabbitService(): RabbitMqService {
         return RabbitServiceMock()
-    }
+    }*/
 }

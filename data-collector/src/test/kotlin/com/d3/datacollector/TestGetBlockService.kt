@@ -32,7 +32,7 @@ import kotlin.test.assertEquals
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@TestPropertySource(properties = arrayOf("app.scheduling.enable=false", "app.rabbitmq.enable=false"))
+@TestPropertySource(properties = arrayOf("app.scheduling.enable=false", "app.rabbitmq.enable=true"))
 class TestGetBlockService {
     private val log = KLogging().logger
 

@@ -1,6 +1,5 @@
 package com.d3.datacollector.config
 
-import com.d3.datacollector.rabbitmq.Receiver
 import com.d3.datacollector.service.RabbitMqService
 import com.d3.datacollector.service.RabbitMqServiceImpl
 import org.springframework.amqp.core.Binding
@@ -13,19 +12,17 @@ import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
+import org.springframework.amqp.rabbit.core.RabbitTemplate
+
+
 
 @ConditionalOnProperty(value = ["app.rabbitmq.enable"], havingValue = "true", matchIfMissing = true)
 @Configuration
 class RabbitConfig {
-    val queueName = "data-collector-queue"
     val outRoutingKeyPrefix = "d3.data-collector"
     val transaferBillingUdateRoutingKey = "$outRoutingKeyPrefix.transfer-billing.update"
     val dataCollectorExchange = "data-collector"
-
-    @Bean
-    fun queue(): Queue {
-        return Queue(queueName, true)
-    }
 
     @Bean
     fun exchange(): TopicExchange {
@@ -33,30 +30,15 @@ class RabbitConfig {
     }
 
     @Bean
-    fun binding(queue: Queue, exchange: TopicExchange): Binding {
-        return BindingBuilder.bind(queue).to(exchange).with(queueName)
+    fun rabbitTemplate(connectionFactory: ConnectionFactory): RabbitTemplate {
+        val rabbitTemplate = RabbitTemplate(connectionFactory)
+        rabbitTemplate.messageConverter = producerJackson2MessageConverter()
+        return rabbitTemplate
     }
 
     @Bean
-    fun container(
-        connectionFactory: ConnectionFactory,
-        listenerAdapter: MessageListenerAdapter
-    ): SimpleMessageListenerContainer {
-        val container = SimpleMessageListenerContainer()
-        container.connectionFactory = connectionFactory
-        container.setQueueNames(queueName)
-        container.setMessageListener(listenerAdapter)
-        return container
-    }
-
-    @Bean
-    fun receiver(): Receiver {
-        return Receiver()
-    }
-
-    @Bean
-    fun listenerAdapter(receiver: Receiver): MessageListenerAdapter {
-        return MessageListenerAdapter(receiver, "receiveMessage")
+    fun producerJackson2MessageConverter(): Jackson2JsonMessageConverter {
+        return Jackson2JsonMessageConverter()
     }
 
     @Bean
