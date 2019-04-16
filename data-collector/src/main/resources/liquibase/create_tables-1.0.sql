@@ -23,7 +23,7 @@ CREATE TABLE billing (
 	asset varchar(128) NULL,
 	fee_fraction numeric(8,6) NULL,
 	created bigint NOT NULL,
-	updated bigint NULL,
+	updated bigint NOT NULL,
 	CONSTRAINT billing_pkey PRIMARY KEY (id)
 );
 
