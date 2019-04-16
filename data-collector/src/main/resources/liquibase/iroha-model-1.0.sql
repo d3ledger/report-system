@@ -41,3 +41,18 @@ CREATE TABLE iroha.transfer_asset
       REFERENCES iroha.transaction (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION
 )
+
+--changeset yvinogradov:create_table_create_account
+CREATE TABLE iroha.create_account
+(
+  id bigserial NOT NULL,
+  type character varying(255),
+  account_name character varying(255),
+  domain_id character varying(255),
+  public_key character varying(255),
+  transaction_id bigint,
+  CONSTRAINT create_account_pkey PRIMARY KEY (id),
+  CONSTRAINT fkpj7ghlhtb9irsx8vlsv3mjg2v FOREIGN KEY (transaction_id)
+      REFERENCES iroha.transaction (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)

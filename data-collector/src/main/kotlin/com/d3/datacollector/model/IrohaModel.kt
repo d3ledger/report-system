@@ -57,3 +57,11 @@ data class TransferAsset(
     val description: String,
     val amount: BigDecimal
 ) : Command()
+
+@Entity
+@Table(name = "create_account", schema = "iroha")
+data class CreateAccount(
+    val accountName: String,
+    val domainId: String,
+    val publicKey: String
+) : Command()

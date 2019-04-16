@@ -34,7 +34,7 @@ spring:
   jpa:
     hibernate:
       # To be updated in real production usage! Possible values none;update;create
-      ddl-auto: none
+      ddl-auto: create
     show-sql: true
   liquibase:
     change-log: classpath:liquibase-master.xml
