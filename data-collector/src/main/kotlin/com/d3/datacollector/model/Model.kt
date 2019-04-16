@@ -33,9 +33,8 @@ data class Billing(
     @JsonIgnore
     val asset:String = "",
     var feeFraction: BigDecimal = BigDecimal("0.015"),
-    var created: Date? = null,
-    @JsonIgnore
-    var updated: Date? = null
+    var created: Long = 0L,
+    var updated: Long = 0L
 ) {
     enum class BillingTypeEnum {
         @JsonProperty("transfer")
@@ -54,11 +53,12 @@ data class Billing(
 
     @PrePersist
     protected fun onCreate() {
-        created = Date()
+        created = Date().time
+        updated = created
     }
 
     @PreUpdate
     protected fun onUpdate() {
-        updated = Date()
+        updated = Date().time
     }
 }

@@ -31,7 +31,7 @@ class DbService {
                 asset = toUpdate.asset,
                 feeFraction = billing.feeFraction,
                 created = toUpdate.created,
-                updated = Date()
+                updated = Date().time
             )
             billingRepo.save(updated)
         } else {

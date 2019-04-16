@@ -22,8 +22,8 @@ CREATE TABLE billing (
 	account_id varchar(128) NULL,
 	asset varchar(128) NULL,
 	fee_fraction numeric(8,6) NULL,
-	created timestamp NOT NULL DEFAULT NOW(),
-	updated timestamp NULL,
+	created bigint NOT NULL,
+	updated bigint NOT NULL,
 	CONSTRAINT billing_pkey PRIMARY KEY (id)
 );
 
