@@ -26,5 +26,3 @@ CREATE TABLE billing (
 	updated bigint NOT NULL,
 	CONSTRAINT billing_pkey PRIMARY KEY (id)
 );
-
-
