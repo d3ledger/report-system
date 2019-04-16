@@ -23,6 +23,6 @@ data class BillingMqDto(
     val billingType: Billing.BillingTypeEnum = Billing.BillingTypeEnum.TRANSFER,
     val asset: String = "",
     var feeFraction: BigDecimal = BigDecimal("0.015"),
-    var updated: Date? = null,
-    var created: Date? = null
+    var updated: Long? = null,
+    var created: Long? = null
 )
