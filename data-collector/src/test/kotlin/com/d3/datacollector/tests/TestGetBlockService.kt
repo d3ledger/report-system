@@ -1,4 +1,4 @@
-package com.d3.datacollector
+package com.d3.datacollector.tests
 
 import iroha.protocol.*
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3

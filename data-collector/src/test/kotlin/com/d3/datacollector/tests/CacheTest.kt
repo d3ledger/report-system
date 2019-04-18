@@ -1,4 +1,4 @@
-package com.d3.datacollector
+package com.d3.datacollector.tests
 
 import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.model.Billing

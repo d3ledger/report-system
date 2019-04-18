@@ -1,4 +1,4 @@
-package com.d3.datacollector.datajpa
+package com.d3.datacollector.tests.datajpa
 
 import com.d3.datacollector.model.Billing
 import com.d3.datacollector.model.State

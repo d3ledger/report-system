@@ -1,4 +1,4 @@
-package com.d3.datacollector
+package com.d3.datacollector.tests
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.d3.datacollector.cache.CacheRepository
