@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull
 @Table(name = "block", schema = "iroha")
 data class Block(
     @Id
+    @NotNull
     val blockNumber: Long? = null,
     @NotNull
     val timestamp: Long? = null
@@ -26,42 +27,38 @@ data class Transaction(
     @NotNull
     val creatorId: String? = null,
     @NotNull
-    val quorum: Int? = null
+    val quorum: Int? = null,
+    @NotNull
+    var rejected: Boolean = false
 )
 
 @MappedSuperclass
-open class Command (
+open class Command(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
     @NotNull
     @ManyToOne
     @JoinColumn(name = "transactionId")
-    val transaction: Transaction? = null,
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    val type:CommandType? = null
-) {
-    enum class CommandType {
-        TransferAsset,
-        CreateAccount
-    }
-}
+    val transaction: Transaction
+)
 
 @Entity
 @Table(name = "transfer_asset", schema = "iroha")
-data class TransferAsset(
+class TransferAsset(
     val srcAccountId: String,
     val destAccountId: String,
     val assetId: String,
     val description: String,
-    val amount: BigDecimal
-) : Command()
+    val amount: BigDecimal,
+    transaction: Transaction
+) : Command(transaction = transaction)
 
 @Entity
 @Table(name = "create_account", schema = "iroha")
-data class CreateAccount(
+class CreateAccount(
     val accountName: String,
     val domainId: String,
-    val publicKey: String
-) : Command()
+    val publicKey: String,
+    transaction: Transaction
+) : Command(transaction = transaction)

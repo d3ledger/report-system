@@ -13,17 +13,15 @@ CREATE TABLE iroha.block
 )
 
 --changeset yvinogradov:create_table_transaction
-CREATE TABLE iroha.transaction
-(
-  id bigserial NOT NULL,
-  creator_id character varying(255),
-  quorum integer,
-  block_number bigint,
-  CONSTRAINT transaction_pkey PRIMARY KEY (id),
-  CONSTRAINT fk2bc78pqajc8yuds2kh88vi0ic FOREIGN KEY (block_number)
-      REFERENCES iroha.block (block_number) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE NO ACTION
-)
+CREATE TABLE iroha."transaction" (
+	id bigserial NOT NULL,
+	creator_id varchar(255) NULL,
+	quorum int4 NULL,
+	rejected bool NOT NULL,
+	block_number int8 NULL,
+	CONSTRAINT transaction_pkey PRIMARY KEY (id),
+	CONSTRAINT fk2bc78pqajc8yuds2kh88vi0ic FOREIGN KEY (block_number) REFERENCES iroha.block(block_number)
+);
 
 --changeset yvinogradov:create_table_transfer_asset
 CREATE TABLE iroha.transfer_asset
@@ -38,8 +36,7 @@ CREATE TABLE iroha.transfer_asset
   transaction_id bigint,
   CONSTRAINT transfer_asset_pkey PRIMARY KEY (id),
   CONSTRAINT fkovti4rff89omo1oiy300jhxm2 FOREIGN KEY (transaction_id)
-      REFERENCES iroha.transaction (id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE NO ACTION
+      REFERENCES iroha.transaction (id)
 )
 
 --changeset yvinogradov:create_table_create_account
@@ -53,6 +50,5 @@ CREATE TABLE iroha.create_account
   transaction_id bigint,
   CONSTRAINT create_account_pkey PRIMARY KEY (id),
   CONSTRAINT fkpj7ghlhtb9irsx8vlsv3mjg2v FOREIGN KEY (transaction_id)
-      REFERENCES iroha.transaction (id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE NO ACTION
+      REFERENCES iroha.transaction (id)
 )
