@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+group 'd3'
+version '1.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    //Spring-boot
+    implementation("org.springframework.boot:spring-boot-starter-web:$spring_boot_version") {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:$spring_boot_version"
+    implementation("org.springframework.boot:spring-boot-starter-amqp:$spring_boot_version")
+    
+    implementation "org.springframework.boot:spring-boot-starter-jetty:$spring_boot_version"
+
+    implementation 'org.postgresql:postgresql:42.2.5'
+
+    testImplementation "org.springframework.boot:spring-boot-starter-test:$spring_boot_version"
+    testImplementation 'com.h2database:h2:1.4.199'
+    
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
