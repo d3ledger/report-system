@@ -8,12 +8,12 @@ CREATE SCHEMA iroha
 CREATE TABLE iroha.block
 (
   block_number bigint NOT NULL,
-  "timestamp" bigint,
+  block_creation_time bigint,
   CONSTRAINT block_pkey PRIMARY KEY (block_number)
 )
 
 --changeset yvinogradov:create_table_transaction
-CREATE TABLE iroha."transaction" (
+CREATE TABLE iroha.transaction (
 	id bigserial NOT NULL,
 	creator_id varchar(255) NULL,
 	quorum int4 NULL,
