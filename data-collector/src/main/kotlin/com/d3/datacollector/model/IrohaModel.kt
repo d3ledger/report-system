@@ -62,3 +62,12 @@ class CreateAccount(
     val publicKey: String,
     transaction: Transaction
 ) : Command(transaction = transaction)
+
+@Entity
+@Table(name = "create_asset", schema = "iroha")
+class CreateAsset (
+    val assetName: String,
+    val domainId: String,
+    val decimalPrecision: Int,
+    transaction: Transaction
+): Command(transaction = transaction)

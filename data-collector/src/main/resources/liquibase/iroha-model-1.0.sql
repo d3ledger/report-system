@@ -52,3 +52,14 @@ CREATE TABLE iroha.create_account
   CONSTRAINT fkpj7ghlhtb9irsx8vlsv3mjg2v FOREIGN KEY (transaction_id)
       REFERENCES iroha.transaction (id)
 )
+
+--changeset yvinogradov:create_table_create_asset
+CREATE TABLE iroha.create_asset (
+	id bigserial NOT NULL,
+	asset_name varchar(255) NULL,
+	domain_id varchar(255) NULL,
+	decimal_precision int4 NOT NULL,
+	transaction_id int8 NULL,
+	CONSTRAINT create_asset_pkey PRIMARY KEY (id),
+	CONSTRAINT fkb2nstk6qj5w3prlw9ks80vm6 FOREIGN KEY (transaction_id) REFERENCES iroha.transaction(id)
+);

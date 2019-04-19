@@ -154,6 +154,10 @@ class TestGetBlockService {
         assertEquals(userAId,trnsfr.srcAccountId)
         assertEquals(transferDescription,trnsfr.description)
         assertEquals(BigDecimal(transferAmount),trnsfr.amount)
+        assertNotNull(trnsfr.transaction)
+        assertNotNull(trnsfr.transaction.creatorId)
+        assertEquals(false,trnsfr.transaction.rejected)
+
 
         val dbCrtAccout = ArrayList<CreateAccount>()
         dbCrtAccout.addAll(createAccountRepo.findAll())
@@ -162,6 +166,9 @@ class TestGetBlockService {
             assertNotNull(it.accountName)
             assertNotNull(it.domainId)
             assertNotNull(it.publicKey)
+            assertNotNull(it.transaction)
+            assertNotNull(it.transaction.creatorId)
+            assertEquals(1, it.transaction.block?.blockNumber)
         }
 
         try {

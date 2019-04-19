@@ -4,10 +4,7 @@ import iroha.protocol.QryResponses
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.model.*
-import com.d3.datacollector.repository.BlockRepository
-import com.d3.datacollector.repository.CreateAccountRepo
-import com.d3.datacollector.repository.TransactionRepo
-import com.d3.datacollector.repository.TransferAssetRepo
+import com.d3.datacollector.repository.*
 import com.d3.datacollector.utils.irohaBinaryKeyfromHex
 import com.google.protobuf.ProtocolStringList
 import iroha.protocol.Commands
@@ -62,6 +59,8 @@ class BlockTaskService {
     lateinit var transferRepo: TransferAssetRepo
     @Autowired
     lateinit var createAccountRepo: CreateAccountRepo
+    @Autowired
+    lateinit var createAssetRepo: CreateAssetRepo
 
     @Transactional
     fun processBlockTask(): Boolean {
@@ -80,12 +79,14 @@ class BlockTaskService {
                 val dbBlock = blockRepo.save(Block(newBlockNumber, blockV1.payload.createdTime))
                 blockV1.payload.transactionsList.forEach { tx ->
                     val reducedPayload = tx.payload.reducedPayload
-                    var dbTransaction = transactionRepo.save(Transaction(
-                        block = dbBlock,
-                        creatorId = reducedPayload.creatorAccountId,
-                        quorum = reducedPayload.quorum,
-                        rejected = !checkTrxAccepted(tx, rejectedTrxs)
-                    ))
+                    var dbTransaction = transactionRepo.save(
+                        Transaction(
+                            block = dbBlock,
+                            creatorId = reducedPayload.creatorAccountId,
+                            quorum = reducedPayload.quorum,
+                            rejected = !checkTrxAccepted(tx, rejectedTrxs)
+                        )
+                    )
                     reducedPayload
                         .commandsList
                         .stream()
@@ -104,14 +105,26 @@ class BlockTaskService {
                                         dbTransaction
                                     )
                                 )
-                            } else if(it.hasCreateAccount()) {
+                            } else if (it.hasCreateAccount()) {
                                 val ca = it.createAccount
-                                createAccountRepo.save(CreateAccount(
-                                    ca.accountName,
-                                    ca.domainId,
-                                    ca.publicKey,
-                                    dbTransaction
-                                ))
+                                createAccountRepo.save(
+                                    CreateAccount(
+                                        ca.accountName,
+                                        ca.domainId,
+                                        ca.publicKey,
+                                        dbTransaction
+                                    )
+                                )
+                            } else if (it.hasCreateAsset()) {
+                                val asset = it.createAsset
+                                createAssetRepo.save(
+                                    CreateAsset(
+                                        asset.assetName,
+                                        asset.domainId,
+                                        asset.precision,
+                                        dbTransaction
+                                    )
+                                )
                             }
                         }
                 }
