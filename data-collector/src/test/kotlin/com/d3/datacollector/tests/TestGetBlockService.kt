@@ -3,8 +3,10 @@ package com.d3.datacollector.tests
 import iroha.protocol.*
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import com.d3.datacollector.cache.CacheRepository
+import com.d3.datacollector.model.CreateAccount
 import com.d3.datacollector.model.TransferAsset
 import com.d3.datacollector.repository.BillingRepository
+import com.d3.datacollector.repository.CreateAccountRepo
 import com.d3.datacollector.repository.StateRepository
 import com.d3.datacollector.repository.TransferAssetRepo
 import com.d3.datacollector.service.BlockTaskService
@@ -49,6 +51,8 @@ class TestGetBlockService {
     lateinit var billingRepo: BillingRepository
     @Autowired
     lateinit var transferAssetRepo: TransferAssetRepo
+    @Autowired
+    lateinit var createAccountRepo: CreateAccountRepo
 
     private val bankDomain = "bank"
     private val notaryDomain = "notary"
@@ -150,6 +154,15 @@ class TestGetBlockService {
         assertEquals(userAId,trnsfr.srcAccountId)
         assertEquals(transferDescription,trnsfr.description)
         assertEquals(BigDecimal(transferAmount),trnsfr.amount)
+
+        val dbCrtAccout = ArrayList<CreateAccount>()
+        dbCrtAccout.addAll(createAccountRepo.findAll())
+        assertEquals(8, dbCrtAccout.size)
+        dbCrtAccout.forEach {
+            assertNotNull(it.accountName)
+            assertNotNull(it.domainId)
+            assertNotNull(it.publicKey)
+        }
 
         try {
             val transaferBilling = cache.getTransferFee(bankDomain, usd)
