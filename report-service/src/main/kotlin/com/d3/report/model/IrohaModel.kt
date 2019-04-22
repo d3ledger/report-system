@@ -46,12 +46,12 @@ open class Command(
 @Entity
 @Table(name = "transfer_asset")
 class TransferAsset(
-    val srcAccountId: String,
-    val destAccountId: String,
-    val assetId: String,
-    val description: String?,
-    val amount: BigDecimal,
-    transaction: Transaction
+    val srcAccountId: String? = null,
+    val destAccountId: String? = null,
+    val assetId: String? = null,
+    val description: String? = null,
+    val amount: BigDecimal? = null,
+    transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
 
 @Entity

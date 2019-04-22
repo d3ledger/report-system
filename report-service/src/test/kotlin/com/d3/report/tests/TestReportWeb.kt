@@ -1,26 +1,31 @@
-package com.d3.report.tests.datajpa
+package com.d3.report.tests
 
 import com.d3.report.model.Block
 import com.d3.report.model.Transaction
 import com.d3.report.model.TransferAsset
+import com.d3.report.model.TransferReport
 import com.d3.report.repository.BlockRepository
 import com.d3.report.repository.TransactionRepo
 import com.d3.report.repository.TransferAssetRepo
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
-import org.springframework.data.domain.PageRequest
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.MvcResult
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
-import javax.transaction.Transactional
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 @RunWith(SpringRunner::class)
-@DataJpaTest
-class TranferAssetTest {
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc
+class TestReportWeb {
 
     @Autowired
     lateinit var transferRepo: TransferAssetRepo
@@ -29,14 +34,28 @@ class TranferAssetTest {
     @Autowired
     lateinit var transactionRepo: TransactionRepo
 
+    private val mapper = ObjectMapper()
+
+    @Autowired
+    lateinit var mvc: MockMvc
+
     @Test
-    @Transactional
-    fun testTransferSummary() {
+    fun testTransferReport() {
         prepareData()
+        var result: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.get("/report/billing/transferAsset")
+                    .param("from", "1")
+                    .param("to", "99999")
+                    .param("pageNum", "1")
+                    .param("pageSize", "10")
+            )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        var respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
 
-        val dbData = transferRepo.getDataBetween(130, 13000, PageRequest.of(0, 5))
-        assertEquals(2, dbData.size)
-
+        assertEquals(3, respBody.transfers.size)
+        assertNotNull(respBody.transfers[2].fee)
     }
 
     private fun prepareData() {
@@ -71,5 +90,9 @@ class TranferAssetTest {
         val transfer4 =
             TransferAsset("srcAcc@author", "destAcc@author", "assetId@author", null, BigDecimal("20"), transaction4)
         transferRepo.save(transfer4)
+
+        val transfer5 =
+            TransferAsset("srcAcc@author", "transfer_billing@author", "assetId@author", null, BigDecimal("0.2"), transaction3)
+        transferRepo.save(transfer5)
     }
 }
