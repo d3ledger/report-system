@@ -5,7 +5,7 @@ import javax.persistence.*
 import javax.validation.constraints.NotNull
 
 @Entity
-@Table(name = "block", schema = "iroha")
+@Table(name = "block")
 data class Block(
     @Id
     @NotNull
@@ -15,7 +15,7 @@ data class Block(
 )
 
 @Entity
-@Table(name = "transaction", schema = "iroha")
+@Table(name = "transaction")
 data class Transaction(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,7 +44,7 @@ open class Command(
 )
 
 @Entity
-@Table(name = "transfer_asset", schema = "iroha")
+@Table(name = "transfer_asset")
 class TransferAsset(
     val srcAccountId: String,
     val destAccountId: String,
@@ -55,7 +55,7 @@ class TransferAsset(
 ) : Command(transaction = transaction)
 
 @Entity
-@Table(name = "create_account", schema = "iroha")
+@Table(name = "create_account")
 class CreateAccount(
     val accountName: String,
     val domainId: String,
@@ -64,7 +64,7 @@ class CreateAccount(
 ) : Command(transaction = transaction)
 
 @Entity
-@Table(name = "create_asset", schema = "iroha")
+@Table(name = "create_asset")
 class CreateAsset (
     val assetName: String,
     val domainId: String,
