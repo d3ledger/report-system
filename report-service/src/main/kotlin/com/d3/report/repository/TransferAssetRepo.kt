@@ -6,6 +6,6 @@ import org.springframework.data.repository.CrudRepository
 
 interface TransferAssetRepo : CrudRepository<TransferAsset, Long?> {
 
-    @Query("SELECT t FROM TransferAsset t WHERE t.transaction.block.blockCreationTime Between :from and :to")
+    @Query("SELECT t FROM TransferAsset t WHERE t.transaction.rejected = false and t.transaction.block.blockCreationTime Between :from and :to")
     fun getDataBetween(from: Long, to: Long): List<TransferAsset>
 }
