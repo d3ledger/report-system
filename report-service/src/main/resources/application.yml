@@ -1,22 +1,9 @@
 iroha:
-  host: localhost
-  port: 32835
-  toriiAddress: grpc://${iroha.host}:${iroha.port}
-  user:
-    privateKeyHex: 37C2070BD7C628B2ABA61F6C353DF06504A92F6997D8658F3EE69DC598B57CA2
-    publicKeyHex: 97B888554684FB30F29FAB92991AB7ECEFFFE433AB3AF501E5DEAEE69392518C
-    id: data_collector@notary
   transferBillingTemplate: transfer_billing@
   custodyBillingTemplate: custody_billing@
   accountCreationBillingTemplate: account_creation_billing@
   exchangeBillingTemplate: exchange_billing@
   withdrawalBillingTemplate: withdrawal_billing@
-
-scheduling:
-  iroha:
-    block:
-      request: 10000
-
 
 postgres:
   host:     localhost
@@ -36,12 +23,10 @@ spring:
       # To be updated in real production usage! Possible values none;update;create
       ddl-auto: none
     show-sql: true
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-    virtual-host: /
+
+hibernate:
+  hbm2ddl:
+    auto: update
 
 logging:
   level:
