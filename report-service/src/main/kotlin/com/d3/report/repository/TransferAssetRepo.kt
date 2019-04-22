@@ -8,7 +8,9 @@ import org.springframework.data.repository.CrudRepository
 
 interface TransferAssetRepo : CrudRepository<TransferAsset, Long?> {
 
-    @Query("SELECT t FROM TransferAsset t WHERE t.transaction.rejected = false and t.transaction.block.blockCreationTime Between :from and :to")
+    @Query("SELECT t FROM TransferAsset t WHERE t.transaction.rejected = false " +
+            "and exists (SELECT ta FROM TransferAsset ta WHERE ta.transaction.id = t.transaction.id and ta.destAccountId LIKE '%transfer%') " +
+            "and t.transaction.block.blockCreationTime Between :from and :to")
     fun getDataBetween(from: Long, to: Long, pageable: Pageable): Page<TransferAsset>
 
 }

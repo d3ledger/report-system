@@ -1,5 +1,6 @@
 package com.d3.report.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.math.BigDecimal
 import javax.persistence.*
 import javax.validation.constraints.NotNull
@@ -29,16 +30,20 @@ data class Transaction(
     @NotNull
     val quorum: Int? = null,
     @NotNull
-    var rejected: Boolean = false
+    var rejected: Boolean = false,
+    @JsonIgnore
+    @OneToMany(mappedBy = "transaction", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    val commands:List<Command> = ArrayList()
 )
 
-@MappedSuperclass
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 open class Command(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
     @NotNull
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "transactionId")
     val transaction: Transaction
 )
@@ -65,9 +70,9 @@ class CreateAccount(
 
 @Entity
 @Table(name = "create_asset")
-class CreateAsset (
+class CreateAsset(
     val assetName: String,
     val domainId: String,
     val decimalPrecision: Int,
     transaction: Transaction
-): Command(transaction = transaction)
+) : Command(transaction = transaction)

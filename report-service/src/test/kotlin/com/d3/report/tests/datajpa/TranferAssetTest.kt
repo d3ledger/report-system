@@ -15,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
 import org.springframework.data.domain.PageRequest
 import org.springframework.test.context.junit4.SpringRunner
 import java.math.BigDecimal
+import java.util.stream.Collectors
 import javax.transaction.Transactional
 import kotlin.test.assertEquals
 
@@ -31,11 +32,22 @@ class TranferAssetTest {
 
     @Test
     @Transactional
-    fun testTransferSummary() {
+    fun testTransferExclusion() {
         prepareData()
 
         val dbData = transferRepo.getDataBetween(130, 13000, PageRequest.of(0, 5))
-        assertEquals(2, dbData.size)
+        assertEquals(0, dbData.get().collect(Collectors.toList()).size)
+
+    }
+
+
+    @Test
+    @Transactional
+    fun testTransferOneTransactionWithCorrectTransferAndFee() {
+        prepareDataContainsOneTransactionWithCorrectTransferAndFee()
+
+        val dbData = transferRepo.getDataBetween(130, 13000, PageRequest.of(0, 5))
+        assertEquals(2, dbData.get().collect(Collectors.toList()).size)
 
     }
 
@@ -71,5 +83,27 @@ class TranferAssetTest {
         val transfer4 =
             TransferAsset("srcAcc@author", "destAcc@author", "assetId@author", null, BigDecimal("20"), transaction4)
         transferRepo.save(transfer4)
+    }
+
+    private fun prepareDataContainsOneTransactionWithCorrectTransferAndFee() {
+        var block3 = Block(3, 1398)
+        block3 = blockRepo.save(block3)
+        var transaction3 = Transaction(null, block3, "mySelf@author", 1, false)
+        transaction3 = transactionRepo.save(transaction3)
+        val transfer3 =
+            TransferAsset("srcAcc@author", "destAcc@author", "assetId@author", null, BigDecimal("20"), transaction3)
+        transferRepo.save(transfer3)
+
+        var block4 = Block(4, 1499)
+        block4 = blockRepo.save(block4)
+        var transaction4 = Transaction(null, block4, "mySelf@author", 1, true)
+        transaction4 = transactionRepo.save(transaction4)
+        val transfer4 =
+            TransferAsset("srcAcc@author", "destAcc@author", "assetId@author", null, BigDecimal("20"), transaction4)
+        transferRepo.save(transfer4)
+
+        val transfer5 =
+            TransferAsset("srcAcc@author", "transfer_billing@author", "assetId@author", null, BigDecimal("0.2"), transaction3)
+        transferRepo.save(transfer5)
     }
 }

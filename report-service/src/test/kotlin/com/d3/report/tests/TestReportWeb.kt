@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
+import javax.transaction.Transactional
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -40,6 +41,7 @@ class TestReportWeb {
     lateinit var mvc: MockMvc
 
     @Test
+    @Transactional
     fun testTransferReport() {
         prepareData()
         var result: MvcResult = mvc
@@ -54,8 +56,8 @@ class TestReportWeb {
             .andReturn()
         var respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
 
-        assertEquals(3, respBody.transfers.size)
-        assertNotNull(respBody.transfers[2].fee)
+        assertEquals(1, respBody.transfers.size)
+        assertNotNull(respBody.transfers[0].fee)
     }
 
     private fun prepareData() {
