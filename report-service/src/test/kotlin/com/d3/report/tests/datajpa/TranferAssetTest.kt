@@ -29,13 +29,15 @@ class TranferAssetTest {
     lateinit var blockRepo: BlockRepository
     @Autowired
     lateinit var transactionRepo: TransactionRepo
+    @Value("\${iroha.transferBillingTemplate}")
+    private lateinit var transferBillingTemplate: String
 
     @Test
     @Transactional
     fun testTransferExclusion() {
         prepareData()
 
-        val dbData = transferRepo.getDataBetween(130, 13000, PageRequest.of(0, 5))
+        val dbData = transferRepo.getDataBetween(transferBillingTemplate,130, 13000, PageRequest.of(0, 5))
         assertEquals(0, dbData.get().collect(Collectors.toList()).size)
 
     }
@@ -46,7 +48,7 @@ class TranferAssetTest {
     fun testTransferOneTransactionWithCorrectTransferAndFee() {
         prepareDataContainsOneTransactionWithCorrectTransferAndFee()
 
-        val dbData = transferRepo.getDataBetween(130, 13000, PageRequest.of(0, 5))
+        val dbData = transferRepo.getDataBetween(transferBillingTemplate,130, 13000, PageRequest.of(0, 5))
         assertEquals(2, dbData.get().collect(Collectors.toList()).size)
 
     }
@@ -103,7 +105,7 @@ class TranferAssetTest {
         transferRepo.save(transfer4)
 
         val transfer5 =
-            TransferAsset("srcAcc@author", "transfer_billing@author", "assetId@author", null, BigDecimal("0.2"), transaction3)
+            TransferAsset("srcAcc@author", "${transferBillingTemplate}author", "assetId@author", null, BigDecimal("0.2"), transaction3)
         transferRepo.save(transfer5)
     }
 }

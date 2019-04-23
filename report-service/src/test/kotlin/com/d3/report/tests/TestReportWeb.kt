@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
@@ -39,6 +40,8 @@ class TestReportWeb {
 
     @Autowired
     lateinit var mvc: MockMvc
+    @Value("\${iroha.transferBillingTemplate}")
+    private lateinit var transferBillingTemplate: String
 
     @Test
     @Transactional
@@ -94,7 +97,7 @@ class TestReportWeb {
         transferRepo.save(transfer4)
 
         val transfer5 =
-            TransferAsset("srcAcc@author", "transfer_billing@author", "assetId@author", null, BigDecimal("0.2"), transaction3)
+            TransferAsset("srcAcc@author", "${transferBillingTemplate}author", "assetId@author", null, BigDecimal("0.2"), transaction3)
         transferRepo.save(transfer5)
     }
 }

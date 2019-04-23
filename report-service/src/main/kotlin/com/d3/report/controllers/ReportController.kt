@@ -20,7 +20,7 @@ class ReportController {
     @Autowired
     private lateinit var transaferRepo: TransferAssetRepo
     @Value("\${iroha.transferBillingTemplate}")
-    private lateinit var transferfeeAccTemplate: String
+    private lateinit var transferBillingTemplate: String
 
     @GetMapping("/billing/transferAsset")
     fun reportBillingTransferAsset(
@@ -31,7 +31,7 @@ class ReportController {
 
     ): ResponseEntity<TransferReport> {
         val report = TransferReport()
-        val page = transaferRepo.getDataBetween(from, to, PageRequest.of(pageNum - 1, pageSize))
+        val page = transaferRepo.getDataBetween(transferBillingTemplate,from, to, PageRequest.of(pageNum - 1, pageSize))
 
         report.pages = page.totalPages
         report.total = page.totalElements
@@ -41,7 +41,7 @@ class ReportController {
             .forEach {
                 var transfer = Transfer()
                 it.value.forEach {
-                    if (it.destAccountId?.contains(transferfeeAccTemplate) == true) {
+                    if (it.destAccountId?.contains(transferBillingTemplate) == true) {
                         transfer.fee = it
                     } else {
                         transfer.transfer = it
