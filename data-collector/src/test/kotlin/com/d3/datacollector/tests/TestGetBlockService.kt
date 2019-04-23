@@ -4,11 +4,9 @@ import iroha.protocol.*
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.model.CreateAccount
+import com.d3.datacollector.model.SetAccountDetail
 import com.d3.datacollector.model.TransferAsset
-import com.d3.datacollector.repository.BillingRepository
-import com.d3.datacollector.repository.CreateAccountRepo
-import com.d3.datacollector.repository.StateRepository
-import com.d3.datacollector.repository.TransferAssetRepo
+import com.d3.datacollector.repository.*
 import com.d3.datacollector.service.BlockTaskService
 import jp.co.soramitsu.iroha.java.*
 import jp.co.soramitsu.iroha.java.detail.InlineTransactionStatusObserver
@@ -53,6 +51,8 @@ class TestGetBlockService {
     lateinit var transferAssetRepo: TransferAssetRepo
     @Autowired
     lateinit var createAccountRepo: CreateAccountRepo
+    @Autowired
+    lateinit var accountDetailRepo: SetAccountDetailRepo
 
     private val bankDomain = "bank"
     private val notaryDomain = "notary"
@@ -81,6 +81,10 @@ class TestGetBlockService {
     private val accountCreationKeyPair = crypto.generateKeypair()
     private val exchangeKeyPair = crypto.generateKeypair()
     private val withdrawalKeyPair = crypto.generateKeypair()
+
+    private val detailKey = "bing"
+    private val detailValue = "bong"
+
 
     private fun user(name: String): String {
         return String.format("%s@%s", name, bankDomain)
@@ -188,6 +192,10 @@ class TestGetBlockService {
                 assertFalse(it.accountId.isNullOrEmpty())
                 assertNotNull(it.billingType)
             }
+            val detailList = ArrayList<SetAccountDetail>()
+            detailList.addAll(accountDetailRepo.findAll())
+            assertEquals(detailKey, detailList[0].detailKey)
+            assertEquals(detailValue, detailValue)
         } catch (e: RuntimeException) {
             log.error("Error getting billing",e)
             fail()
@@ -321,6 +329,7 @@ class TestGetBlockService {
                     .createAccount("user_a", bankDomain, useraKeypair.public)
                     .createAccount("user_b", bankDomain, userbKeypair.public)
                     .createAsset(usdName, bankDomain, 2)
+                    .setAccountDetail("user_a@$bankDomain", detailKey, detailValue)
                     .build()
                     .build()
             )

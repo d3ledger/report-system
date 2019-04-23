@@ -21,3 +21,10 @@ class TransferReport(
     code: String? = null,
     message: String? = null
 ): BaseReport(total,pages, code, message)
+
+class RegistrationReport(
+    total:Long = 0,
+    pages:Int = 0,
+    code: String? = null,
+    message: String? = null
+): BaseReport(total,pages, code, message)

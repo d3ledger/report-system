@@ -1,5 +1,6 @@
 package com.d3.report.controllers
 
+import com.d3.report.model.RegistrationReport
 import com.d3.report.model.Transfer
 import com.d3.report.model.TransferReport
 import com.d3.report.repository.TransferAssetRepo
@@ -49,7 +50,16 @@ class ReportController {
                 }
                 report.transfers.add(transfer)
             }
-
         return ResponseEntity.ok<TransferReport>(report)
+    }
+
+    @GetMapping("/billing/registeredAccounts")
+    fun reportRegistrations(
+        @RequestParam from: Long,
+        @RequestParam to: Long,
+        @RequestParam pageNum: Int = 1,
+        @RequestParam pageSize: Int = 20
+    ): ResponseEntity<RegistrationReport> {
+        return ResponseEntity.ok<RegistrationReport>(RegistrationReport())
     }
 }
