@@ -1,10 +1,14 @@
-package com.d3.datacollector
+package com.d3.datacollector.tests
 
 import iroha.protocol.*
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import com.d3.datacollector.cache.CacheRepository
+import com.d3.datacollector.model.CreateAccount
+import com.d3.datacollector.model.TransferAsset
 import com.d3.datacollector.repository.BillingRepository
+import com.d3.datacollector.repository.CreateAccountRepo
 import com.d3.datacollector.repository.StateRepository
+import com.d3.datacollector.repository.TransferAssetRepo
 import com.d3.datacollector.service.BlockTaskService
 import jp.co.soramitsu.iroha.java.*
 import jp.co.soramitsu.iroha.java.detail.InlineTransactionStatusObserver
@@ -45,6 +49,10 @@ class TestGetBlockService {
     lateinit var cache: CacheRepository
     @Autowired
     lateinit var billingRepo: BillingRepository
+    @Autowired
+    lateinit var transferAssetRepo: TransferAssetRepo
+    @Autowired
+    lateinit var createAccountRepo: CreateAccountRepo
 
     private val bankDomain = "bank"
     private val notaryDomain = "notary"
@@ -97,14 +105,15 @@ class TestGetBlockService {
         val api = IrohaAPI(iroha.toriiAddress)
 
         // transfer 100 usd from user_a to user_b
-        val tx = Transaction.builder("user_a@bank")
-            .transferAsset(
-                "user_a@bank", "user_b@bank",
-                usd, "For pizza", "10"
-            )
-            .sign(useraKeypair)
+        val userAId = "user_a@bank"
+        val userBId = "user_b@bank"
+        val transferDescription = "For pizza"
+        val transferAmount = "10"
+        val tx = Transaction.builder(userAId)
+            .transferAsset(userAId, userBId,
+                usd, transferDescription, transferAmount
+            ).sign(useraKeypair)
             .build()
-
         val tx2 = Transaction.builder(transferBillingAccountId)
             .setAccountDetail(transferBillingAccountId, usd.replace('#','_'), "0.6")
             .sign(transaferBillingKeyPair)
@@ -136,6 +145,31 @@ class TestGetBlockService {
             getBlockAndCheck(i)
         }
 
+        val dbTrAss = ArrayList<TransferAsset>()
+            dbTrAss.addAll(transferAssetRepo.findAll())
+        assertEquals(1,dbTrAss.size)
+        val trnsfr = dbTrAss.get(0)
+        assertEquals(usd, trnsfr.assetId)
+        assertEquals(userBId,trnsfr.destAccountId)
+        assertEquals(userAId,trnsfr.srcAccountId)
+        assertEquals(transferDescription,trnsfr.description)
+        assertEquals(BigDecimal(transferAmount),trnsfr.amount)
+        assertNotNull(trnsfr.transaction)
+        assertNotNull(trnsfr.transaction.creatorId)
+        assertEquals(false,trnsfr.transaction.rejected)
+
+
+        val dbCrtAccout = ArrayList<CreateAccount>()
+        dbCrtAccout.addAll(createAccountRepo.findAll())
+        assertEquals(8, dbCrtAccout.size)
+        dbCrtAccout.forEach {
+            assertNotNull(it.accountName)
+            assertNotNull(it.domainId)
+            assertNotNull(it.publicKey)
+            assertNotNull(it.transaction)
+            assertNotNull(it.transaction.creatorId)
+            assertEquals(1, it.transaction.block?.blockNumber)
+        }
 
         try {
             val transaferBilling = cache.getTransferFee(bankDomain, usd)

@@ -1,0 +1,34 @@
+iroha:
+  transferBillingTemplate: transfer_billing@
+  custodyBillingTemplate: custody_billing@
+  accountCreationBillingTemplate: account_creation_billing@
+  exchangeBillingTemplate: exchange_billing@
+  withdrawalBillingTemplate: withdrawal_billing@
+
+postgres:
+  host:     localhost
+  port:     5432
+  database: data_collector
+
+spring:
+  # Spring JDBC configuration
+  datasource:
+    driverClassName: org.h2.Driver
+    url:      jdbc:h2:mem:AZ;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: sa
+  h2:
+    console:
+       enabled: true
+       path: /h2-console
+
+  # Spring Data JPA configuration
+  jpa:
+    hibernate:
+      # To be updated in real production usage! Possible values none;update;create
+      ddl-auto: update
+    show-sql: true
+
+logging:
+  level:
+    org.hibernate.engine.jdbc.env.internal.LobCreatorBuilderImpl: ERROR

@@ -7,7 +7,7 @@ import java.util.*
 import javax.persistence.*
 import javax.persistence.PreUpdate
 import javax.persistence.PrePersist
-
+import kotlin.collections.ArrayList
 
 @Entity
 @Table(name = "state")
@@ -31,7 +31,7 @@ data class Billing(
     @Enumerated(EnumType.STRING)
     val billingType: BillingTypeEnum = BillingTypeEnum.TRANSFER,
     @JsonIgnore
-    val asset:String = "",
+    val asset: String = "",
     var feeFraction: BigDecimal = BigDecimal("0.015"),
     var created: Long = 0L,
     var updated: Long = 0L

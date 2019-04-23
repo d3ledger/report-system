@@ -3,12 +3,15 @@ package com.d3.datacollector.service
 import iroha.protocol.QryResponses
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import com.d3.datacollector.cache.CacheRepository
-import com.d3.datacollector.model.Billing
-import com.d3.datacollector.model.BillingMqDto
+import com.d3.datacollector.model.*
+import com.d3.datacollector.repository.*
 import com.d3.datacollector.utils.irohaBinaryKeyfromHex
+import com.google.protobuf.ProtocolStringList
 import iroha.protocol.Commands
+import iroha.protocol.TransactionOuterClass
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.Query
+import jp.co.soramitsu.iroha.java.Utils
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -48,36 +51,81 @@ class BlockTaskService {
     @Autowired
     lateinit var rabbitService: RabbitMqService
 
+    @Autowired
+    lateinit var blockRepo: BlockRepository
+    @Autowired
+    lateinit var transactionRepo: TransactionRepo
+    @Autowired
+    lateinit var transferRepo: TransferAssetRepo
+    @Autowired
+    lateinit var createAccountRepo: CreateAccountRepo
+    @Autowired
+    lateinit var createAssetRepo: CreateAssetRepo
+
     @Transactional
     fun processBlockTask(): Boolean {
         val lastBlockState = dbService.stateRepo.findById(LAST_PROCESSED_BLOCK_ROW_ID).get()
         val lastRequest = dbService.stateRepo.findById(LAST_REQUEST_ROW_ID).get()
-        val response = irohaBlockQuery(lastRequest.value.toLong(), lastBlockState.value.toLong())
-
+        val newBlockNumber = lastBlockState.value.toLong() + 1
+        val newRequestNumber = lastRequest.value.toLong() + 1
+        val response = irohaBlockQuery(newBlockNumber, newRequestNumber)
 
         if (response.hasBlockResponse()) {
             log.debug("Successful Iroha block query: $response")
 
             if (response.blockResponse.block.hasBlockV1()) {
                 val blockV1 = response.blockResponse.block.blockV1
-                blockV1.payload.transactionsList.forEach { transaction ->
-                    transaction
-                        .payload
-                        .reducedPayload
+                val rejectedTrxs = blockV1.payload.rejectedTransactionsHashesList
+                val dbBlock = blockRepo.save(Block(newBlockNumber, blockV1.payload.createdTime))
+                blockV1.payload.transactionsList.forEach { tx ->
+                    val reducedPayload = tx.payload.reducedPayload
+                    var dbTransaction = transactionRepo.save(
+                        Transaction(
+                            block = dbBlock,
+                            creatorId = reducedPayload.creatorAccountId,
+                            quorum = reducedPayload.quorum,
+                            rejected = !checkTrxAccepted(tx, rejectedTrxs)
+                        )
+                    )
+                    reducedPayload
                         .commandsList
                         .stream()
-                        .filter { it.hasSetAccountDetail() }
-                        .map { it.setAccountDetail }
-                        .filter { filterBillingAccounts(it) }
                         .forEach {
-                            val billing = Billing(
-                                null,
-                                it.accountId,
-                                defineBillingType(it.accountId),
-                                it.key.replace("_","#"),
-                                BigDecimal(it.value)
-                            )
-                            performUpdates(billing)
+                            if (it.hasSetAccountDetail()) {
+                                processBillingAccountDetail(it.setAccountDetail)
+                            } else if (it.hasTransferAsset()) {
+                                val assetTransfer = it.transferAsset
+                                transferRepo.save(
+                                    TransferAsset(
+                                        assetTransfer.srcAccountId,
+                                        assetTransfer.destAccountId,
+                                        assetTransfer.assetId,
+                                        assetTransfer.description,
+                                        BigDecimal(assetTransfer.amount),
+                                        dbTransaction
+                                    )
+                                )
+                            } else if (it.hasCreateAccount()) {
+                                val ca = it.createAccount
+                                createAccountRepo.save(
+                                    CreateAccount(
+                                        ca.accountName,
+                                        ca.domainId,
+                                        ca.publicKey,
+                                        dbTransaction
+                                    )
+                                )
+                            } else if (it.hasCreateAsset()) {
+                                val asset = it.createAsset
+                                createAssetRepo.save(
+                                    CreateAsset(
+                                        asset.assetName,
+                                        asset.domainId,
+                                        asset.precision,
+                                        dbTransaction
+                                    )
+                                )
+                            }
                         }
                 }
             } else {
@@ -97,6 +145,33 @@ class BlockTaskService {
             log.error("No block or error response caught from Iroha: $response")
             return false
         }
+    }
+
+    private fun processBillingAccountDetail(ad: Commands.SetAccountDetail) {
+        if (filterBillingAccounts(ad)) {
+            val billing = Billing(
+                null,
+                ad.accountId,
+                defineBillingType(ad.accountId),
+                ad.key.replace("_", "#"),
+                BigDecimal(ad.value)
+            )
+            performUpdates(billing)
+        }
+    }
+
+    private fun checkTrxAccepted(
+        tx: TransactionOuterClass.Transaction?,
+        rejectedTrxs: ProtocolStringList
+    ): Boolean {
+        val trxHash = Utils.toHex(Utils.hash(tx))
+        var accepted = true
+        rejectedTrxs.forEach {
+            if (it.contentEquals(trxHash)) {
+                accepted = false
+            }
+        }
+        return accepted
     }
 
     private fun performUpdates(billing: Billing) {
@@ -139,11 +214,11 @@ class BlockTaskService {
     }
 
     fun irohaBlockQuery(
-        lastRequest: Long,
-        lastBlock: Long
+        newRequestNumber: Long,
+        newBlock: Long
     ): QryResponses.QueryResponse {
-        val q = Query.builder(userId, lastRequest + 1)
-            .getBlock(lastBlock + 1)
+        val q = Query.builder(userId, newRequestNumber + 1)
+            .getBlock(newBlock)
             .buildSigned(
                 Ed25519Sha3.keyPairFromBytes(
                     irohaBinaryKeyfromHex(privateKey),

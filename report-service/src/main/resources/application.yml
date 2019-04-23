@@ -1,0 +1,33 @@
+iroha:
+  transferBillingTemplate: transfer_billing@
+  custodyBillingTemplate: custody_billing@
+  accountCreationBillingTemplate: account_creation_billing@
+  exchangeBillingTemplate: exchange_billing@
+  withdrawalBillingTemplate: withdrawal_billing@
+
+postgres:
+  host:     localhost
+  port:     5432
+  database: data_collector
+
+spring:
+  # Spring JDBC configuration
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url:      jdbc:postgresql://${postgres.host}:${postgres.port}/${postgres.database}?useSSL=false
+    username: test
+    password: test
+  # Spring Data JPA configuration
+  jpa:
+    hibernate:
+      # To be updated in real production usage! Possible values none;update;create
+      ddl-auto: none
+    show-sql: true
+
+hibernate:
+  hbm2ddl:
+    auto: update
+
+logging:
+  level:
+    org.hibernate.engine.jdbc.env.internal.LobCreatorBuilderImpl: ERROR
