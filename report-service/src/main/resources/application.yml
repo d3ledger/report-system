@@ -1,9 +1,11 @@
 iroha:
-  transferBillingTemplate: transfer_billing@
-  custodyBillingTemplate: custody_billing@
-  accountCreationBillingTemplate: account_creation_billing@
-  exchangeBillingTemplate: exchange_billing@
-  withdrawalBillingTemplate: withdrawal_billing@
+  templates:
+    transferBilling: transfer_billing@
+    custodyBilling: custody_billing@
+    accountCreationBilling: account_creation_billing@
+    exchangeBilling: exchange_billing@
+    withdrawalBilling: withdrawal_billing@
+    clientsStorage: client_accounts@
 
 postgres:
   host:     localhost

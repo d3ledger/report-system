@@ -35,15 +35,15 @@ class BlockTaskService {
     private lateinit var publicKey: String
     @Value("\${iroha.user.id}")
     private lateinit var userId: String
-    @Value("\${iroha.transferBillingTemplate}")
+    @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
-    @Value("\${iroha.custodyBillingTemplate}")
+    @Value("\${iroha.templates.custodyBilling}")
     private lateinit var custodyBillingTemplate: String
-    @Value("\${iroha.accountCreationBillingTemplate}")
+    @Value("\${iroha.templates.accountCreationBilling}")
     private lateinit var accountCreationBillingTemplate: String
-    @Value("\${iroha.exchangeBillingTemplate}")
+    @Value("\${iroha.templates.exchangeBilling}")
     private lateinit var exchangeBillingTemplate: String
-    @Value("\${iroha.withdrawalBillingTemplate}")
+    @Value("\${iroha.templates.withdrawalBilling}")
     private lateinit var withdrawalBillingTemplate: String
     val LAST_PROCESSED_BLOCK_ROW_ID = 0L
     val LAST_REQUEST_ROW_ID = 1L

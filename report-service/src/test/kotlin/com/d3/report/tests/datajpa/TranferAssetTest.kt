@@ -29,7 +29,7 @@ class TranferAssetTest {
     lateinit var blockRepo: BlockRepository
     @Autowired
     lateinit var transactionRepo: TransactionRepo
-    @Value("\${iroha.transferBillingTemplate}")
+    @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
 
     @Test

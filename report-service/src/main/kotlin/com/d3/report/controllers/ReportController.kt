@@ -20,8 +20,10 @@ class ReportController {
 
     @Autowired
     private lateinit var transaferRepo: TransferAssetRepo
-    @Value("\${iroha.transferBillingTemplate}")
+    @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
+    @Value("\${iroha.templates.clientsStorage}")
+    private lateinit var clientsStorageTemplate: String
 
     @GetMapping("/billing/transferAsset")
     fun reportBillingTransferAsset(
@@ -53,13 +55,15 @@ class ReportController {
         return ResponseEntity.ok<TransferReport>(report)
     }
 
-    @GetMapping("/billing/registeredAccounts")
+    @GetMapping("/billing/agent/registeredAccounts")
     fun reportRegistrations(
+        @RequestParam domain: String,
         @RequestParam from: Long,
         @RequestParam to: Long,
         @RequestParam pageNum: Int = 1,
         @RequestParam pageSize: Int = 20
     ): ResponseEntity<RegistrationReport> {
+
         return ResponseEntity.ok<RegistrationReport>(RegistrationReport())
     }
 }
