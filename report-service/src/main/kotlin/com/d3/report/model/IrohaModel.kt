@@ -76,3 +76,12 @@ class CreateAsset(
     val decimalPrecision: Int,
     transaction: Transaction
 ) : Command(transaction = transaction)
+
+@Entity
+@Table(name = "set_account_detail")
+class SetAccountDetail(
+    val account_id: String? = null,
+    val detailKey: String? = null,
+    val detailValue: String? = null,
+    transaction: Transaction
+) : Command(transaction = transaction)
