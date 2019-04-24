@@ -24,7 +24,7 @@ class CacheTest {
     lateinit var cache: CacheRepository
 
     @Test
-    @Transactional
+    //@Transactional
     fun testInitCache() {
         assertEquals(0, cache.getTransferFee().size)
 
