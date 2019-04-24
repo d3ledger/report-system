@@ -15,8 +15,7 @@ import javax.transaction.Transactional
 import kotlin.test.assertEquals
 
 @RunWith(SpringRunner::class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc
+@SpringBootTest
 @TestPropertySource(properties = arrayOf("app.scheduling.enable=false", "app.rabbitmq.enable=false"))
 class CacheTest {
     @Autowired
@@ -26,7 +25,6 @@ class CacheTest {
 
     @Test
     @Transactional
-    @Ignore
     fun testInitCache() {
         assertEquals(0, cache.getTransferFee().size)
 
