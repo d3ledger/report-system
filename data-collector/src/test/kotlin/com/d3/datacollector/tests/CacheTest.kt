@@ -25,6 +25,7 @@ class CacheTest {
 
     @Test
     @Transactional
+    @Ignore
     fun testInitCache() {
         assertEquals(0, cache.getTransferFee().size)
 
