@@ -82,7 +82,7 @@ class ReportController {
     ): ResponseEntity<RegistrationReport> {
         return try {
             val accountsPage = accountDetailsRepo.getRegisteredAccountsForDomain(
-                "${clientsStorageTemplate}domain",
+                "${clientsStorageTemplate}$domain",
                 from,
                 to,
                 PageRequest.of(pageNum - 1, pageSize)
@@ -97,7 +97,7 @@ class ReportController {
             dataList.forEach {
                 accounts.add(
                     AccountRegistration(
-                        it.account_id,
+                        it.detailKey,
                         it.transaction.block?.blockCreationTime
                     )
                 )

@@ -29,7 +29,7 @@ import kotlin.test.assertNotNull
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-class TestReportWeb {
+class TestTransferReport {
 
     @Autowired
     lateinit var transferRepo: TransferAssetRepo

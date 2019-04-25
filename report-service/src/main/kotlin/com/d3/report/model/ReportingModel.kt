@@ -8,8 +8,8 @@ class Transfer(
 )
 
 class AccountRegistration(
-    val accountId: String?,
-    val registrationTime: Long?
+    val accountId: String? = null,
+    val registrationTime: Long? = null
 )
 
 open class BaseReport(

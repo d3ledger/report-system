@@ -65,7 +65,7 @@ class CreateAccount(
     val accountName: String,
     val domainId: String,
     val publicKey: String,
-    transaction: Transaction
+    transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
 
 @Entity
@@ -74,7 +74,7 @@ class CreateAsset(
     val assetName: String,
     val domainId: String,
     val decimalPrecision: Int,
-    transaction: Transaction
+    transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
 
 @Entity
@@ -83,5 +83,5 @@ class SetAccountDetail(
     val account_id: String? = null,
     val detailKey: String? = null,
     val detailValue: String? = null,
-    transaction: Transaction
+    transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
