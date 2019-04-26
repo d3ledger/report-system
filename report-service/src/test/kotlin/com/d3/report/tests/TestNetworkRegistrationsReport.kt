@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import javax.transaction.Transactional
 import kotlin.test.assertEquals
 
 @RunWith(SpringRunner::class)
@@ -43,6 +44,7 @@ class TestNetworkRegistrationsReport {
     lateinit var mvc: MockMvc
 
     @Test
+    @Transactional
     fun tesNetworkRegistrationsReport() {
         prepareData()
         var result: MvcResult = mvc

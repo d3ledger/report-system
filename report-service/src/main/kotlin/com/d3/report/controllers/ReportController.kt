@@ -91,16 +91,15 @@ class ReportController {
                 PageRequest.of(pageNum - 1, pageSize)
             )
 
-            val dataList = accountsPage
+            val accounts = accountsPage
                 .get()
                 .collect(Collectors.toList())
-
-            val accounts = dataList.map {
-                AccountRegistration(
-                    it.detailKey,
-                    it.transaction.block?.blockCreationTime
-                )
-            }
+                .map {
+                    AccountRegistration(
+                        it.detailKey,
+                        it.transaction.block?.blockCreationTime
+                    )
+                }
 
             ResponseEntity.ok<RegistrationReport>(
                 RegistrationReport(
@@ -127,8 +126,9 @@ class ReportController {
         @RequestParam pageSize: Int = 20
     ): ResponseEntity<RegistrationReport> {
         return try {
-            val accountsCreated = accountRepo.findAccountsByName(clientsStorageTemplate.replace("@",""))
-            val storageAccounts = accountsCreated.map { "${it.accountName}@${it.domainId}" }
+            val storageAccounts = accountRepo
+                .findAccountsByName(clientsStorageTemplate.replace("@", ""))
+                .map { "${it.accountName}@${it.domainId}" }
 
             val accDetailsList =
                 accountDetailsRepo.getRegisteredAccounts(
