@@ -2,11 +2,8 @@ package com.d3.report.controllers
 
 import com.d3.report.model.AccountRegistration
 import com.d3.report.model.RegistrationReport
-import com.d3.report.model.Transfer
-import com.d3.report.model.TransferReport
 import com.d3.report.repository.CreateAccountRepo
 import com.d3.report.repository.SetAccountDetailRepo
-import com.d3.report.repository.TransferAssetRepo
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
@@ -19,63 +16,17 @@ import org.springframework.web.bind.annotation.RequestParam
 import java.util.stream.Collectors
 
 @Controller
-@RequestMapping("/report")
-class ReportController {
+@RequestMapping("/report/billing/registeredAccounts")
+class RegisteredAccountsController {
 
-    @Value("\${iroha.templates.transferBilling}")
-    private lateinit var transferBillingTemplate: String
-    @Value("\${iroha.templates.clientsStorage}")
-    private lateinit var clientsStorageTemplate: String
-
-    @Autowired
-    private lateinit var transaferRepo: TransferAssetRepo
     @Autowired
     private lateinit var accountDetailsRepo: SetAccountDetailRepo
     @Autowired
     private lateinit var accountRepo: CreateAccountRepo
+    @Value("\${iroha.templates.clientsStorage}")
+    private lateinit var clientsStorageTemplate: String
 
-
-    @GetMapping("/billing/transferAsset")
-    fun reportBillingTransferAsset(
-        @RequestParam from: Long,
-        @RequestParam to: Long,
-        @RequestParam pageNum: Int = 1,
-        @RequestParam pageSize: Int = 20
-
-    ): ResponseEntity<TransferReport> {
-        val report = TransferReport()
-        return try {
-            val page =
-                transaferRepo.getDataBetween(transferBillingTemplate, from, to, PageRequest.of(pageNum - 1, pageSize))
-
-            report.pages = page.totalPages
-            report.total = page.totalElements
-
-            page.get().collect(Collectors.toList())
-                .groupBy { it.transaction.id }
-                .forEach {
-                    var transfer = Transfer()
-                    it.value.forEach {
-                        if (it.destAccountId?.contains(transferBillingTemplate) == true) {
-                            transfer.fee = it
-                        } else {
-                            transfer.transfer = it
-                        }
-                    }
-                    report.transfers.add(transfer)
-                }
-            ResponseEntity.ok<TransferReport>(report)
-        } catch (e: Exception) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                TransferReport(
-                    code = e.javaClass.simpleName,
-                    message = e.message
-                )
-            )
-        }
-    }
-
-    @GetMapping("/billing/agent/registeredAccounts")
+    @GetMapping("/agent")
     fun reportRegistrations(
         @RequestParam domain: String,
         @RequestParam from: Long,
@@ -91,16 +42,15 @@ class ReportController {
                 PageRequest.of(pageNum - 1, pageSize)
             )
 
-            val dataList = accountsPage
+            val accounts = accountsPage
                 .get()
                 .collect(Collectors.toList())
-
-            val accounts = dataList.map {
-                AccountRegistration(
-                    it.detailKey,
-                    it.transaction.block?.blockCreationTime
-                )
-            }
+                .map {
+                    AccountRegistration(
+                        it.detailKey,
+                        it.transaction.block?.blockCreationTime
+                    )
+                }
 
             ResponseEntity.ok<RegistrationReport>(
                 RegistrationReport(
@@ -119,7 +69,7 @@ class ReportController {
         }
     }
 
-    @GetMapping("/billing/network/registeredAccounts")
+    @GetMapping("/network")
     fun reportNetworkRegistrations(
         @RequestParam from: Long,
         @RequestParam to: Long,
@@ -127,8 +77,9 @@ class ReportController {
         @RequestParam pageSize: Int = 20
     ): ResponseEntity<RegistrationReport> {
         return try {
-            val accountsCreated = accountRepo.findAccountsByName(clientsStorageTemplate.replace("@",""))
-            val storageAccounts = accountsCreated.map { "${it.accountName}@${it.domainId}" }
+            val storageAccounts = accountRepo
+                .findAccountsByName(clientsStorageTemplate.replace("@", ""))
+                .map { "${it.accountName}@${it.domainId}" }
 
             val accDetailsList =
                 accountDetailsRepo.getRegisteredAccounts(
@@ -163,4 +114,5 @@ class ReportController {
             )
         }
     }
+
 }

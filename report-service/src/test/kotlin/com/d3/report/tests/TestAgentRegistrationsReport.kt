@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import javax.transaction.Transactional
 import kotlin.test.assertEquals
 
 
@@ -43,12 +44,13 @@ class TestAgentRegistrationsReport {
     lateinit var mvc: MockMvc
 
     @Test
+    @Transactional
     fun testAgentRegistrationsReport() {
         prepareData()
 
         var result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/agent/registeredAccounts")
+                MockMvcRequestBuilders.get("/report/billing/registeredAccounts/agent")
                     .param("domain", domain)
                     .param("from", "9")
                     .param("to", "99")
