@@ -4,6 +4,7 @@ import com.d3.report.model.AccountRegistration
 import com.d3.report.model.RegistrationReport
 import com.d3.report.model.Transfer
 import com.d3.report.model.TransferReport
+import com.d3.report.repository.CreateAccountRepo
 import com.d3.report.repository.SetAccountDetailRepo
 import com.d3.report.repository.TransferAssetRepo
 import org.springframework.beans.factory.annotation.Autowired
@@ -30,6 +31,8 @@ class ReportController {
     private lateinit var transaferRepo: TransferAssetRepo
     @Autowired
     private lateinit var accountDetailsRepo: SetAccountDetailRepo
+    @Autowired
+    private lateinit var accountRepo: CreateAccountRepo
 
 
     @GetMapping("/billing/transferAsset")
@@ -92,18 +95,14 @@ class ReportController {
                 .get()
                 .collect(Collectors.toList())
 
-            val accounts = ArrayList<AccountRegistration>()
-
-            dataList.forEach {
-                accounts.add(
-                    AccountRegistration(
-                        it.detailKey,
-                        it.transaction.block?.blockCreationTime
-                    )
+            val accounts = dataList.map {
+                AccountRegistration(
+                    it.detailKey,
+                    it.transaction.block?.blockCreationTime
                 )
             }
 
-            return ResponseEntity.ok<RegistrationReport>(
+            ResponseEntity.ok<RegistrationReport>(
                 RegistrationReport(
                     total = accountsPage.totalElements,
                     pages = accountsPage.totalPages,
@@ -111,7 +110,52 @@ class ReportController {
                 )
             )
         } catch (e: Exception) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+            ResponseEntity.status(HttpStatus.CONFLICT).body(
+                RegistrationReport(
+                    code = e.javaClass.simpleName,
+                    message = e.message
+                )
+            )
+        }
+    }
+
+    @GetMapping("/billing/network/registeredAccounts")
+    fun reportNetworkRegistrations(
+        @RequestParam from: Long,
+        @RequestParam to: Long,
+        @RequestParam pageNum: Int = 1,
+        @RequestParam pageSize: Int = 20
+    ): ResponseEntity<RegistrationReport> {
+        return try {
+            val accountsCreated = accountRepo.findAccountsByName(clientsStorageTemplate.replace("@",""))
+            val storageAccounts = accountsCreated.map { "${it.accountName}@${it.domainId}" }
+
+            val accDetailsList =
+                accountDetailsRepo.getRegisteredAccounts(
+                    storageAccounts,
+                    from,
+                    to,
+                    PageRequest.of(pageNum - 1, pageSize)
+                )
+
+            val accounts = accDetailsList.get()
+                .collect(Collectors.toList())
+                .map {
+                    AccountRegistration(
+                        it.detailKey,
+                        it.transaction.block?.blockCreationTime
+                    )
+                }
+
+            ResponseEntity.ok<RegistrationReport>(
+                RegistrationReport(
+                    total = accDetailsList.totalElements,
+                    pages = accDetailsList.totalPages,
+                    accounts = accounts
+                )
+            )
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.CONFLICT).body(
                 RegistrationReport(
                     code = e.javaClass.simpleName,
                     message = e.message

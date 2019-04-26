@@ -12,4 +12,11 @@ interface SetAccountDetailRepo : CrudRepository<SetAccountDetail, Long?> {
             "and sac.account_id = :account " +
             "and sac.transaction.block.blockCreationTime Between :from and :to")
     fun getRegisteredAccountsForDomain(account:String, from: Long, to: Long, pageable: Pageable): Page<SetAccountDetail>
+
+
+    @Query("SELECT sac FROM SetAccountDetail sac WHERE sac.transaction.rejected = false " +
+            "and sac.account_id IN :storeAccounts " +
+            "and sac.transaction.block.blockCreationTime Between :from and :to")
+    fun getRegisteredAccounts(storeAccounts:List<String>, from: Long, to: Long, pageable: Pageable): Page<SetAccountDetail>
+
 }

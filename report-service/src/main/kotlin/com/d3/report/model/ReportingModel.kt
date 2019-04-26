@@ -28,7 +28,7 @@ class TransferReport(
 ) : BaseReport(total, pages, code, message)
 
 class RegistrationReport(
-    val accounts:ArrayList<AccountRegistration> = ArrayList(),
+    val accounts:List<AccountRegistration> = emptyList(),
     total: Long = 0,
     pages: Int = 0,
     code: String? = null,

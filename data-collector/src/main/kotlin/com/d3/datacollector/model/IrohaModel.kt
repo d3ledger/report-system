@@ -62,10 +62,10 @@ class TransferAsset(
 @Entity
 @Table(name = "create_account")
 class CreateAccount(
-    val accountName: String,
-    val domainId: String,
-    val publicKey: String,
-    transaction: Transaction
+    val accountName: String? = null,
+    val domainId: String? = null,
+    val publicKey: String? = null,
+    transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
 
 @Entity

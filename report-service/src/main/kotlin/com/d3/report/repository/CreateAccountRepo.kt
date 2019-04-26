@@ -10,4 +10,6 @@ import org.springframework.data.repository.CrudRepository
 interface CreateAccountRepo : CrudRepository<CreateAccount, Long?> {
 
 
+    @Query("SELECT ca FROM CreateAccount ca WHERE ca.accountName LIKE CONCAT(:accTemplate,'%')")
+    fun findAccountsByName(accTemplate:String):List<CreateAccount>
 }

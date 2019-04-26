@@ -46,6 +46,18 @@ class SetAccountDetailRepoTest {
         assertEquals(1, page.totalElements)
     }
 
+    @Test
+    @Transactional
+    fun testReportForNetworkQuery() {
+        prepareData()
+        val page = accountDetailRepo.getRegisteredAccounts(
+            listOf("$clientsStorageTemplate$domain","${clientsStorageTemplate}testOther"),
+            9,
+            99,
+            PageRequest.of(0, 3)
+        )
+        assertEquals(2, page.totalElements)
+    }
 
     private fun prepareData() {
 
@@ -60,21 +72,21 @@ class SetAccountDetailRepoTest {
         block1 = blockRepo.save(block1)
         var transaction1 = Transaction(null, block1, "mySelf@author", 1, false)
         transaction1 = transactionRepo.save(transaction1)
-        val accountDetail1 = SetAccountDetail("$clientsStorageTemplate$domain", "title1@$domain", domain, transaction1)
+        val accountDetail1 = SetAccountDetail("$clientsStorageTemplate$domain", "title2@$domain", domain, transaction1)
         accountDetailRepo.save(accountDetail1)
 
         var block1a = Block(3, 11)
         block1a = blockRepo.save(block1a)
         var transaction1a = Transaction(null, block1a, "mySelf@author", 1, false)
         transaction1a = transactionRepo.save(transaction1a)
-        val accountDetail1a = SetAccountDetail("${clientsStorageTemplate}testOther", "title1@$domain", domain, transaction1a)
+        val accountDetail1a = SetAccountDetail("${clientsStorageTemplate}testOther", "title3@$domain", domain, transaction1a)
         accountDetailRepo.save(accountDetail1a)
 
         var block2 = Block(4, 111)
         block2 = blockRepo.save(block2)
         var transaction2 = Transaction(null, block2, "yourSelf@author", 1, false)
         transaction2 = transactionRepo.save(transaction2)
-        val accountDetail2 = SetAccountDetail("$clientsStorageTemplate$domain", "title1@$domain", domain, transaction2)
+        val accountDetail2 = SetAccountDetail("$clientsStorageTemplate$domain", "title4@$domain", domain, transaction2)
         accountDetailRepo.save(accountDetail2)
     }
 
