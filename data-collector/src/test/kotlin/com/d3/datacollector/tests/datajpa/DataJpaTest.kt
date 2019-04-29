@@ -1,9 +1,13 @@
 package com.d3.datacollector.tests.datajpa
 
 import com.d3.datacollector.model.Billing
+import com.d3.datacollector.model.CreateAccount
 import com.d3.datacollector.model.State
+import com.d3.datacollector.model.Transaction
 import com.d3.datacollector.repository.BillingRepository
+import com.d3.datacollector.repository.CreateAccountRepo
 import com.d3.datacollector.repository.StateRepository
+import com.d3.datacollector.repository.TransactionRepo
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,14 +19,14 @@ import org.springframework.test.context.junit4.SpringRunner
 import java.math.BigDecimal
 import javax.transaction.Transactional
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 
 @RunWith(SpringRunner::class)
 @DataJpaTest
-@TestPropertySource(properties = arrayOf(
-    "spring.jpa.hibernate.ddl-auto=validate"))
+@TestPropertySource(properties = ["spring.jpa.hibernate.ddl-auto=validate"])
 class DataJpaTest {
 
     @Autowired
@@ -33,6 +37,24 @@ class DataJpaTest {
 
     @Autowired
     lateinit var billingRepo: BillingRepository
+
+    @Autowired
+    lateinit var accountRepo: CreateAccountRepo
+
+    @Autowired
+    lateinit var transactionRepo: TransactionRepo
+
+    @Test
+    @Transactional
+    fun testFindAccountByAccountId() {
+        val name = "best"
+        val domain = "iroha"
+        val transaction = transactionRepo.save((Transaction()))
+        accountRepo.save(CreateAccount(name, domain, "some public key", transaction))
+        assertTrue(accountRepo.findByAccountId("$name@$domain").isPresent)
+        assertFalse(accountRepo.findByAccountId("otherName@$domain").isPresent)
+        assertFalse(accountRepo.findByAccountId("$name@otherDomain").isPresent)
+    }
 
     @Test
     @Transactional
@@ -46,7 +68,7 @@ class DataJpaTest {
 
         assertTrue(found.isPresent)
 
-        found = billingRepo.selectByAccountIdBillingTypeAndAsset(billing.accountId, billing.asset,billing.billingType)
+        found = billingRepo.selectByAccountIdBillingTypeAndAsset(billing.accountId, billing.asset, billing.billingType)
         assertTrue(found.isPresent)
         assertEquals(billing.id, found.get().id)
 
