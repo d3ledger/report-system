@@ -26,3 +26,9 @@ data class BillingMqDto(
     var updated: Long = 0L,
     var created: Long = 0L
 )
+
+class BooleanWrapper(
+    val itIs:Boolean = false,
+    errorCode: String? = null,
+    errorMessage: String? = null
+) : Conflictable(errorCode,errorMessage)

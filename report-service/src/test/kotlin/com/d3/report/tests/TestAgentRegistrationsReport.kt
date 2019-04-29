@@ -50,7 +50,7 @@ class TestAgentRegistrationsReport {
 
         var result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/agent/registeredAccounts")
+                MockMvcRequestBuilders.get("/report/billing/registeredAccounts/agent")
                     .param("domain", domain)
                     .param("from", "9")
                     .param("to", "99")

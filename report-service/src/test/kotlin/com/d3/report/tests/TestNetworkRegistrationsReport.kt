@@ -49,7 +49,7 @@ class TestNetworkRegistrationsReport {
         prepareData()
         var result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/network/registeredAccounts")
+                MockMvcRequestBuilders.get("/report/billing/registeredAccounts/network")
                     .param("from", "9")
                     .param("to", "99")
                     .param("pageNum", "1")
