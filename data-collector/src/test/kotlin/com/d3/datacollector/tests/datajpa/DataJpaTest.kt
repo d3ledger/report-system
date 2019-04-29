@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 import java.math.BigDecimal
+import javax.transaction.Transactional
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -34,6 +35,7 @@ class DataJpaTest {
     lateinit var billingRepo: BillingRepository
 
     @Test
+    @Transactional
     fun testBillingRepository() {
         val feeFraction = "0.55"
         val billing = Billing(feeFraction = BigDecimal(feeFraction))
@@ -65,6 +67,7 @@ class DataJpaTest {
     }
 
     @Test
+    @Transactional
     fun testStateRepository() {
         // given
         val state1 = State(null, "sdfs", "sdfsf")
