@@ -103,7 +103,7 @@ class TestGetBlockService {
             .withPeerConfig(peerConfig)
         // start the peer. blocking call
         iroha.start()
-        blockTaskService.toriiAddress = iroha.toriiAddress.toString()
+        blockTaskService.irohaService.toriiAddress = iroha.toriiAddress.toString()
 
         // create API wrapper
         val api = IrohaAPI(iroha.toriiAddress)

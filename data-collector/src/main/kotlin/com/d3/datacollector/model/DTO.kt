@@ -32,3 +32,9 @@ class BooleanWrapper(
     errorCode: String? = null,
     errorMessage: String? = null
 ) : Conflictable(errorCode,errorMessage)
+
+class IntegerWrapper(
+    val itIs:Int? = null,
+    errorCode: String? = null,
+    errorMessage: String? = null
+) : Conflictable(errorCode,errorMessage)

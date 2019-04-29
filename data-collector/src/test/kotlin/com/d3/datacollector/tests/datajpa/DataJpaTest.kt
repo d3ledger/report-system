@@ -44,6 +44,14 @@ class DataJpaTest {
     @Autowired
     lateinit var transactionRepo: TransactionRepo
 
+    /**
+     * Test Find Account by accountId
+     * @given Account saved in DB and accountId
+     * @when execute query which checks that account with particular accountId
+     * @then 1. Three cases exists
+     * 2. not exists when name is different
+     * 3. not exists when domain is different
+     */
     @Test
     @Transactional
     fun testFindAccountByAccountId() {

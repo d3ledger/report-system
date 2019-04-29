@@ -1,23 +1,17 @@
 package com.d3.datacollector.service
 
-import iroha.protocol.QryResponses
-import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
-import com.d3.datacollector.utils.irohaBinaryKeyfromHex
 import com.google.protobuf.ProtocolStringList
 import iroha.protocol.Commands
 import iroha.protocol.TransactionOuterClass
-import jp.co.soramitsu.iroha.java.IrohaAPI
-import jp.co.soramitsu.iroha.java.Query
 import jp.co.soramitsu.iroha.java.Utils
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.net.URI
 import javax.transaction.Transactional
 
 @Service
@@ -27,14 +21,6 @@ class BlockTaskService {
     lateinit var dbService: DbService
     @Autowired
     private lateinit var cache: CacheRepository
-    @Value("\${iroha.toriiAddress}")
-    lateinit var toriiAddress: String
-    @Value("\${iroha.user.privateKeyHex}")
-    private lateinit var privateKey: String
-    @Value("\${iroha.user.publicKeyHex}")
-    private lateinit var publicKey: String
-    @Value("\${iroha.user.id}")
-    private lateinit var userId: String
     @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
     @Value("\${iroha.templates.custodyBilling}")
@@ -47,7 +33,6 @@ class BlockTaskService {
     private lateinit var withdrawalBillingTemplate: String
     val LAST_PROCESSED_BLOCK_ROW_ID = 0L
     val LAST_REQUEST_ROW_ID = 1L
-    private var api: IrohaAPI? = null
     @Autowired
     lateinit var rabbitService: RabbitMqService
 
@@ -63,6 +48,8 @@ class BlockTaskService {
     lateinit var createAssetRepo: CreateAssetRepo
     @Autowired
     lateinit var accountDetailRepo: SetAccountDetailRepo
+    @Autowired
+    lateinit var irohaService: IrohaApiService
 
     @Transactional
     fun processBlockTask(): Boolean {
@@ -70,7 +57,7 @@ class BlockTaskService {
         val lastRequest = dbService.stateRepo.findById(LAST_REQUEST_ROW_ID).get()
         val newBlockNumber = lastBlockState.value.toLong() + 1
         val newRequestNumber = lastRequest.value.toLong() + 1
-        val response = irohaBlockQuery(newBlockNumber, newRequestNumber)
+        val response = irohaService.irohaBlockQuery(newBlockNumber, newRequestNumber)
 
         if (response.hasBlockResponse()) {
             log.debug("Successful Iroha block query: $response")
@@ -220,24 +207,5 @@ class BlockTaskService {
         accountId.contains(exchangeBillingTemplate) -> Billing.BillingTypeEnum.EXCHANGE
         accountId.contains(withdrawalBillingTemplate) -> Billing.BillingTypeEnum.WITHDRAWAL
         else -> Billing.BillingTypeEnum.NOT_FOUND
-    }
-
-    fun irohaBlockQuery(
-        newRequestNumber: Long,
-        newBlock: Long
-    ): QryResponses.QueryResponse {
-        val q = Query.builder(userId, newRequestNumber + 1)
-            .getBlock(newBlock)
-            .buildSigned(
-                Ed25519Sha3.keyPairFromBytes(
-                    irohaBinaryKeyfromHex(privateKey),
-                    irohaBinaryKeyfromHex(publicKey)
-                )
-            )
-        if (api == null) {
-            api = IrohaAPI(URI(toriiAddress))
-        }
-        val response = api!!.query(q)
-        return response
     }
 }

@@ -27,8 +27,6 @@ class AssetTransferController {
     @Autowired
     private lateinit var transaferRepo: TransferAssetRepo
 
-
-
     @GetMapping("/transferAsset")
     fun reportBillingTransferAsset(
         @NotNull @RequestParam domain: String,
