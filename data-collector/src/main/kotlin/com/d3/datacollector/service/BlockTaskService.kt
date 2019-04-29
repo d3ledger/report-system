@@ -35,15 +35,15 @@ class BlockTaskService {
     private lateinit var publicKey: String
     @Value("\${iroha.user.id}")
     private lateinit var userId: String
-    @Value("\${iroha.transferBillingTemplate}")
+    @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
-    @Value("\${iroha.custodyBillingTemplate}")
+    @Value("\${iroha.templates.custodyBilling}")
     private lateinit var custodyBillingTemplate: String
-    @Value("\${iroha.accountCreationBillingTemplate}")
+    @Value("\${iroha.templates.accountCreationBilling}")
     private lateinit var accountCreationBillingTemplate: String
-    @Value("\${iroha.exchangeBillingTemplate}")
+    @Value("\${iroha.templates.exchangeBilling}")
     private lateinit var exchangeBillingTemplate: String
-    @Value("\${iroha.withdrawalBillingTemplate}")
+    @Value("\${iroha.templates.withdrawalBilling}")
     private lateinit var withdrawalBillingTemplate: String
     val LAST_PROCESSED_BLOCK_ROW_ID = 0L
     val LAST_REQUEST_ROW_ID = 1L
@@ -61,6 +61,8 @@ class BlockTaskService {
     lateinit var createAccountRepo: CreateAccountRepo
     @Autowired
     lateinit var createAssetRepo: CreateAssetRepo
+    @Autowired
+    lateinit var accountDetailRepo: SetAccountDetailRepo
 
     @Transactional
     fun processBlockTask(): Boolean {
@@ -79,7 +81,7 @@ class BlockTaskService {
                 val dbBlock = blockRepo.save(Block(newBlockNumber, blockV1.payload.createdTime))
                 blockV1.payload.transactionsList.forEach { tx ->
                     val reducedPayload = tx.payload.reducedPayload
-                    var dbTransaction = transactionRepo.save(
+                    var commitedTransaction = transactionRepo.save(
                         Transaction(
                             block = dbBlock,
                             creatorId = reducedPayload.creatorAccountId,
@@ -93,6 +95,13 @@ class BlockTaskService {
                         .forEach {
                             if (it.hasSetAccountDetail()) {
                                 processBillingAccountDetail(it.setAccountDetail)
+                                val ad = it.setAccountDetail
+                                accountDetailRepo.save(SetAccountDetail(
+                                    ad.accountId,
+                                    ad.key,
+                                    ad.value,
+                                    commitedTransaction
+                                ))
                             } else if (it.hasTransferAsset()) {
                                 val assetTransfer = it.transferAsset
                                 transferRepo.save(
@@ -102,7 +111,7 @@ class BlockTaskService {
                                         assetTransfer.assetId,
                                         assetTransfer.description,
                                         BigDecimal(assetTransfer.amount),
-                                        dbTransaction
+                                        commitedTransaction
                                     )
                                 )
                             } else if (it.hasCreateAccount()) {
@@ -112,7 +121,7 @@ class BlockTaskService {
                                         ca.accountName,
                                         ca.domainId,
                                         ca.publicKey,
-                                        dbTransaction
+                                        commitedTransaction
                                     )
                                 )
                             } else if (it.hasCreateAsset()) {
@@ -122,7 +131,7 @@ class BlockTaskService {
                                         asset.assetName,
                                         asset.domainId,
                                         asset.precision,
-                                        dbTransaction
+                                        commitedTransaction
                                     )
                                 )
                             }

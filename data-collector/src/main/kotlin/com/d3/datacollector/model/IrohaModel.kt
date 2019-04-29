@@ -62,10 +62,10 @@ class TransferAsset(
 @Entity
 @Table(name = "create_account")
 class CreateAccount(
-    val accountName: String,
-    val domainId: String,
-    val publicKey: String,
-    transaction: Transaction
+    val accountName: String? = null,
+    val domainId: String? = null,
+    val publicKey: String? = null,
+    transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
 
 @Entity
@@ -74,5 +74,14 @@ class CreateAsset(
     val assetName: String,
     val domainId: String,
     val decimalPrecision: Int,
+    transaction: Transaction
+) : Command(transaction = transaction)
+
+@Entity
+@Table(name = "set_account_detail")
+class SetAccountDetail(
+    val account_id: String? = null,
+    val detailKey: String? = null,
+    val detailValue: String? = null,
     transaction: Transaction
 ) : Command(transaction = transaction)

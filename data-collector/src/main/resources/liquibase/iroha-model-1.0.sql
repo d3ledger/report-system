@@ -23,6 +23,9 @@ CREATE TABLE transaction (
 CREATE TABLE public.command (
 	dtype varchar(31) NOT NULL,
 	id bigserial NOT NULL,
+	account_id varchar(255) NULL,
+	detail_key varchar(255) NULL,
+	detail_value varchar(255) NULL,
 	amount numeric(19,2) NULL,
 	asset_id varchar(255) NULL,
 	description varchar(255) NULL,
