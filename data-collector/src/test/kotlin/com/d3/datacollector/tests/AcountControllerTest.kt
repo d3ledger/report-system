@@ -1,10 +1,9 @@
 package com.d3.datacollector.tests
 
-import com.d3.datacollector.model.BillingResponse
-import com.d3.datacollector.model.BooleanWrapper
-import com.d3.datacollector.model.CreateAccount
-import com.d3.datacollector.model.Transaction
+import com.d3.datacollector.model.*
+import com.d3.datacollector.repository.BlockRepository
 import com.d3.datacollector.repository.CreateAccountRepo
+import com.d3.datacollector.repository.SetAccountQuorumRepo
 import com.d3.datacollector.repository.TransactionRepo
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.Test
@@ -19,6 +18,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import javax.transaction.Transactional
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -38,13 +38,62 @@ class AcountControllerTest {
     lateinit var transactionRepo: TransactionRepo
 
     @Autowired
+    lateinit var quorumRepo: SetAccountQuorumRepo
+
+    @Autowired
+    lateinit var blockRepo:BlockRepository
+
+    @Autowired
     lateinit var mvc: MockMvc
+
+    val name = "best"
+    val domain = "iroha"
+
+    @Test
+    @Transactional
+    fun testFindAccountQuorumNoAccount() {
+        val result: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.get("/iroha/account/quorum")
+                    .param("accountId", "$name@$domain")
+            )
+            .andExpect(MockMvcResultMatchers.status().`is`(409))
+            .andReturn()
+
+        val respBody = mapper.readValue(result.response.contentAsString, IntegerWrapper::class.java)
+        assertEquals("BAD_REQUEST", respBody.errorCode)
+    }
+
+    @Test
+    @Transactional
+    fun testFindAccountQuorum() {
+        val block0 = blockRepo.save(Block(1, 11))
+        val transaction0 = transactionRepo.save((Transaction(block = block0)))
+        accountRepo.save(CreateAccount(name, domain, "some public key", transaction0))
+        assertTrue(accountRepo.findByAccountId("$name@$domain").isPresent)
+        val quorum0 = quorumRepo.save(SetAccountQuorum("$name@$domain", 1, transaction0))
+        assertTrue(quorumRepo.getQuorumByAccountId(quorum0.accountId!!).isNotEmpty())
+
+        val block = blockRepo.save(Block(2, 12))
+        val transaction = transactionRepo.save((Transaction(block = block)))
+        val quorum = quorumRepo.save(SetAccountQuorum("$name@$domain", 2, transaction))
+        assertTrue(quorumRepo.getQuorumByAccountId(quorum.accountId!!).isNotEmpty())
+
+        val result: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.get("/iroha/account/quorum")
+                    .param("accountId", "$name@$domain")
+            )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+
+        val respBody = mapper.readValue(result.response.contentAsString, IntegerWrapper::class.java)
+        assertEquals(2, respBody.itIs)
+    }
 
     @Test
     @Transactional
     fun testFindAccountByAccountId() {
-        val name = "best"
-        val domain = "iroha"
         val transaction = transactionRepo.save((Transaction()))
         accountRepo.save(CreateAccount(name, domain, "some public key", transaction))
         assertTrue(accountRepo.findByAccountId("$name@$domain").isPresent)
@@ -52,8 +101,10 @@ class AcountControllerTest {
         assertFalse(accountRepo.findByAccountId("$name@otherDomain").isPresent)
 
         var result: MvcResult = mvc
-            .perform(MockMvcRequestBuilders.get("/iroha/account/exists")
-                .param("accountId", "$name@$domain"))
+            .perform(
+                MockMvcRequestBuilders.get("/iroha/account/exists")
+                    .param("accountId", "$name@$domain")
+            )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
 
@@ -63,8 +114,10 @@ class AcountControllerTest {
         assertNull(respBody.message)
 
         result = mvc
-            .perform(MockMvcRequestBuilders.get("/iroha/account/exists")
-                .param("accountId", "otherName@$domain"))
+            .perform(
+                MockMvcRequestBuilders.get("/iroha/account/exists")
+                    .param("accountId", "otherName@$domain")
+            )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
 
@@ -72,8 +125,10 @@ class AcountControllerTest {
         assertFalse(respBody.itIs)
 
         result = mvc
-            .perform(MockMvcRequestBuilders.get("/iroha/account/exists")
-                .param("accountId", "$name@otherDomain"))
+            .perform(
+                MockMvcRequestBuilders.get("/iroha/account/exists")
+                    .param("accountId", "$name@otherDomain")
+            )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
 

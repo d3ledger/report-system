@@ -1,13 +1,7 @@
 package com.d3.datacollector.tests.datajpa
 
-import com.d3.datacollector.model.Billing
-import com.d3.datacollector.model.CreateAccount
-import com.d3.datacollector.model.State
-import com.d3.datacollector.model.Transaction
-import com.d3.datacollector.repository.BillingRepository
-import com.d3.datacollector.repository.CreateAccountRepo
-import com.d3.datacollector.repository.StateRepository
-import com.d3.datacollector.repository.TransactionRepo
+import com.d3.datacollector.model.*
+import com.d3.datacollector.repository.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +38,12 @@ class DataJpaTest {
     @Autowired
     lateinit var transactionRepo: TransactionRepo
 
+    @Autowired
+    lateinit var quorumRepo: SetAccountQuorumRepo
+
+    @Autowired
+    lateinit var blockRepo:BlockRepository
+
     /**
      * Test Find Account by accountId
      * @given Account saved in DB and accountId
@@ -62,6 +62,21 @@ class DataJpaTest {
         assertTrue(accountRepo.findByAccountId("$name@$domain").isPresent)
         assertFalse(accountRepo.findByAccountId("otherName@$domain").isPresent)
         assertFalse(accountRepo.findByAccountId("$name@otherDomain").isPresent)
+    }
+
+    @Test
+    @Transactional
+    fun testFindQuorumByAccountId() {
+        val name = "best"
+        val domain = "iroha"
+        var block = Block(1, 12)
+        block = blockRepo.save(block)
+        val transaction = transactionRepo.save((Transaction(block = block)))
+        accountRepo.save(CreateAccount(name, domain, "some public key", transaction))
+        assertTrue(accountRepo.findByAccountId("$name@$domain").isPresent)
+        val quorum = quorumRepo.save(SetAccountQuorum("$name@$domain", 2, transaction))
+        assertTrue(quorumRepo.existsById(quorum.id))
+        assertTrue(quorumRepo.getQuorumByAccountId(quorum.accountId!!).isNotEmpty())
     }
 
     @Test

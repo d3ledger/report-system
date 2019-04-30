@@ -4,6 +4,7 @@ import com.d3.datacollector.model.BooleanWrapper
 import com.d3.datacollector.model.IntegerWrapper
 import com.d3.datacollector.repository.CreateAccountRepo
 import com.d3.datacollector.repository.CreateAssetRepo
+import com.d3.datacollector.repository.SetAccountQuorumRepo
 import com.d3.datacollector.service.IrohaApiService
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.lang.Exception
+import java.lang.RuntimeException
 import javax.validation.constraints.NotNull
 
 @Controller
@@ -26,6 +28,8 @@ class AccountController(val accountRepo: CreateAccountRepo) {
 
     @Autowired
     private lateinit var iroha: IrohaApiService
+    @Autowired
+    private lateinit var quorumRepo: SetAccountQuorumRepo
 
     @GetMapping("/account/exists")
     fun checkAccountExists(
@@ -45,15 +49,20 @@ class AccountController(val accountRepo: CreateAccountRepo) {
         @NotNull @RequestParam accountId: String
     ): ResponseEntity<IntegerWrapper> {
         return try {
-            val optional = iroha.irohaQueryAccount(accountId)
-            if (optional.isPresent) {
-                ResponseEntity.ok(IntegerWrapper(optional.get().quorum))
+            val optional = accountRepo.findByAccountId(accountId)
+            if(optional.isPresent) {
+                val quorumList = quorumRepo.getQuorumByAccountId(accountId)
+                if (quorumList.isNotEmpty()) {
+                    ResponseEntity.ok(IntegerWrapper(quorumList[0].quorum))
+                } else {
+                    ResponseEntity.ok(IntegerWrapper(1))
+                }
+            } else {
+                ResponseEntity.status(HttpStatus.CONFLICT).body(IntegerWrapper(null, "BAD_REQUEST", "Account not exists"))
             }
-            ResponseEntity.ok(IntegerWrapper(0))
         } catch (e: Exception) {
             log.error("Error querying account quorum", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(IntegerWrapper(null, e.javaClass.simpleName, e.message))
         }
     }
-
 }
