@@ -93,3 +93,11 @@ class SetAccountQuorum(
     val quorum: Int = 1,
     transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
+
+@Entity
+@Table(name = "add_signatory")
+class AddSignatory(
+    val accountId: String? = null,
+    val publicKey: String? = null,
+    transaction: Transaction = Transaction()
+) : Command(transaction = transaction)

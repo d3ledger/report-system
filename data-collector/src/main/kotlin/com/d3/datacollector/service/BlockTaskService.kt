@@ -50,6 +50,10 @@ class BlockTaskService {
     lateinit var accountDetailRepo: SetAccountDetailRepo
     @Autowired
     lateinit var irohaService: IrohaApiService
+    @Autowired
+    lateinit var accountQuorumRepo: SetAccountQuorumRepo
+    @Autowired
+    lateinit var addSignatoryRepo: AddSignatoryRepository
 
     @Transactional
     fun processBlockTask(): Boolean {
@@ -83,12 +87,14 @@ class BlockTaskService {
                             if (it.hasSetAccountDetail()) {
                                 processBillingAccountDetail(it.setAccountDetail)
                                 val ad = it.setAccountDetail
-                                accountDetailRepo.save(SetAccountDetail(
-                                    ad.accountId,
-                                    ad.key,
-                                    ad.value,
-                                    commitedTransaction
-                                ))
+                                accountDetailRepo.save(
+                                    SetAccountDetail(
+                                        ad.accountId,
+                                        ad.key,
+                                        ad.value,
+                                        commitedTransaction
+                                    )
+                                )
                             } else if (it.hasTransferAsset()) {
                                 val assetTransfer = it.transferAsset
                                 transferRepo.save(
@@ -120,6 +126,24 @@ class BlockTaskService {
                                         asset.precision,
                                         commitedTransaction
                                     )
+                                )
+                            } else if (it.hasSetAccountQuorum()) {
+                                val quorum = it.setAccountQuorum
+                                accountQuorumRepo.save(
+                                    SetAccountQuorum(
+                                        quorum.accountId,
+                                        quorum.quorum,
+                                        commitedTransaction
+                                    )
+                                )
+                            } else if (it.hasAddSignatory()) {
+                                val signatory = it.addSignatory
+                                addSignatoryRepo.save(
+                                    AddSignatory(
+                                        signatory.accountId,
+                                        signatory.publicKey,
+                                        commitedTransaction
+                                        )
                                 )
                             }
                         }
