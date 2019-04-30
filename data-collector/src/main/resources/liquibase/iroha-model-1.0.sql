@@ -37,6 +37,7 @@ CREATE TABLE public.command (
 	account_name varchar(255) NULL,
 	public_key varchar(255) NULL,
 	transaction_id int8 NULL,
+	quorum int4 NULL,
 	CONSTRAINT command_pkey PRIMARY KEY (id),
 	CONSTRAINT fkc90i3gykxnwq7xqlwttfnquya FOREIGN KEY (transaction_id) REFERENCES transaction(id)
 );

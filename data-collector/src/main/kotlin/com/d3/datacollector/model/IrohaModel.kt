@@ -33,7 +33,7 @@ data class Transaction(
     var rejected: Boolean = false,
     @JsonIgnore
     @OneToMany(mappedBy = "transaction", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
-    val commands:List<Command> = ArrayList()
+    val commands: List<Command> = ArrayList()
 )
 
 @Entity
@@ -74,14 +74,22 @@ class CreateAsset(
     val assetName: String,
     val domainId: String,
     val decimalPrecision: Int,
-    transaction: Transaction
+    transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
 
 @Entity
 @Table(name = "set_account_detail")
 class SetAccountDetail(
-    val account_id: String? = null,
+    val accountId: String? = null,
     val detailKey: String? = null,
     val detailValue: String? = null,
-    transaction: Transaction
+    transaction: Transaction = Transaction()
+) : Command(transaction = transaction)
+
+@Entity
+@Table(name = "set_account_quorum")
+class SetAccountQuorum(
+    val accountId: String? = null,
+    val quorum: Int = 1,
+    transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
