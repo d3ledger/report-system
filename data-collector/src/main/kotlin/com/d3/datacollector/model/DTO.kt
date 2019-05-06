@@ -28,7 +28,13 @@ data class BillingMqDto(
 )
 
 class BooleanWrapper(
-    val itIs:Boolean = false,
+    val itIs: Boolean = false,
+    errorCode: String? = null,
+    errorMessage: String? = null
+) : Conflictable(errorCode,errorMessage)
+
+class IntegerWrapper(
+    val itIs: Int? = null,
     errorCode: String? = null,
     errorMessage: String? = null
 ) : Conflictable(errorCode,errorMessage)

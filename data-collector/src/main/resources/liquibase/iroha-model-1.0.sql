@@ -26,19 +26,19 @@ CREATE TABLE public.command (
 	account_id varchar(255) NULL,
 	detail_key varchar(255) NULL,
 	detail_value varchar(255) NULL,
+	public_key varchar(255) NULL,
 	amount numeric(19,2) NULL,
 	asset_id varchar(255) NULL,
 	description varchar(255) NULL,
 	dest_account_id varchar(255) NULL,
 	src_account_id varchar(255) NULL,
+	quorum int4 NULL,
 	asset_name varchar(255) NULL,
 	decimal_precision int4 NULL,
 	domain_id varchar(255) NULL,
 	account_name varchar(255) NULL,
-	public_key varchar(255) NULL,
 	transaction_id int8 NULL,
 	CONSTRAINT command_pkey PRIMARY KEY (id),
 	CONSTRAINT fkc90i3gykxnwq7xqlwttfnquya FOREIGN KEY (transaction_id) REFERENCES transaction(id)
 );
-
 

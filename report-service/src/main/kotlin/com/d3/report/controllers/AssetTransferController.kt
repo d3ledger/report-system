@@ -2,8 +2,6 @@ package com.d3.report.controllers
 
 import com.d3.report.model.Transfer
 import com.d3.report.model.TransferReport
-import com.d3.report.repository.CreateAccountRepo
-import com.d3.report.repository.SetAccountDetailRepo
 import com.d3.report.repository.TransferAssetRepo
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -26,8 +24,6 @@ class AssetTransferController {
 
     @Autowired
     private lateinit var transaferRepo: TransferAssetRepo
-
-
 
     @GetMapping("/transferAsset")
     fun reportBillingTransferAsset(
