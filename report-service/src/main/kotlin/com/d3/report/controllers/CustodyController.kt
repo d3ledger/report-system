@@ -49,6 +49,7 @@ class CustodyController {
             accountsPage.forEach { account ->
                 var calculatedPages = 1
                 val custodyFees = HashMap<String, AccountCustody>()
+                val custodyContext = HashMap<String, TransaferAsset>
                 do {
                     val transfersPage = transaferRepo.getDataBetween(
                         "${account.accountName}@",
@@ -58,20 +59,21 @@ class CustodyController {
                     )
                     transfersPage
                         .get()
-                        .forEach { asset ->
+                        .forEach { transafer ->
                             val bomba = custodyFees.computeIfAbsent(
                                 account.accountName!!,
                                 { AccountCustody(account.accountName!!) })
-                            val custody = bomba.assetCustody.computeIfAbsent(asset.assetId!!) { BigDecimal("0") }
+                            val custody = bomba.assetCustody.computeIfAbsent(transafer.assetId!!) { BigDecimal("0") }
 
                             val billing = billingStore.computeIfAbsent(
-                                asset.assetId!!)
+                                transafer.assetId!!)
                                 {
                                     billingRepo.selectByAccountIdBillingTypeAndAsset(
                                     "${account.accountName}@${account.domainId}",
-                                    asset.assetId,
+                                    transafer.assetId,
                                     Billing.BillingTypeEnum.CUSTODY).get()
                                 }
+
                             Здесь должна быть логика подсчета биллинга и создаия отчетаы
                         }
                 } while (++calculatedPages - transfersPage.totalPages < 0)
