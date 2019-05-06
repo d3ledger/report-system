@@ -12,4 +12,8 @@ interface CreateAccountRepo : CrudRepository<CreateAccount, Long?> {
 
     @Query("SELECT ca FROM CreateAccount ca WHERE ca.accountName LIKE CONCAT(:accTemplate,'%')")
     fun findAccountsByName(accTemplate:String):List<CreateAccount>
+
+    @Query("SELECT ca FROM CreateAccount ca WHERE ca.transaction.rejected = false " +
+            "and ca.domainId = :domain")
+    fun getDomainAccounts(domain:String, pageable: Pageable): Page<CreateAccount>
 }
