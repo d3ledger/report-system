@@ -58,7 +58,7 @@ class AccountController(val accountRepo: CreateAccountRepo) {
                     ResponseEntity.ok(IntegerWrapper(1))
                 }
             } else {
-                ResponseEntity.status(HttpStatus.CONFLICT).body(IntegerWrapper(null, "BAD_REQUEST", "Account not exists"))
+                ResponseEntity.status(HttpStatus.CONFLICT).body(IntegerWrapper(null, "BAD_REQUEST", "Account doesn't exist"))
             }
         } catch (e: Exception) {
             log.error("Error querying account quorum", e)

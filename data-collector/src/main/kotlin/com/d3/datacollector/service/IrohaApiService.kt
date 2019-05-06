@@ -14,10 +14,18 @@ import java.util.*
 
 @Service
 class IrohaApiService {
-
-    private var irohaApi: IrohaAPI? = null
-    private var queryApi: QueryAPI? = null
-    private var keyPair: KeyPair? = null
+    private val irohaApi: IrohaAPI by lazy {
+        IrohaAPI(URI(toriiAddress))
+    }
+    private val queryApi: QueryAPI by lazy {
+        QueryAPI(irohaApi, userId, keyPair)
+    }
+    private val keyPair: KeyPair by lazy {
+        Ed25519Sha3.keyPairFromBytes(
+            irohaBinaryKeyfromHex(privateKey),
+            irohaBinaryKeyfromHex(publicKey)
+        )
+    }
 
     @Value("\${iroha.toriiAddress}")
     lateinit var toriiAddress: String
@@ -30,7 +38,6 @@ class IrohaApiService {
 
     @Synchronized
     fun irohaQueryAccount(accountId: String): Optional<QryResponses.Account> {
-        initApiIfNot()
         val response = queryApi?.getAccount(accountId)
         if(response?.hasAccount() == true) {
             return Optional.of(response.account)
@@ -42,23 +49,10 @@ class IrohaApiService {
         newRequestNumber: Long,
         newBlock: Long
     ): QryResponses.QueryResponse {
-        initApiIfNot()
         val q = Query.builder(userId, newRequestNumber + 1)
             .getBlock(newBlock)
             .buildSigned(keyPair)
         val response = irohaApi!!.query(q)
         return response
     }
-
-    private fun initApiIfNot() {
-        if (irohaApi == null) {
-            irohaApi = IrohaAPI(URI(toriiAddress))
-            keyPair = Ed25519Sha3.keyPairFromBytes(
-                irohaBinaryKeyfromHex(privateKey),
-                irohaBinaryKeyfromHex(publicKey)
-            )
-            queryApi = QueryAPI(irohaApi, userId, keyPair)
-        }
-    }
-
 }

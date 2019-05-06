@@ -64,6 +64,12 @@ class DataJpaTest {
         assertFalse(accountRepo.findByAccountId("$name@otherDomain").isPresent)
     }
 
+    /**
+     * Test Find Account by accountId
+     * @given Account saved in DB
+     * @when Quorum record created for account
+     * @then It is possible to find Quorum by accountId
+     */
     @Test
     @Transactional
     fun testFindQuorumByAccountId() {
@@ -79,6 +85,12 @@ class DataJpaTest {
         assertTrue(quorumRepo.getQuorumByAccountId(quorum.accountId!!).isNotEmpty())
     }
 
+    /**
+     * Test Find Account by accountId
+     * @given Billing saved in DB
+     * @when Billing found in DB
+     * @then Iit is possible to find billing by accountId, asset and type
+     */
     @Test
     @Transactional
     fun testBillingRepository() {
@@ -111,6 +123,12 @@ class DataJpaTest {
         assertNotNull(found.get().updated)
     }
 
+    /**
+     * Test Find Account by accountId
+     * @given State saved in DB
+     * @when and found
+     * @then value of saved is the same as of original
+     */
     @Test
     @Transactional
     fun testStateRepository() {
