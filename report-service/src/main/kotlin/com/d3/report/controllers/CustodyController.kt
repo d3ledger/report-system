@@ -1,10 +1,13 @@
 package com.d3.report.controllers
 
 import com.d3.report.model.AccountCustody
+import com.d3.report.model.Billing
 import com.d3.report.model.CustodyReport
 import com.d3.report.model.RegistrationReport
+import com.d3.report.repository.BillingRepository
 import com.d3.report.repository.CreateAccountRepo
 import com.d3.report.repository.TransferAssetRepo
+import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
@@ -21,12 +24,18 @@ import javax.validation.constraints.NotNull
 @RequestMapping("/report/billing/custody")
 class CustodyController {
 
+    companion object {
+        val log = KLogging().logger
+    }
+
     @Autowired
     private lateinit var transaferRepo: TransferAssetRepo
     @Autowired
     private lateinit var accountRepo: CreateAccountRepo
+    @Autowired
+    private lateinit var billingRepo: BillingRepository
 
-    @GetMapping("agent")
+    @GetMapping("/agent")
     fun reportBillingTransferAsset(
         @NotNull @RequestParam domain: String,
         @NotNull @RequestParam from: Long,
@@ -34,6 +43,7 @@ class CustodyController {
         @RequestParam pageNum: Int = 1,
         @RequestParam pageSize: Int = 20
     ): ResponseEntity<CustodyReport> {
+        val billingStore = HashMap<String,Billing>()
         return try {
             val accountsPage = accountRepo.getDomainAccounts(domain, PageRequest.of(pageNum - 1, pageSize))
             accountsPage.forEach { account ->
@@ -52,8 +62,17 @@ class CustodyController {
                             val bomba = custodyFees.computeIfAbsent(
                                 account.accountName!!,
                                 { AccountCustody(account.accountName!!) })
-                            val custody = bomba.assetCustody.computeIfAbsent(asset.assetId!!, { BigDecimal("0") })
-                            kbl
+                            val custody = bomba.assetCustody.computeIfAbsent(asset.assetId!!) { BigDecimal("0") }
+
+                            val billing = billingStore.computeIfAbsent(
+                                asset.assetId!!)
+                                {
+                                    billingRepo.selectByAccountIdBillingTypeAndAsset(
+                                    "${account.accountName}@${account.domainId}",
+                                    asset.assetId,
+                                    Billing.BillingTypeEnum.CUSTODY).get()
+                                }
+                            Здесь должна быть логика подсчета биллинга и создаия отчетаы
                         }
                 } while (++calculatedPages - transfersPage.totalPages < 0)
             }

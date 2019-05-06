@@ -4,6 +4,7 @@ import com.d3.report.model.AccountRegistration
 import com.d3.report.model.RegistrationReport
 import com.d3.report.repository.CreateAccountRepo
 import com.d3.report.repository.SetAccountDetailRepo
+import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
@@ -18,6 +19,10 @@ import java.util.stream.Collectors
 @Controller
 @RequestMapping("/report/billing/registeredAccounts")
 class RegisteredAccountsController {
+
+    companion object {
+        val log = KLogging().logger
+    }
 
     @Autowired
     private lateinit var accountDetailsRepo: SetAccountDetailRepo
@@ -60,6 +65,7 @@ class RegisteredAccountsController {
                 )
             )
         } catch (e: Exception) {
+            log.error("Error registrations report", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
                 RegistrationReport(
                     code = e.javaClass.simpleName,
@@ -106,6 +112,7 @@ class RegisteredAccountsController {
                 )
             )
         } catch (e: Exception) {
+            log.error("Error registrations report", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
                 RegistrationReport(
                     code = e.javaClass.simpleName,

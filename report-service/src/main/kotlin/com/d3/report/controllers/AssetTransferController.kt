@@ -3,6 +3,7 @@ package com.d3.report.controllers
 import com.d3.report.model.Transfer
 import com.d3.report.model.TransferReport
 import com.d3.report.repository.TransferAssetRepo
+import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
@@ -18,6 +19,10 @@ import javax.validation.constraints.NotNull
 @Controller
 @RequestMapping("/report/billing")
 class AssetTransferController {
+
+    companion object {
+        val log = KLogging().logger
+    }
 
     @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
@@ -56,7 +61,8 @@ class AssetTransferController {
                 }
             ResponseEntity.ok<TransferReport>(report)
         } catch (e: Exception) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+            RegisteredAccountsController.log.error("Error transfer report", e)
+            ResponseEntity.status(HttpStatus.CONFLICT).body(
                 TransferReport(
                     code = e.javaClass.simpleName,
                     message = e.message
