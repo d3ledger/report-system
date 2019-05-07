@@ -34,22 +34,24 @@ class CustodyController {
     private lateinit var accountRepo: CreateAccountRepo
     @Autowired
     private lateinit var billingRepo: BillingRepository
-    @Value("iroha.templates.custodyBilling")
+    @Value("\${iroha.templates.custodyBilling}")
     private lateinit var custodyAccountTemplate: String
+    @Value("\${billing.custody.period}")
+    private var custodyPeriod: Long = 86400000
 
     @GetMapping("/agent")
     fun reportBillingTransferAsset(
         @NotNull @RequestParam domain: String,
-    //    @NotNull @RequestParam from: Long,
-    //    @NotNull @RequestParam to: Long,
+        //    @NotNull @RequestParam from: Long,
+        @NotNull @RequestParam to: Long,
         @RequestParam pageNum: Int = 1,
         @RequestParam pageSize: Int = 20
     ): ResponseEntity<CustodyReport> {
-        val billingStore = HashMap<String,Billing>()
+        val billingStore = HashMap<String, Billing>()
         return try {
-            val accountsPage = accountRepo.getDomainAccounts(domain, PageRequest.of(pageNum - 1, pageSize))
+            val accountsPage =
+                accountRepo.getDomainAccounts(domain, PageRequest.of(pageNum - 1, pageSize))
             accountsPage.forEach { account ->
-                var calculatedPages = 1
                 /*
                 Collection with custody Fee
                  */
@@ -62,6 +64,7 @@ class CustodyController {
                 val accountCustodyContext = custodyContext.computeIfAbsent(account.accountName!!) {
                     AccountCustodyContext()
                 }
+                var calculatedTransferPages = 0
                 do {
                     val transfersPage = getTransferPage(account, pageNum)
                     transfersPage
@@ -70,35 +73,57 @@ class CustodyController {
                             /*
                                 Sum of custody fees for asset from every period
                              */
-                            val assetCustodyContextForAccount = accountCustodyContext.assetsContexts.computeIfAbsent(transfer.assetId!!) {
-                                AssetCustodyContext(
-                                    lastTransferTimestamp = account.transaction.block?.blockCreationTime
-                                )
-                            }
+                            val assetCustodyContextForAccount =
+                                accountCustodyContext.assetsContexts.computeIfAbsent(transfer.assetId!!) {
+                                    AssetCustodyContext(
+                                        lastTransferTimestamp = account.transaction.block?.blockCreationTime
+                                    )
+                                }
                             /*
                                 Get billing propertires
                              */
                             val billing = billingStore.computeIfAbsent(
-                                transfer.assetId!!)
-                                {
-                                    billingRepo.selectByAccountIdBillingTypeAndAsset(
+                                transfer.assetId!!
+                            )
+                            {
+                                billingRepo.selectByAccountIdBillingTypeAndAsset(
                                     "$custodyAccountTemplate@${account.domainId}",
                                     transfer.assetId,
-                                    Billing.BillingTypeEnum.CUSTODY).get()
-                                }
-                            if(transfer.destAccountId!!.contentEquals(getAccountId(account))) {
+                                    Billing.BillingTypeEnum.CUSTODY
+                                ).get()
+                            }
+
+                            if (assetCustodyContextForAccount.lastTransferTimestamp != null) {
+                                val previous =
+                                    BigDecimal(assetCustodyContextForAccount.lastTransferTimestamp.toString())
+                                val new =
+                                    BigDecimal(transfer.transaction.block!!.blockCreationTime.toString())
+                                val length = new.minus(previous)
+                                val custodyMultiplier = length.divide(BigDecimal(custodyPeriod))
+                                val periodFee = billing.feeFraction.multiply(custodyMultiplier)
+                                assetCustodyContextForAccount
+                                    .commulativeFeeAmount =
+                                    assetCustodyContextForAccount.commulativeFeeAmount.add(periodFee)
+                            }
+                            assetCustodyContextForAccount.lastTransferTimestamp =
+                                transfer.transaction.block!!.blockCreationTime
+                            if (transfer.destAccountId!!.contentEquals(getAccountId(account))) {
                                 assetCustodyContextForAccount.lastAssetSum.add(transfer.amount)
-                            } else if(transfer.srcAccountId!!.contentEquals(getAccountId(account))) {
+                            } else if (transfer.srcAccountId!!.contentEquals(getAccountId(account))) {
                                 assetCustodyContextForAccount.lastAssetSum.subtract(transfer.amount)
                             }
-                            if(assetCustodyContextForAccount.lastTransferTimestamp != null) {
-/*
-add billing calculations here
-*/
-                            }
-                            assetCustodyContextForAccount.lastTransferTimestamp = transfer.transaction.block!!.blockCreationTime
                         }
-                } while (++calculatedPages - transfersPage.totalPages < 0)
+                    calculatedTransferPages += 1
+                } while (++calculatedTransferPages - transfersPage.totalPages < 0)
+                /*
+                TODO Add fee calculations between last transfer and end of period when from to will be added
+                It is easier just to add 'to' at first and test. Then add from.
+                 */
+                val assetCustodies = HashMap<String, BigDecimal>()
+                accountCustodyContext.assetsContexts.forEach {
+                    assetCustodies.put(it.key,it.value.commulativeFeeAmount)
+                }
+                custodyFees.put(getAccountId(account), AccountCustody(getAccountId(account),assetCustodies))
             }
 
             ResponseEntity.status(HttpStatus.CONFLICT).body(
