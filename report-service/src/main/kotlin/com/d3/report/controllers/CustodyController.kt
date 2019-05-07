@@ -1,9 +1,9 @@
 package com.d3.report.controllers
 
+import com.d3.report.context.AccountCustodyContext
 import com.d3.report.model.AccountCustody
 import com.d3.report.model.Billing
 import com.d3.report.model.CustodyReport
-import com.d3.report.model.RegistrationReport
 import com.d3.report.repository.BillingRepository
 import com.d3.report.repository.CreateAccountRepo
 import com.d3.report.repository.TransferAssetRepo
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.math.BigDecimal
-import java.util.stream.Collectors
 import javax.validation.constraints.NotNull
 
 @Controller
@@ -49,7 +48,7 @@ class CustodyController {
             accountsPage.forEach { account ->
                 var calculatedPages = 1
                 val custodyFees = HashMap<String, AccountCustody>()
-                val custodyContext = HashMap<String, TransaferAsset>
+                val custodyContext = HashMap<String, AccountCustodyContext>()
                 do {
                     val transfersPage = transaferRepo.getDataBetween(
                         "${account.accountName}@",
@@ -74,7 +73,7 @@ class CustodyController {
                                     Billing.BillingTypeEnum.CUSTODY).get()
                                 }
 
-                            Здесь должна быть логика подсчета биллинга и создаия отчетаы
+                            Здесь должна быть логика подсчета биллинга и создания отчетаы
                         }
                 } while (++calculatedPages - transfersPage.totalPages < 0)
             }
