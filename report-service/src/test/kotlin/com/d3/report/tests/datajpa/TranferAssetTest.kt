@@ -32,6 +32,36 @@ class TranferAssetTest {
     private lateinit var transferBillingTemplate: String
 
     private val domain = "author"
+    /**
+     * @given Some transactions in DB
+     * @when request all transfer data for account
+     * @then Should return all transfers where account is source or destination account.
+     */
+    @Test
+    @Transactional
+    fun testGetAllTransferDataForAccount() {
+        var block2 = Block(2, 1299)
+        block2 = blockRepo.save(block2)
+        var transaction2 = Transaction(null, block2, "mySelf@$domain", 1, false)
+        transaction2 = transactionRepo.save(transaction2)
+        transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("20"), transaction2))
+
+        var block1 = Block(1, 129)
+        block1 = blockRepo.save(block1)
+        var transaction1 = Transaction(null, block1, "mySelf@$domain", 1, false)
+        transaction1 = transactionRepo.save(transaction1)
+        transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("1"), transaction1))
+        transferRepo.save(TransferAsset("srcNotAcc@$domain", "srcAcc@$domain", "assetId@$domain", null, BigDecimal("2"), transaction1))
+        transferRepo.save(TransferAsset("srcAcc@domainTwo", "destAcc@$domain", "assetId@$domain", null, BigDecimal("12"), transaction1))
+        transferRepo.save(TransferAsset("otherAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("14"), transaction1))
+
+        val page = transferRepo.getAllDataForAccount("srcAcc@$domain", PageRequest.of(0, 5))
+        assertEquals(3,page.numberOfElements)
+        /*
+        Check order of transactions
+         */
+        assertEquals(BigDecimal("20"), page.get().collect(Collectors.toList())[2].amount)
+    }
 
     @Test
     @Transactional
@@ -40,9 +70,7 @@ class TranferAssetTest {
 
         val dbData = transferRepo.getDataBetween(transferBillingTemplate,130, 13000, PageRequest.of(0, 5))
         assertEquals(0, dbData.get().collect(Collectors.toList()).size)
-
     }
-
 
     @Test
     @Transactional

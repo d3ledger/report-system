@@ -13,4 +13,9 @@ interface TransferAssetRepo : CrudRepository<TransferAsset, Long?> {
             "and t.transaction.block.blockCreationTime Between :from and :to")
     fun getDataBetween(accTemplate:String, from: Long, to: Long, pageable: Pageable): Page<TransferAsset>
 
+    @Query("SELECT t FROM TransferAsset t WHERE t.transaction.rejected = false " +
+            "and (t.srcAccountId = :account OR  t.destAccountId = :account) " +
+    "ORDER BY t.transaction.block.blockCreationTime ASC")
+    fun getAllDataForAccount(account:String, pageable: Pageable): Page<TransferAsset>
+
 }

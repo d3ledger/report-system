@@ -1,14 +1,15 @@
 package com.d3.report.controllers
 
 import com.d3.report.context.AccountCustodyContext
-import com.d3.report.model.AccountCustody
-import com.d3.report.model.Billing
-import com.d3.report.model.CustodyReport
+import com.d3.report.context.AssetCustodyContext
+import com.d3.report.model.*
 import com.d3.report.repository.BillingRepository
 import com.d3.report.repository.CreateAccountRepo
 import com.d3.report.repository.TransferAssetRepo
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -33,12 +34,14 @@ class CustodyController {
     private lateinit var accountRepo: CreateAccountRepo
     @Autowired
     private lateinit var billingRepo: BillingRepository
+    @Value("iroha.templates.custodyBilling")
+    private lateinit var custodyAccountTemplate: String
 
     @GetMapping("/agent")
     fun reportBillingTransferAsset(
         @NotNull @RequestParam domain: String,
-        @NotNull @RequestParam from: Long,
-        @NotNull @RequestParam to: Long,
+    //    @NotNull @RequestParam from: Long,
+    //    @NotNull @RequestParam to: Long,
         @RequestParam pageNum: Int = 1,
         @RequestParam pageSize: Int = 20
     ): ResponseEntity<CustodyReport> {
@@ -47,33 +50,53 @@ class CustodyController {
             val accountsPage = accountRepo.getDomainAccounts(domain, PageRequest.of(pageNum - 1, pageSize))
             accountsPage.forEach { account ->
                 var calculatedPages = 1
+                /*
+                Collection with custody Fee
+                 */
                 val custodyFees = HashMap<String, AccountCustody>()
+                /*
+                Calculation context for asset of account
+                 */
                 val custodyContext = HashMap<String, AccountCustodyContext>()
+
+                val accountCustodyContext = custodyContext.computeIfAbsent(account.accountName!!) {
+                    AccountCustodyContext()
+                }
                 do {
-                    val transfersPage = transaferRepo.getDataBetween(
-                        "${account.accountName}@",
-                        from,
-                        to,
-                        PageRequest.of(pageNum - 1, 200)
-                    )
+                    val transfersPage = getTransferPage(account, pageNum)
                     transfersPage
                         .get()
-                        .forEach { transafer ->
-                            val bomba = custodyFees.computeIfAbsent(
-                                account.accountName!!,
-                                { AccountCustody(account.accountName!!) })
-                            val custody = bomba.assetCustody.computeIfAbsent(transafer.assetId!!) { BigDecimal("0") }
-
+                        .forEach { transfer ->
+                            /*
+                                Sum of custody fees for asset from every period
+                             */
+                            val assetCustodyContextForAccount = accountCustodyContext.assetsContexts.computeIfAbsent(transfer.assetId!!) {
+                                AssetCustodyContext(
+                                    lastTransferTimestamp = account.transaction.block?.blockCreationTime
+                                )
+                            }
+                            /*
+                                Get billing propertires
+                             */
                             val billing = billingStore.computeIfAbsent(
-                                transafer.assetId!!)
+                                transfer.assetId!!)
                                 {
                                     billingRepo.selectByAccountIdBillingTypeAndAsset(
-                                    "${account.accountName}@${account.domainId}",
-                                    transafer.assetId,
+                                    "$custodyAccountTemplate@${account.domainId}",
+                                    transfer.assetId,
                                     Billing.BillingTypeEnum.CUSTODY).get()
                                 }
-
-                            Здесь должна быть логика подсчета биллинга и создания отчетаы
+                            if(transfer.destAccountId!!.contentEquals(getAccountId(account))) {
+                                assetCustodyContextForAccount.lastAssetSum.add(transfer.amount)
+                            } else if(transfer.srcAccountId!!.contentEquals(getAccountId(account))) {
+                                assetCustodyContextForAccount.lastAssetSum.subtract(transfer.amount)
+                            }
+                            if(assetCustodyContextForAccount.lastTransferTimestamp != null) {
+/*
+add billing calculations here
+*/
+                            }
+                            assetCustodyContextForAccount.lastTransferTimestamp = transfer.transaction.block!!.blockCreationTime
                         }
                 } while (++calculatedPages - transfersPage.totalPages < 0)
             }
@@ -93,4 +116,17 @@ class CustodyController {
             )
         }
     }
+
+    private fun getTransferPage(
+        account: CreateAccount,
+        pageNum: Int
+    ): Page<TransferAsset> {
+        return transaferRepo.getAllDataForAccount(
+            getAccountId(account),
+            PageRequest.of(pageNum - 1, 200)
+        )
+    }
+
+    private fun getAccountId(account: CreateAccount) =
+        "${account.accountName}@${account.domainId}"
 }
