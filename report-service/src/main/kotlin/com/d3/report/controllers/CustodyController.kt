@@ -54,7 +54,7 @@ class CustodyController {
     @Transactional
     fun reportBillingTransferAsset(
         @NotNull @RequestParam domain: String,
-        //    @NotNull @RequestParam from: Long,
+        @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long,
         @NotNull @RequestParam pageNum: Int = 1,
         @NotNull @RequestParam pageSize: Int = 20
@@ -105,8 +105,8 @@ class CustodyController {
                                     Billing.BillingTypeEnum.CUSTODY
                                 ).get()
                             }
-
-                            if (assetCustodyContextForAccount.lastTransferTimestamp != null) {
+                            val lastTransferTime = assetCustodyContextForAccount.lastTransferTimestamp ?: 0
+                            if (assetCustodyContextForAccount.lastTransferTimestamp != null && lastTransferTime > from) {
                                 addFeePortion(
                                     assetCustodyContextForAccount,
                                     transfer.transaction.block!!.blockCreationTime!!,
