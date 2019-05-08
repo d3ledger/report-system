@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.math.BigDecimal
+import java.util.stream.Collectors
 import javax.transaction.Transactional
 import javax.validation.constraints.NotNull
 
@@ -57,11 +58,12 @@ class CustodyController {
         return try {
             val accountsPage =
                 accountRepo.getDomainAccounts(domain, PageRequest.of(pageNum - 1, pageSize))
+
+            /*
+                 Collection with custody Fee
+            */
+            val custodyFees = HashMap<String, AccountCustody>()
             accountsPage.forEach { account ->
-                /*
-                Collection with custody Fee
-                 */
-                val custodyFees = HashMap<String, AccountCustody>()
                 /*
                 Calculation context for asset of account
                  */
@@ -128,8 +130,9 @@ class CustodyController {
                 )
             }
 
-            ResponseEntity.status(HttpStatus.CONFLICT).body(
+            ResponseEntity.ok(
                 CustodyReport(
+                    accounts = custodyFees.values.stream().collect(Collectors.toList()),
                     total = accountsPage.totalElements,
                     pages = accountsPage.totalPages
                 )

@@ -14,7 +14,7 @@ class AccountRegistration(
 )
 
 class AccountCustody(
-    val accountId: String,
+    val accountId: String? = null,
     val assetCustody: HashMap<String, BigDecimal> = HashMap()
 )
 
