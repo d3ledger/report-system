@@ -21,7 +21,10 @@ import java.math.BigDecimal
 import java.util.stream.Collectors
 import javax.transaction.Transactional
 import javax.validation.constraints.NotNull
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 @Controller
 @RequestMapping("/report/billing/custody")
 class CustodyController {

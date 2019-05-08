@@ -18,6 +18,10 @@ import java.lang.Exception
 import java.lang.RuntimeException
 import javax.validation.constraints.NotNull
 
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 @Controller
 @RequestMapping("/iroha")
 class AccountController(val accountRepo: CreateAccountRepo) {

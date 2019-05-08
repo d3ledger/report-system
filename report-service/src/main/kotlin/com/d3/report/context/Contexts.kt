@@ -1,7 +1,10 @@
 package com.d3.report.context
 
 import java.math.BigDecimal
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 class AccountCustodyContext(
     val assetsContexts: HashMap<String, AssetCustodyContext> = HashMap()
 )

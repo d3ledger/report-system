@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import java.math.BigDecimal
 import javax.persistence.*
 import javax.validation.constraints.NotNull
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 @Entity
 @Table(name = "block")
 data class Block(

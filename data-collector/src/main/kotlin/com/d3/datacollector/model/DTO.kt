@@ -2,7 +2,10 @@ package com.d3.datacollector.model
 
 import java.math.BigDecimal
 import java.util.*
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 open class Conflictable(var errorCode: String? = null, var message: String? = null)
 
 data class BillingResponse(

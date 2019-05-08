@@ -17,7 +17,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 @RunWith(SpringRunner::class)
 @DataJpaTest
 @TestPropertySource(properties = ["spring.jpa.hibernate.ddl-auto=validate"])

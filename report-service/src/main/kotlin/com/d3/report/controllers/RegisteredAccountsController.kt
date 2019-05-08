@@ -16,7 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.util.stream.Collectors
 import javax.validation.constraints.NotNull
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 @Controller
 @RequestMapping("/report/billing/registeredAccounts")
 class RegisteredAccountsController {

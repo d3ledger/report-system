@@ -15,8 +15,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 
-
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 @ConditionalOnProperty(value = ["app.rabbitmq.enable"], havingValue = "true", matchIfMissing = true)
 @Configuration
 class RabbitConfig {
