@@ -92,11 +92,25 @@ class TestCustodyReport {
             false
         )
         transaction1 = transactionRepo.save(transaction1)
+        /**
+         * Account with testDomain to be added in to report
+         */
         val account1 = accountRepo.save(
             CreateAccount(
                 "account1",
                 testDomain,
                 "publicKey1",
+                transaction1
+            )
+        )
+        /**
+         * Account with other domain not to be added in report
+         */
+        val account2 = accountRepo.save(
+            CreateAccount(
+                "accountOther",
+                "notTestDomain",
+                "publicKeyNOtTest",
                 transaction1
             )
         )
