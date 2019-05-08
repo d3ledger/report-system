@@ -89,7 +89,7 @@ class TestCustodyReport {
                 MockMvcRequestBuilders.get("/report/billing/custody/agent")
                     .param("domain", testDomain)
                     .param("to", "172800002")
-                    .param("from", "0")
+                    .param("from", "2")
                     .param("pageNum", "1")
                     .param("pageSize", "10")
             )
@@ -130,7 +130,7 @@ class TestCustodyReport {
                 accountOneId,
                 assetId,
                 null,
-                BigDecimal("10"),
+                BigDecimal("5"),
                 transaction1
             )
         )
@@ -180,6 +180,17 @@ class TestCustodyReport {
                 "accountOther",
                 otherDomain,
                 "publicKeyNotTest",
+                transaction1
+            )
+        )
+
+        transferRepo.save(
+            TransferAsset(
+                otherAccountId,
+                accountOneId,
+                assetId,
+                null,
+                BigDecimal("5"),
                 transaction1
             )
         )
