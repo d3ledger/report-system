@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
+import javax.transaction.Transactional
 import kotlin.test.assertEquals
 
 @RunWith(SpringRunner::class)
@@ -46,6 +47,7 @@ class TestCustodyReport {
     val accountOneId = "$accountOne@$testDomain"
 
     @Test
+    @Transactional
     fun testCustodyFeeReportEmpty() {
         var result: MvcResult = mvc
             .perform(
@@ -66,6 +68,7 @@ class TestCustodyReport {
      * @given
      */
     @Test
+    @Transactional
     fun testCustodyFeeReport() {
         prepeareData()
 
