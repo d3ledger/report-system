@@ -138,6 +138,7 @@ class CustodyController {
                 )
             )
         } catch (e: Exception) {
+            log.error("Error making Custody report: ", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
                 CustodyReport(
                     code = e.javaClass.simpleName,
