@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.util.stream.Collectors
+import javax.validation.constraints.NotNull
 
 @Controller
 @RequestMapping("/report/billing/registeredAccounts")
@@ -33,11 +34,11 @@ class RegisteredAccountsController {
 
     @GetMapping("/agent")
     fun reportRegistrations(
-        @RequestParam domain: String,
-        @RequestParam from: Long,
-        @RequestParam to: Long,
-        @RequestParam pageNum: Int = 1,
-        @RequestParam pageSize: Int = 20
+        @NotNull @RequestParam domain: String,
+        @NotNull @RequestParam from: Long,
+        @NotNull @RequestParam to: Long,
+        @NotNull @RequestParam pageNum: Int = 1,
+        @NotNull @RequestParam pageSize: Int = 20
     ): ResponseEntity<RegistrationReport> {
         return try {
             val accountsPage = accountDetailsRepo.getRegisteredAccountsForDomain(
@@ -77,10 +78,10 @@ class RegisteredAccountsController {
 
     @GetMapping("/network")
     fun reportNetworkRegistrations(
-        @RequestParam from: Long,
-        @RequestParam to: Long,
-        @RequestParam pageNum: Int = 1,
-        @RequestParam pageSize: Int = 20
+        @NotNull @RequestParam from: Long,
+        @NotNull @RequestParam to: Long,
+        @NotNull @RequestParam pageNum: Int = 1,
+        @NotNull @RequestParam pageSize: Int = 20
     ): ResponseEntity<RegistrationReport> {
         return try {
             val storageAccounts = accountRepo

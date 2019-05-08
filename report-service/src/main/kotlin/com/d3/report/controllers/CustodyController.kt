@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.math.BigDecimal
+import javax.transaction.Transactional
 import javax.validation.constraints.NotNull
 
 @Controller
@@ -39,13 +40,18 @@ class CustodyController {
     @Value("\${billing.custody.period}")
     private var custodyPeriod: Long = 86400000
 
+    /**
+     * Add from parameter and svaing of daily snapshots.
+     * To calculate fees for a period on a finished dayly basis. Not to recalculate all values for every request.
+     */
     @GetMapping("/agent")
+    @Transactional
     fun reportBillingTransferAsset(
         @NotNull @RequestParam domain: String,
         //    @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long,
-        @RequestParam pageNum: Int = 1,
-        @RequestParam pageSize: Int = 20
+        @NotNull @RequestParam pageNum: Int = 1,
+        @NotNull @RequestParam pageSize: Int = 20
     ): ResponseEntity<CustodyReport> {
         val billingStore = HashMap<String, Billing>()
         return try {
@@ -83,7 +89,7 @@ class CustodyController {
                                 Get billing propertires
                              */
                             val billing = billingStore.computeIfAbsent(
-                                transfer.assetId!!
+                                transfer.assetId
                             )
                             {
                                 billingRepo.selectByAccountIdBillingTypeAndAsset(
@@ -94,16 +100,11 @@ class CustodyController {
                             }
 
                             if (assetCustodyContextForAccount.lastTransferTimestamp != null) {
-                                val previous =
-                                    BigDecimal(assetCustodyContextForAccount.lastTransferTimestamp.toString())
-                                val new =
-                                    BigDecimal(transfer.transaction.block!!.blockCreationTime.toString())
-                                val length = new.minus(previous)
-                                val custodyMultiplier = length.divide(BigDecimal(custodyPeriod))
-                                val periodFee = billing.feeFraction.multiply(custodyMultiplier)
-                                assetCustodyContextForAccount
-                                    .commulativeFeeAmount =
-                                    assetCustodyContextForAccount.commulativeFeeAmount.add(periodFee)
+                                addFeePortion(
+                                    assetCustodyContextForAccount,
+                                    transfer.transaction.block!!.blockCreationTime!!,
+                                    billing.feeFraction
+                                )
                             }
                             assetCustodyContextForAccount.lastTransferTimestamp =
                                 transfer.transaction.block!!.blockCreationTime
@@ -115,15 +116,16 @@ class CustodyController {
                         }
                     calculatedTransferPages += 1
                 } while (++calculatedTransferPages - transfersPage.totalPages < 0)
-                /*
-                TODO Add fee calculations between last transfer and end of period when from to will be added
-                It is easier just to add 'to' at first and test. Then add from.
-                 */
+
                 val assetCustodies = HashMap<String, BigDecimal>()
                 accountCustodyContext.assetsContexts.forEach {
-                    assetCustodies.put(it.key,it.value.commulativeFeeAmount)
+                    addFeePortion(it.value, to, billingStore[it.key]!!.feeFraction)
+                    assetCustodies.put(it.key, it.value.commulativeFeeAmount)
                 }
-                custodyFees.put(getAccountId(account), AccountCustody(getAccountId(account),assetCustodies))
+                custodyFees.put(
+                    getAccountId(account),
+                    AccountCustody(getAccountId(account), assetCustodies)
+                )
             }
 
             ResponseEntity.status(HttpStatus.CONFLICT).body(
@@ -140,6 +142,28 @@ class CustodyController {
                 )
             )
         }
+    }
+
+    /**
+     * @param assetCustodyContextForAccount - context of fee calculation for asset in account
+     * @param blockCreationTime - time of new transfer transaction block commit
+     * @param feeFraction - Fraction of money that should be sent as fee.
+     */
+    private fun addFeePortion(
+        assetCustodyContextForAccount: AssetCustodyContext,
+        blockCreationTime: Long,
+        feeFraction: BigDecimal
+    ) {
+        val previous =
+            BigDecimal(assetCustodyContextForAccount.lastTransferTimestamp.toString())
+        val new =
+            BigDecimal(blockCreationTime.toString())
+        val length = new.minus(previous)
+        val custodyMultiplier = length.divide(BigDecimal(custodyPeriod))
+        val periodFee = feeFraction.multiply(custodyMultiplier)
+        assetCustodyContextForAccount
+            .commulativeFeeAmount =
+            assetCustodyContextForAccount.commulativeFeeAmount.add(periodFee)
     }
 
     private fun getTransferPage(

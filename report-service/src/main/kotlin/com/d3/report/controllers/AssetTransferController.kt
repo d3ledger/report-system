@@ -35,8 +35,8 @@ class AssetTransferController {
         @NotNull @RequestParam domain: String,
         @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long,
-        @RequestParam pageNum: Int = 1,
-        @RequestParam pageSize: Int = 20
+        @NotNull @RequestParam pageNum: Int = 1,
+        @NotNull @RequestParam pageSize: Int = 20
     ): ResponseEntity<TransferReport> {
         val report = TransferReport()
         return try {
