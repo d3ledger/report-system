@@ -1,5 +1,8 @@
 package com.d3.datacollector.service
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 import com.d3.datacollector.utils.irohaBinaryKeyfromHex
 import iroha.protocol.QryResponses
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
@@ -11,10 +14,7 @@ import org.springframework.stereotype.Service
 import java.net.URI
 import java.security.KeyPair
 import java.util.*
-/*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+
 @Service
 class IrohaApiService {
     private val irohaApi: IrohaAPI by lazy {
