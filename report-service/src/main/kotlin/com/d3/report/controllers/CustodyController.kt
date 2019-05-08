@@ -18,9 +18,11 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.stream.Collectors
 import javax.transaction.Transactional
 import javax.validation.constraints.NotNull
+
 /*
 * Copyright D3 Ledger, Inc. All Rights Reserved.
 * SPDX-License-Identifier: Apache-2.0
@@ -114,9 +116,11 @@ class CustodyController {
                             assetCustodyContextForAccount.lastTransferTimestamp =
                                 transfer.transaction.block!!.blockCreationTime
                             if (transfer.destAccountId!!.contentEquals(getAccountId(account))) {
-                                assetCustodyContextForAccount.lastAssetSum.add(transfer.amount)
+                                assetCustodyContextForAccount.lastAssetSum =
+                                    assetCustodyContextForAccount.lastAssetSum.add(transfer.amount)
                             } else if (transfer.srcAccountId!!.contentEquals(getAccountId(account))) {
-                                assetCustodyContextForAccount.lastAssetSum.subtract(transfer.amount)
+                                assetCustodyContextForAccount.lastAssetSum =
+                                    assetCustodyContextForAccount.lastAssetSum.subtract(transfer.amount)
                             }
                         }
                     calculatedTransferPages += 1
@@ -166,11 +170,12 @@ class CustodyController {
         val new =
             BigDecimal(blockCreationTime.toString())
         val length = new.minus(previous)
-        val custodyMultiplier = length.divide(BigDecimal(custodyPeriod))
-        val periodFee = feeFraction.multiply(custodyMultiplier)
+        val custodyMultiplier = length.divide(BigDecimal(custodyPeriod), 8, RoundingMode.HALF_UP)
+        val periodFeeMultiplier = feeFraction.multiply(custodyMultiplier)
+        val fee = periodFeeMultiplier.multiply(assetCustodyContextForAccount.lastAssetSum)
         assetCustodyContextForAccount
             .commulativeFeeAmount =
-            assetCustodyContextForAccount.commulativeFeeAmount.add(periodFee)
+            assetCustodyContextForAccount.commulativeFeeAmount.add(fee)
     }
 
     private fun getTransferPage(
