@@ -9,5 +9,9 @@ package com.d3.report.utils
 
 import com.d3.report.model.CreateAccount
 
-fun getAccountId(account: CreateAccount) =
-    "${account.accountName}@${account.domainId}"
+fun getAccountId(account: CreateAccount) : String {
+    if(account.accountName == null || account.domainId == null) {
+        throw IllegalArgumentException("accountName and domainId should be not null")
+    }
+    return "${account.accountName}@${account.domainId}"
+}
