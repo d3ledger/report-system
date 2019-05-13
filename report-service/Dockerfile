@@ -1,6 +1,6 @@
 FROM openjdk:8-jre
 WORKDIR /opt/report-service
-COPY ./build/libs/report-service-1.0.jar /opt/data-collector/report-service.jar
+COPY ./build/libs/report-service-1.0.jar /opt/report-service/report-service.jar
 EXPOSE 8080
 
 ## THE LIFE SAVER

@@ -4,7 +4,7 @@ services:
   data-collector:
     container_name: "data-collector"
     build:
-      context: ../
+      context: ../data-collector/
       dockerfile: Dockerfile
     ports:
       - 8080:8080
@@ -17,8 +17,21 @@ services:
       POSTGRES_HOST: dc-postgres
       POSTGRES_DATABASE: postgres
       SPRING_RABBITMQ_HOST: brvs-rmq
-      IROHA_HOST: brvs-iroha
+      IROHA_HOST: d3-iroha
       IROHA_PORT: 50051
+
+  report-service:
+    container_name: "report-service"
+    build:
+      context: ../report-service/
+      dockerfile: Dockerfile
+    ports:
+      - 8090:8090
+    depends_on:
+      - data-collector
+    environment:
+      POSTGRES_HOST: dc-postgres
+      POSTGRES_DATABASE: postgres
 
   dc-postgres:
     image: postgres
@@ -30,7 +43,6 @@ services:
   brvs-rmq:
     image: rabbitmq:3-management
     container_name: "brvs-rmq"
-
 
 networks:
   # Specify the network Iroha is present in if needed
