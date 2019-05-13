@@ -1,10 +1,13 @@
 package com.d3.report.tests
+
 /*
 * Copyright D3 Ledger, Inc. All Rights Reserved.
 * SPDX-License-Identifier: Apache-2.0
 */
+import com.d3.report.context.AssetCustodyContext
 import com.d3.report.model.*
 import com.d3.report.repository.*
+import com.d3.report.service.CustodyService
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,6 +34,9 @@ class TestCustodyReport {
     @Value("\${iroha.templates.custodyBilling}")
     private var custodyBillingTemplate = "custody_billing@"
 
+    @Value("\${billing.custody.period}")
+    private var custodyPeriod: Long = 86400000
+
     @Autowired
     lateinit var mvc: MockMvc
     @Autowired
@@ -43,6 +49,8 @@ class TestCustodyReport {
     lateinit var accountRepo: CreateAccountRepo
     @Autowired
     lateinit var billingRepo: BillingRepository
+    @Autowired
+    lateinit var custodyService: CustodyService
 
     val testDomain = "test_domain"
     val otherDomain = "other_domain"
@@ -97,18 +105,23 @@ class TestCustodyReport {
             .andReturn()
         val respBody = mapper.readValue(result.response.contentAsString, CustodyReport::class.java)
         assertEquals(1, respBody.accounts.size)
-        assertEquals(accountOneId,respBody.accounts[0].accountId)
+        assertEquals(accountOneId, respBody.accounts[0].accountId)
         assertEquals(1, respBody.accounts[0].assetCustody.size)
-        assertEquals(BigDecimal("1").setScale(8), respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8))
+        assertEquals(
+            BigDecimal("1").setScale(8),
+            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8)
+        )
     }
 
     private fun prepeareData() {
-        billingRepo.save(Billing(
-            accountId = "$custodyBillingTemplate@$testDomain",
-            billingType =  Billing.BillingTypeEnum.CUSTODY,
-            asset = assetId,
-            feeFraction = BigDecimal("0.1")
-        ))
+        billingRepo.save(
+            Billing(
+                accountId = "$custodyBillingTemplate@$testDomain",
+                billingType = Billing.BillingTypeEnum.CUSTODY,
+                asset = assetId,
+                feeFraction = BigDecimal("0.1")
+            )
+        )
 
         prepearBlockOneWithAccounts()
 
@@ -194,5 +207,17 @@ class TestCustodyReport {
                 transaction1
             )
         )
+    }
+
+    @Test
+    fun testAddFeePortion() {
+        val assetCustodyContext = AssetCustodyContext(
+            BigDecimal("0"),
+            0,
+            BigDecimal(10)
+        )
+        custodyService.addFeePortion(assetCustodyContext,custodyPeriod*2, BigDecimal("0.1"))
+
+        assertEquals(BigDecimal("2"),assetCustodyContext.commulativeFeeAmount.setScale(0))
     }
 }

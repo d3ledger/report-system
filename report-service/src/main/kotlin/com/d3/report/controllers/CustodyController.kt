@@ -6,6 +6,7 @@ import com.d3.report.model.*
 import com.d3.report.repository.BillingRepository
 import com.d3.report.repository.CreateAccountRepo
 import com.d3.report.repository.TransferAssetRepo
+import com.d3.report.service.CustodyService
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -41,10 +42,10 @@ class CustodyController {
     private lateinit var accountRepo: CreateAccountRepo
     @Autowired
     private lateinit var billingRepo: BillingRepository
+    @Autowired
+    private lateinit var custodyService: CustodyService
     @Value("\${iroha.templates.custodyBilling}")
     private lateinit var custodyAccountTemplate: String
-    @Value("\${billing.custody.period}")
-    private var custodyPeriod: Long = 86400000
 
     /**
      * Add from parameter and svaing of daily snapshots.
@@ -107,7 +108,7 @@ class CustodyController {
                             }
                             val lastTransferTime = assetCustodyContextForAccount.lastTransferTimestamp ?: 0
                             if (assetCustodyContextForAccount.lastTransferTimestamp != null && lastTransferTime > from) {
-                                addFeePortion(
+                                custodyService.addFeePortion(
                                     assetCustodyContextForAccount,
                                     transfer.transaction.block!!.blockCreationTime!!,
                                     billing.feeFraction
@@ -128,7 +129,7 @@ class CustodyController {
 
                 val assetCustodies = HashMap<String, BigDecimal>()
                 accountCustodyContext.assetsContexts.forEach {
-                    addFeePortion(it.value, to, billingStore[it.key]!!.feeFraction)
+                    custodyService.addFeePortion(it.value, to, billingStore[it.key]!!.feeFraction)
                     assetCustodies.put(it.key, it.value.commulativeFeeAmount)
                 }
                 custodyFees.put(
@@ -153,29 +154,6 @@ class CustodyController {
                 )
             )
         }
-    }
-
-    /**
-     * @param assetCustodyContextForAccount - context of fee calculation for asset in account
-     * @param blockCreationTime - time of new transfer transaction block commit
-     * @param feeFraction - Fraction of money that should be sent as fee.
-     */
-    private fun addFeePortion(
-        assetCustodyContextForAccount: AssetCustodyContext,
-        blockCreationTime: Long,
-        feeFraction: BigDecimal
-    ) {
-        val previous =
-            BigDecimal(assetCustodyContextForAccount.lastTransferTimestamp.toString())
-        val new =
-            BigDecimal(blockCreationTime.toString())
-        val length = new.minus(previous)
-        val custodyMultiplier = length.divide(BigDecimal(custodyPeriod), 8, RoundingMode.HALF_UP)
-        val periodFeeMultiplier = feeFraction.multiply(custodyMultiplier)
-        val fee = periodFeeMultiplier.multiply(assetCustodyContextForAccount.lastAssetSum)
-        assetCustodyContextForAccount
-            .commulativeFeeAmount =
-            assetCustodyContextForAccount.commulativeFeeAmount.add(fee)
     }
 
     private fun getTransferPage(
