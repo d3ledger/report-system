@@ -30,6 +30,8 @@ spring:
       # To be updated in real production usage! Possible values none;update;create
       ddl-auto: none
     show-sql: true
+server:
+  port: 8090
 
 hibernate:
   hbm2ddl:

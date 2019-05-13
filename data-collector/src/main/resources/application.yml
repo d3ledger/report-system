@@ -46,6 +46,9 @@ spring:
     password: guest
     virtual-host: /
 
+server:
+  port: 8080
+
 logging:
   level:
     org.hibernate.engine.jdbc.env.internal.LobCreatorBuilderImpl: ERROR
