@@ -23,9 +23,7 @@ import javax.validation.constraints.NotNull
 @RequestMapping("/report/billing")
 class AssetTransferController {
 
-    companion object {
-        val log = KLogging().logger
-    }
+    companion object: KLogging()
 
     @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
@@ -64,8 +62,7 @@ class AssetTransferController {
                 }
             ResponseEntity.ok<TransferReport>(report)
         } catch (e: Exception) {
-            log.error("Error creating transfer billing report.", e)
-            RegisteredAccountsController.log.error("Error transfer report", e)
+            logger.error("Error creating transfer billing report.", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
                 TransferReport(
                     code = e.javaClass.simpleName,

@@ -92,7 +92,7 @@ class CustodyService {
                     from
                 )
                 calculatedTransferPages += 1
-            } while (++calculatedTransferPages - transfersPage.totalPages < 0)
+            } while (calculatedTransferPages - transfersPage.totalPages < 0)
 
             val assetCustodies = HashMap<String, BigDecimal>()
             accountCustodyContext.assetsContexts.forEach {

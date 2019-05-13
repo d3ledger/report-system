@@ -24,9 +24,7 @@ import javax.validation.constraints.NotNull
 @RequestMapping("/report/billing/registeredAccounts")
 class RegisteredAccountsController {
 
-    companion object {
-        val log = KLogging().logger
-    }
+    companion object: KLogging()
 
     @Autowired
     private lateinit var accountDetailsRepo: SetAccountDetailRepo
@@ -69,7 +67,7 @@ class RegisteredAccountsController {
                 )
             )
         } catch (e: Exception) {
-            log.error("Error registrations report", e)
+            logger.error("Error registrations report", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
                 RegistrationReport(
                     code = e.javaClass.simpleName,
@@ -116,7 +114,7 @@ class RegisteredAccountsController {
                 )
             )
         } catch (e: Exception) {
-            log.error("Error registrations report", e)
+            logger.error("Error registrations report", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
                 RegistrationReport(
                     code = e.javaClass.simpleName,

@@ -24,9 +24,7 @@ import javax.validation.constraints.NotNull
 @RequestMapping("/report/billing/custody")
 class CustodyController {
 
-    companion object {
-        val log = KLogging().logger
-    }
+    companion object: KLogging()
 
     @Autowired
     private lateinit var accountRepo: CreateAccountRepo
@@ -34,7 +32,7 @@ class CustodyController {
     private lateinit var custodyService: CustodyService
 
     /**
-     * Add from parameter and svaing of daily snapshots.
+     * Add from parameter and saving of daily snapshots.
      * To calculate fees for a period on a finished dayly basis. Not to recalculate all values for every request.
      */
     @GetMapping("/agent")
@@ -72,7 +70,7 @@ class CustodyController {
                 )
             )
         } catch (e: Exception) {
-            log.error("Error making Custody report: ", e)
+            logger.error("Error making Custody report: ", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
                 CustodyReport(
                     code = e.javaClass.simpleName,
