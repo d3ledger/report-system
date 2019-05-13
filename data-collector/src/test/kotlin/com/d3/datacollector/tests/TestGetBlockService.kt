@@ -1,3 +1,7 @@
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 package com.d3.datacollector.tests
 
 import iroha.protocol.*
@@ -30,10 +34,7 @@ import java.security.KeyPair
 import java.util.Arrays
 import javax.transaction.Transactional
 import kotlin.test.assertEquals
-/*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc

@@ -1,8 +1,9 @@
-package com.d3.report.tests.datajpa
 /*
 * Copyright D3 Ledger, Inc. All Rights Reserved.
 * SPDX-License-Identifier: Apache-2.0
 */
+package com.d3.report.tests.datajpa
+
 import com.d3.report.model.Block
 import com.d3.report.model.Transaction
 import com.d3.report.model.TransferAsset

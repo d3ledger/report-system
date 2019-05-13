@@ -1,15 +1,15 @@
 package com.d3.datacollector.service
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 import com.d3.datacollector.config.RabbitConfig
 import com.d3.datacollector.model.BillingMqDto
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
-/*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+
 class RabbitMqServiceImpl : RabbitMqService {
     @Autowired
     private lateinit var rabbitTemplate: RabbitTemplate

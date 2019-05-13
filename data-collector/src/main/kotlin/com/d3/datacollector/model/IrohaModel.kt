@@ -1,13 +1,13 @@
 package com.d3.datacollector.model
-
-import com.fasterxml.jackson.annotation.JsonIgnore
-import java.math.BigDecimal
-import javax.persistence.*
-import javax.validation.constraints.NotNull
 /*
 * Copyright D3 Ledger, Inc. All Rights Reserved.
 * SPDX-License-Identifier: Apache-2.0
 */
+import com.fasterxml.jackson.annotation.JsonIgnore
+import java.math.BigDecimal
+import javax.persistence.*
+import javax.validation.constraints.NotNull
+
 @Entity
 @Table(name = "block")
 data class Block(

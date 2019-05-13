@@ -1,5 +1,8 @@
 package com.d3.datacollector.service
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 import com.d3.datacollector.model.Billing
 import com.d3.datacollector.model.State
 import com.d3.datacollector.repository.BillingRepository
@@ -8,10 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
 import javax.transaction.Transactional
-/*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+
 @Service
 class DbService {
     @Autowired

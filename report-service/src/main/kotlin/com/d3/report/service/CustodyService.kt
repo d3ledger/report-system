@@ -8,8 +8,10 @@
 package com.d3.report.service
 
 import com.d3.report.context.AssetCustodyContext
+import com.d3.report.model.InvalidValue
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.lang.RuntimeException
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -29,6 +31,14 @@ class CustodyService {
         blockCreationTime: Long,
         feeFraction: BigDecimal
     ) {
+        if(feeFraction.compareTo(BigDecimal.ZERO) < 1) {
+            throw InvalidValue("Fee fraction is zero or negative: $feeFraction")
+        }
+
+        if(feeFraction.compareTo(BigDecimal.ONE) == 1) {
+            throw InvalidValue("Fee fraction should be between 0 and 1, but now we have: $feeFraction")
+        }
+
         val previous =
             BigDecimal(assetCustodyContextForAccount.lastTransferTimestamp.toString())
         val new =

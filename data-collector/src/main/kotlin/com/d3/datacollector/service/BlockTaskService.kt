@@ -1,5 +1,8 @@
 package com.d3.datacollector.service
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
@@ -13,10 +16,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import javax.transaction.Transactional
-/*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+
 @Service
 class BlockTaskService {
     private val log = KLogging().logger

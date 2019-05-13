@@ -1,10 +1,10 @@
 package com.d3.datacollector.service
-
-import com.d3.datacollector.model.BillingMqDto
 /*
 * Copyright D3 Ledger, Inc. All Rights Reserved.
 * SPDX-License-Identifier: Apache-2.0
 */
+import com.d3.datacollector.model.BillingMqDto
+
 interface RabbitMqService {
 
     fun sendBillingUpdate(update: BillingMqDto)

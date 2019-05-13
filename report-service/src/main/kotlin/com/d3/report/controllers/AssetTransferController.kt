@@ -1,5 +1,8 @@
 package com.d3.report.controllers
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 import com.d3.report.model.Transfer
 import com.d3.report.model.TransferReport
 import com.d3.report.repository.TransferAssetRepo
@@ -15,10 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.util.stream.Collectors
 import javax.validation.constraints.NotNull
-/*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+
 @Controller
 @RequestMapping("/report/billing")
 class AssetTransferController {
@@ -64,6 +64,7 @@ class AssetTransferController {
                 }
             ResponseEntity.ok<TransferReport>(report)
         } catch (e: Exception) {
+            log.error("Error creating transfer billing report.", e)
             RegisteredAccountsController.log.error("Error transfer report", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
                 TransferReport(
