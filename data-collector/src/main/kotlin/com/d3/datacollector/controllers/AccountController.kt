@@ -1,9 +1,11 @@
 package com.d3.datacollector.controllers
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 import com.d3.datacollector.model.BooleanWrapper
 import com.d3.datacollector.model.IntegerWrapper
 import com.d3.datacollector.repository.CreateAccountRepo
-import com.d3.datacollector.repository.CreateAssetRepo
 import com.d3.datacollector.repository.SetAccountQuorumRepo
 import com.d3.datacollector.service.IrohaApiService
 import mu.KLogging
@@ -15,7 +17,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.lang.Exception
-import java.lang.RuntimeException
 import javax.validation.constraints.NotNull
 
 @Controller

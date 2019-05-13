@@ -1,5 +1,8 @@
 package com.d3.datacollector.service
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 import com.d3.datacollector.config.RabbitConfig
 import com.d3.datacollector.model.BillingMqDto
 import com.fasterxml.jackson.databind.ObjectMapper

@@ -1,5 +1,8 @@
 package com.d3.datacollector.repository
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 import com.d3.datacollector.model.CreateAccount
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository

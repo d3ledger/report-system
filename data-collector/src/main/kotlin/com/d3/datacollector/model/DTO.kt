@@ -1,5 +1,8 @@
 package com.d3.datacollector.model
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 import java.math.BigDecimal
 import java.util.*
 

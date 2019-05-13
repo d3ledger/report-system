@@ -1,16 +1,30 @@
-plugins {
-    id 'java'
-    id 'org.jetbrains.kotlin.jvm'
-}
-
 group 'd3'
 version '1.0'
 
-sourceCompatibility = 1.8
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        //Spring-boot
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:$spring_boot_version"
+    }
+}
 
 repositories {
     mavenCentral()
 }
+
+sourceCompatibility = 1.8
+
+apply plugin: 'application'
+apply plugin: "kotlin-spring" // See https://kotlinlang.org/docs/reference/compiler-plugins.html#kotlin-spring-compiler-plugin
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'org.jetbrains.kotlin.jvm'
 
 dependencies {
 
@@ -37,4 +51,26 @@ compileKotlin {
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
+}
+
+
+mainClassName = "com.d3.report.ReportMain"
+
+task runCollector(type: JavaExec ) {
+    main = mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    setWorkingDir("$rootDir/")
+}
+
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': mainClassName
+        )
+    }
+}
+
+tasks.withType(Test)  {
+    maxParallelForks = 1
 }

@@ -1,8 +1,12 @@
 package com.d3.report.controllers
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 import com.d3.report.model.Transfer
 import com.d3.report.model.TransferReport
 import com.d3.report.repository.TransferAssetRepo
+import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
@@ -19,6 +23,8 @@ import javax.validation.constraints.NotNull
 @RequestMapping("/report/billing")
 class AssetTransferController {
 
+    companion object: KLogging()
+
     @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
 
@@ -30,8 +36,8 @@ class AssetTransferController {
         @NotNull @RequestParam domain: String,
         @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long,
-        @RequestParam pageNum: Int = 1,
-        @RequestParam pageSize: Int = 20
+        @NotNull @RequestParam pageNum: Int = 1,
+        @NotNull @RequestParam pageSize: Int = 20
     ): ResponseEntity<TransferReport> {
         val report = TransferReport()
         return try {
@@ -56,7 +62,8 @@ class AssetTransferController {
                 }
             ResponseEntity.ok<TransferReport>(report)
         } catch (e: Exception) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+            logger.error("Error creating transfer billing report.", e)
+            ResponseEntity.status(HttpStatus.CONFLICT).body(
                 TransferReport(
                     code = e.javaClass.simpleName,
                     message = e.message

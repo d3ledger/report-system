@@ -1,9 +1,13 @@
 package com.d3.report.controllers
-
+/*
+* Copyright D3 Ledger, Inc. All Rights Reserved.
+* SPDX-License-Identifier: Apache-2.0
+*/
 import com.d3.report.model.AccountRegistration
 import com.d3.report.model.RegistrationReport
 import com.d3.report.repository.CreateAccountRepo
 import com.d3.report.repository.SetAccountDetailRepo
+import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
@@ -14,10 +18,13 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.util.stream.Collectors
+import javax.validation.constraints.NotNull
 
 @Controller
 @RequestMapping("/report/billing/registeredAccounts")
 class RegisteredAccountsController {
+
+    companion object: KLogging()
 
     @Autowired
     private lateinit var accountDetailsRepo: SetAccountDetailRepo
@@ -28,11 +35,11 @@ class RegisteredAccountsController {
 
     @GetMapping("/agent")
     fun reportRegistrations(
-        @RequestParam domain: String,
-        @RequestParam from: Long,
-        @RequestParam to: Long,
-        @RequestParam pageNum: Int = 1,
-        @RequestParam pageSize: Int = 20
+        @NotNull @RequestParam domain: String,
+        @NotNull @RequestParam from: Long,
+        @NotNull @RequestParam to: Long,
+        @NotNull @RequestParam pageNum: Int = 1,
+        @NotNull @RequestParam pageSize: Int = 20
     ): ResponseEntity<RegistrationReport> {
         return try {
             val accountsPage = accountDetailsRepo.getRegisteredAccountsForDomain(
@@ -60,6 +67,7 @@ class RegisteredAccountsController {
                 )
             )
         } catch (e: Exception) {
+            logger.error("Error registrations report", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
                 RegistrationReport(
                     code = e.javaClass.simpleName,
@@ -71,10 +79,10 @@ class RegisteredAccountsController {
 
     @GetMapping("/network")
     fun reportNetworkRegistrations(
-        @RequestParam from: Long,
-        @RequestParam to: Long,
-        @RequestParam pageNum: Int = 1,
-        @RequestParam pageSize: Int = 20
+        @NotNull @RequestParam from: Long,
+        @NotNull @RequestParam to: Long,
+        @NotNull @RequestParam pageNum: Int = 1,
+        @NotNull @RequestParam pageSize: Int = 20
     ): ResponseEntity<RegistrationReport> {
         return try {
             val storageAccounts = accountRepo
@@ -106,6 +114,7 @@ class RegisteredAccountsController {
                 )
             )
         } catch (e: Exception) {
+            logger.error("Error registrations report", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
                 RegistrationReport(
                     code = e.javaClass.simpleName,
