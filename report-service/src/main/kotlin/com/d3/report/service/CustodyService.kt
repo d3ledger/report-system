@@ -121,6 +121,9 @@ class CustodyService {
         transfersPage
             .get()
             .forEach { transfer ->
+/*
+                custodyContextRepo.selectByTimeAndAccountAndAssetId(getAccountId(account), )
+*/
                 /*
                                 Sum of custody fees for asset from every period
                              */

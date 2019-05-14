@@ -49,12 +49,20 @@ class AccountAssetCustodyContextRepoTest {
             )
         )
 
-        val found = repo.selectLastByAccountAndAssetId(entity.accountId, entity.assetId).get()
+        repo.save(
+            AccountAssetCustodyContext(
+                accountId = "some_account@some_domain",
+                assetId = "some_asset@some_domain",
+                commulativeFeeAmount = BigDecimal("95"),
+                lastTransferTimestamp = 27389L,
+                lastAssetSum = BigDecimal("4223")
+            )
+        )
+
+        val found = repo.selectByTimeAndAccountAndAssetId(entity.accountId, entity.assetId, lastTransferTime).get()
 
         assertEquals(commulativeAmount, found.commulativeFeeAmount)
         assertEquals(lastAssetSum, found.lastAssetSum)
         assertEquals(lastTransferTime, found.lastTransferTimestamp)
-
-
     }
 }
