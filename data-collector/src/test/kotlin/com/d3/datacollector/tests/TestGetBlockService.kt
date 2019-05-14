@@ -42,6 +42,8 @@ import kotlin.test.assertEquals
 class TestGetBlockService {
     private val log = KLogging().logger
 
+    @Value("\${iroha.latticePlaceholder}")
+    private lateinit var latticePlaceholder: String
     @Value("\${iroha.user.publicKeyHex}")
     lateinit var dataCollectorPublicKey: String
     @Autowired
@@ -129,27 +131,27 @@ class TestGetBlockService {
             ).sign(useraKeypair)
             .build()
         val tx2 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace("#", "__"), "0.6")
+            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), "0.6")
             .sign(transaferBillingKeyPair)
             .build()
         val tx3 = Transaction.builder(custodyBillingAccountId)
-            .setAccountDetail(custodyBillingAccountId, usd.replace("#", "__"), "0.1")
+            .setAccountDetail(custodyBillingAccountId, usd.replace("#", latticePlaceholder), "0.1")
             .sign(custodyKeyPair)
             .build()
         val tx4 = Transaction.builder(accountCreationBillingAccountId)
-            .setAccountDetail(accountCreationBillingAccountId, usd.replace("#", "__"), "0.2")
+            .setAccountDetail(accountCreationBillingAccountId, usd.replace("#", latticePlaceholder), "0.2")
             .sign(accountCreationKeyPair)
             .build()
         val tx5 = Transaction.builder(exchangeBillingAccountId)
-            .setAccountDetail(exchangeBillingAccountId, usd.replace("#", "__"), "0.3")
+            .setAccountDetail(exchangeBillingAccountId, usd.replace("#", latticePlaceholder), "0.3")
             .sign(exchangeKeyPair)
             .build()
         val tx6 = Transaction.builder(withdrawalBillingAccountId)
-            .setAccountDetail(withdrawalBillingAccountId, usd.replace("#", "__"), "0.4")
+            .setAccountDetail(withdrawalBillingAccountId, usd.replace("#", latticePlaceholder), "0.4")
             .sign(withdrawalKeyPair)
             .build()
         val tx7 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace("#", "__"), "0.5")
+            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), "0.5")
             .sign(transaferBillingKeyPair)
             .build()
         val tx8 = Transaction.builder(custodyBillingAccountId)

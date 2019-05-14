@@ -12,6 +12,7 @@ iroha:
     accountCreationBilling: account_creation_billing@
     exchangeBilling: exchange_billing@
     withdrawalBilling: withdrawal_billing@
+  latticePlaceholder: __
 
 scheduling:
   iroha:

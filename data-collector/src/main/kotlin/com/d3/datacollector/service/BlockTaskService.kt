@@ -34,6 +34,8 @@ class BlockTaskService {
     private lateinit var exchangeBillingTemplate: String
     @Value("\${iroha.templates.withdrawalBilling}")
     private lateinit var withdrawalBillingTemplate: String
+    @Value("\${iroha.latticePlaceholder}")
+    private lateinit var latticePlaceholder: String
     val LAST_PROCESSED_BLOCK_ROW_ID = 0L
     val LAST_REQUEST_ROW_ID = 1L
     @Autowired
@@ -176,7 +178,7 @@ class BlockTaskService {
                 null,
                 ad.accountId,
                 defineBillingType(ad.accountId),
-                ad.key.replace("__", "#"),
+                ad.key.replace(latticePlaceholder, "#"),
                 BigDecimal(ad.value)
             )
             performUpdates(billing)
