@@ -16,7 +16,7 @@ data class Block(
     @NotNull
     val blockNumber: Long? = null,
     @NotNull
-    val blockCreationTime: Long? = null
+    val blockCreationTime: Long = 0
 )
 
 @Entity

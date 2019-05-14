@@ -7,8 +7,6 @@
 
 package com.d3.report.service
 
-import com.d3.report.model.AccountCustodyContext
-import com.d3.report.model.AssetCustodyContext
 import com.d3.report.model.*
 import com.d3.report.repository.AccountAssetCustodyContextRepo
 import com.d3.report.repository.BillingRepository
@@ -121,23 +119,18 @@ class CustodyService {
         transfersPage
             .get()
             .forEach { transfer ->
-/*
-                custodyContextRepo.selectByTimeAndAccountAndAssetId(getAccountId(account), )
-*/
-                /*
-                                Sum of custody fees for asset from every period
-                             */
                 val assetCustodyContextForAccount =
-                    accountCustodyContext.assetsContexts.computeIfAbsent(transfer.assetId!!) {
-                        AssetCustodyContext(
-                            lastTransferTimestamp = account.transaction.block?.blockCreationTime
-                        )
-                    }
+                    getAssetCustodyContext(
+                        accountCustodyContext,
+                        transfer,
+                        account,
+                        from
+                    )
                 /*
-                                Get billing propertires
-                             */
+                   Get billing propertires
+                */
                 val billing = billingStore.computeIfAbsent(
-                    transfer.assetId
+                    transfer.assetId!!
                 )
                 {
                     billingRepo.selectByAccountIdBillingTypeAndAsset(
@@ -164,7 +157,63 @@ class CustodyService {
                     assetCustodyContextForAccount.lastAssetSum =
                         assetCustodyContextForAccount.lastAssetSum.subtract(transfer.amount)
                 }
+
+                val option = custodyContextRepo
+                    .selectByTimeAndAccountAndAssetId(getAccountId(account), transfer.assetId, from)
+                if (option.isPresent && option.get().lastTransferTimestamp.minus(assetCustodyContextForAccount.lastTransferTimestamp).compareTo(custodyPeriod * 14) > 0) {
+
+                } else {
+                    saveCustodyContext(account, transfer.assetId, assetCustodyContextForAccount)
+                }
             }
+    }
+
+    private fun saveCustodyContext(
+        account: CreateAccount,
+        assetId: String,
+        assetCustodyContextForAccount: AssetCustodyContext
+    ) {
+        custodyContextRepo.save(
+            AccountAssetCustodyContext(
+                accountId = getAccountId(account),
+                assetId = assetId,
+                commulativeFeeAmount = assetCustodyContextForAccount.commulativeFeeAmount,
+                lastTransferTimestamp = assetCustodyContextForAccount.lastTransferTimestamp,
+                lastAssetSum = assetCustodyContextForAccount.lastAssetSum
+            )
+        )
+    }
+
+    private fun getAssetCustodyContext(
+        accountCustodyContext: AccountCustodyContext,
+        transfer: TransferAsset,
+        account: CreateAccount,
+        from: Long
+    ): AssetCustodyContext {
+        if (!accountCustodyContext.assetsContexts.containsKey(transfer.assetId!!)) {
+            val option = custodyContextRepo
+                .selectByTimeAndAccountAndAssetId(getAccountId(account), transfer.assetId, from)
+            if (option.isPresent) {
+                val assetContext = option.get()
+                accountCustodyContext.assetsContexts.put(
+                    transfer.assetId, AssetCustodyContext(
+                        commulativeFeeAmount = assetContext.commulativeFeeAmount,
+                        lastTransferTimestamp = assetContext.lastTransferTimestamp,
+                        lastAssetSum = assetContext.lastAssetSum
+                    )
+                )
+            }
+        }
+        /*
+                                Sum of custody fees for asset from every period
+                             */
+        val assetCustodyContextForAccount =
+            accountCustodyContext.assetsContexts.computeIfAbsent(transfer.assetId) {
+                AssetCustodyContext(
+                    lastTransferTimestamp = account.transaction.block?.blockCreationTime ?: 0
+                )
+            }
+        return assetCustodyContextForAccount
     }
 
     private fun getTransferPage(

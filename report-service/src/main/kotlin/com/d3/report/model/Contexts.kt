@@ -18,7 +18,7 @@ class AccountCustodyContext(
 
 class AssetCustodyContext(
     var commulativeFeeAmount: BigDecimal = BigDecimal("0"),
-    var lastTransferTimestamp:Long? = null,
+    var lastTransferTimestamp:Long = 0,
     var lastAssetSum: BigDecimal = BigDecimal("0")
 )
 
@@ -29,6 +29,6 @@ class AccountAssetCustodyContext(
     val accountId: String,
     val assetId: String,
     var commulativeFeeAmount: BigDecimal = BigDecimal("0"),
-    var lastTransferTimestamp: Long? = null,
+    var lastTransferTimestamp: Long = 0,
     var lastAssetSum: BigDecimal = BigDecimal("0")
 )
