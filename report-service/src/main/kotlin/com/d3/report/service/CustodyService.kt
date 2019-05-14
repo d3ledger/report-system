@@ -140,11 +140,11 @@ class CustodyService {
                     ).get()
                 }
                 val lastTransferTime =
-                    assetCustodyContextForAccount.lastTransferTimestamp ?: 0
-                if (assetCustodyContextForAccount.lastTransferTimestamp != null && lastTransferTime > from) {
+                    assetCustodyContextForAccount.lastTransferTimestamp
+                if (lastTransferTime > from) {
                     addFeePortion(
                         assetCustodyContextForAccount,
-                        transfer.transaction.block!!.blockCreationTime!!,
+                        transfer.transaction.block!!.blockCreationTime,
                         billing.feeFraction
                     )
                 }
