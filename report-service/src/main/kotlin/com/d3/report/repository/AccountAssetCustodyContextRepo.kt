@@ -14,9 +14,12 @@ import java.util.*
 
 interface AccountAssetCustodyContextRepo : CrudRepository<AccountAssetCustodyContext, Long> {
 
-    @Query("SELECT c FROM AccountAssetCustodyContext c WHERE c.accountId = :accountId and c.assetId = :assetId")
-    fun selectByAccountAndAssetId(
+    @Query("SELECT c FROM AccountAssetCustodyContext c WHERE c.accountId = :accountId" +
+            " and c.assetId = :assetId and c.lastTransferTimestamp = (SELECT MAX(c.lastTransferTimestamp) FROM AccountAssetCustodyContext c WHERE c.accountId = :accountId AND c.assetId = :assetId)")
+    fun selectLastByAccountAndAssetId(
         accountId: String,
         assetId: String
     ): Optional<AccountAssetCustodyContext>
+
+
 }

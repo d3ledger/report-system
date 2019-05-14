@@ -10,6 +10,7 @@ package com.d3.report.service
 import com.d3.report.model.AccountCustodyContext
 import com.d3.report.model.AssetCustodyContext
 import com.d3.report.model.*
+import com.d3.report.repository.AccountAssetCustodyContextRepo
 import com.d3.report.repository.BillingRepository
 import com.d3.report.repository.TransferAssetRepo
 import com.d3.report.utils.getAccountId
@@ -27,6 +28,10 @@ class CustodyService {
     private lateinit var transaferRepo: TransferAssetRepo
     @Autowired
     private lateinit var billingRepo: BillingRepository
+    @Autowired
+    private lateinit var custodyContextRepo: AccountAssetCustodyContextRepo
+
+
     @Value("\${billing.custody.period}")
     private var custodyPeriod: Long = 86400000
 
