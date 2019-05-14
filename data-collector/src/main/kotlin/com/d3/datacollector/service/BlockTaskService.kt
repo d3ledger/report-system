@@ -176,7 +176,7 @@ class BlockTaskService {
                 null,
                 ad.accountId,
                 defineBillingType(ad.accountId),
-                ad.key.replace("_", "#"),
+                ad.key.replace("__", "#"),
                 BigDecimal(ad.value)
             )
             performUpdates(billing)

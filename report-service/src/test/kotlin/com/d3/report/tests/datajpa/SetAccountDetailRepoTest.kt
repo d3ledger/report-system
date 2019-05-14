@@ -34,7 +34,6 @@ class SetAccountDetailRepoTest {
     @Value("\${iroha.templates.clientsStorage}")
     private lateinit var clientsStorageTemplate: String
 
-    private val mapper = ObjectMapper()
     private val domain = "test"
 
     @Test

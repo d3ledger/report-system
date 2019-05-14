@@ -26,3 +26,16 @@ CREATE TABLE billing (
 	updated bigint NOT NULL,
 	CONSTRAINT billing_pkey PRIMARY KEY (id)
 );
+
+--changeset yvinogradov:create_table_account_asset_custody_context
+CREATE TABLE public.account_asset_custody_context
+(
+    id bigserial NOT NULL,
+    account_id character varying(128),
+    asset_id character varying(128),
+    commulative_fee_amount numeric(19,10),
+    last_asset_sum numeric(21,10),
+    last_transfer_timestamp bigint,
+    CONSTRAINT account_asset_custody_context_pkey PRIMARY KEY (id)
+)
+

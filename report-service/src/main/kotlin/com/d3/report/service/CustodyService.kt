@@ -7,8 +7,8 @@
 
 package com.d3.report.service
 
-import com.d3.report.context.AccountCustodyContext
-import com.d3.report.context.AssetCustodyContext
+import com.d3.report.model.AccountCustodyContext
+import com.d3.report.model.AssetCustodyContext
 import com.d3.report.model.*
 import com.d3.report.repository.BillingRepository
 import com.d3.report.repository.TransferAssetRepo
