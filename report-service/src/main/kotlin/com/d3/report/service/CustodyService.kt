@@ -205,8 +205,8 @@ class CustodyService {
             }
         }
         /*
-                                Sum of custody fees for asset from every period
-                             */
+          Sum of custody fees for asset from every period
+        */
         val assetCustodyContextForAccount =
             accountCustodyContext.assetsContexts.computeIfAbsent(transfer.assetId) {
                 AssetCustodyContext(
