@@ -13,7 +13,6 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -24,7 +23,7 @@ import javax.validation.constraints.NotNull
 @RequestMapping("/report/billing")
 class AssetTransferController {
 
-    companion object: KLogging()
+    companion object : KLogging()
 
     @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
@@ -43,7 +42,12 @@ class AssetTransferController {
         val report = TransferReport()
         return try {
             val page =
-                transaferRepo.getDataBetween("$transferBillingTemplate$domain", from, to, PageRequest.of(pageNum - 1, pageSize))
+                transaferRepo.getDataBetween(
+                    "$transferBillingTemplate$domain",
+                    from,
+                    to,
+                    PageRequest.of(pageNum - 1, pageSize)
+                )
 
             report.pages = page.totalPages
             report.total = page.totalElements
