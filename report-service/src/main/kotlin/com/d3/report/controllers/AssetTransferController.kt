@@ -20,9 +20,6 @@ import org.springframework.web.bind.annotation.RequestParam
 import java.util.stream.Collectors
 import javax.validation.constraints.NotNull
 
-/*
-@CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
-*/
 @Controller
 @RequestMapping("/report/billing")
 class AssetTransferController {
