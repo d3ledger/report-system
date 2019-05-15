@@ -24,6 +24,11 @@ class AccountAssetCustodyContextRepoTest {
     @Autowired
     private lateinit var repo: AccountAssetCustodyContextRepo
 
+    /**
+     * @given three contexts for same asset and account
+     * @when get context from db by account, asset, time
+     * @then returned context for current asset and account with max(lastTransferTime) before time send in request
+     */
     @Test
     fun testSelectByAccountIDAndAssetId() {
         val commulativeAmount = BigDecimal("24")

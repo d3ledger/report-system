@@ -29,7 +29,6 @@ class CustodyService {
     @Autowired
     private lateinit var custodyContextRepo: AccountAssetCustodyContextRepo
 
-
     @Value("\${billing.custody.period}")
     private var custodyPeriod: Long = 86400000
 
