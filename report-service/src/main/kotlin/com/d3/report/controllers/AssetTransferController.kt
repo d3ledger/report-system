@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import java.util.stream.Collectors
 import javax.validation.constraints.NotNull
 
-@CrossOrigin(maxAge = 3600)
+@CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
 @Controller
 @RequestMapping("/report/billing")
 class AssetTransferController {
