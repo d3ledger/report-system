@@ -21,7 +21,9 @@ import java.util.stream.Collectors
 import javax.transaction.Transactional
 import javax.validation.constraints.NotNull
 
+/*
 @CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
+*/
 @Controller
 @RequestMapping("/report/billing/custody")
 class CustodyController {
