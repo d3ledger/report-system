@@ -155,15 +155,39 @@ class CustodyService {
                         assetCustodyContextForAccount.lastAssetSum.subtract(transfer.amount)
                 }
 
-                val option = custodyContextRepo
-                    .selectByTimeAndAccountAndAssetId(getAccountId(account), transfer.assetId, from)
-                if (option.isPresent && option.get().lastTransferTimestamp.minus(assetCustodyContextForAccount.lastTransferTimestamp).compareTo(custodyPeriod * 14) > 0) {
-
-                } else {
-                    saveCustodyContext(account, transfer.assetId, assetCustodyContextForAccount)
-                }
+                manageContextSnapshotsInDb(
+                    account,
+                    transfer.assetId,
+                    from,
+                    assetCustodyContextForAccount
+                )
             }
     }
+
+    private fun manageContextSnapshotsInDb(
+        account: CreateAccount,
+        assetId: String,
+        from: Long,
+        assetCustodyContextForAccount: AssetCustodyContext
+    ) {
+        val option = custodyContextRepo
+            .selectByTimeAndAccountAndAssetId(getAccountId(account), assetId, from)
+        if (option.isPresent) { // Check that there are any snapshot suited for this timestamp
+            val context = option.get()
+            /* Check if snapshot from database is too old we should add new snapshot*/
+            if (isSnapshotFromDbTooOld(context, assetCustodyContextForAccount)) {
+                saveCustodyContext(account, assetId, assetCustodyContextForAccount)
+            }
+        } else { // If no snapshots found in database we should add this one
+            saveCustodyContext(account, assetId, assetCustodyContextForAccount)
+        }
+    }
+
+    private fun isSnapshotFromDbTooOld(
+        context: AccountAssetCustodyContext,
+        assetCustodyContextForAccount: AssetCustodyContext
+    ) =
+        context.lastTransferTimestamp.minus(assetCustodyContextForAccount.lastTransferTimestamp) > custodyPeriod * 14
 
     private fun saveCustodyContext(
         account: CreateAccount,
