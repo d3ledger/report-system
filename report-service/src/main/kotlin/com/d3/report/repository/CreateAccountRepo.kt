@@ -4,10 +4,7 @@
  */
 
 package com.d3.report.repository
-/*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+
 import com.d3.report.model.CreateAccount
 import com.d3.report.model.TransferAsset
 import org.springframework.data.domain.Page

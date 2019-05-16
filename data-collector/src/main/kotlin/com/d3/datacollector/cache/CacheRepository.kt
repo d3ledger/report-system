@@ -4,10 +4,7 @@
  */
 
 package com.d3.datacollector.cache
-/*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+
 import com.d3.datacollector.model.Billing
 import com.d3.datacollector.service.DbService
 import com.d3.datacollector.utils.getDomainFromAccountId

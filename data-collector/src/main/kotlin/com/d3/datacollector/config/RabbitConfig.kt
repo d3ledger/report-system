@@ -4,10 +4,7 @@
  */
 
 package com.d3.datacollector.config
-/*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+
 import com.d3.datacollector.service.RabbitMqService
 import com.d3.datacollector.service.RabbitMqServiceImpl
 import org.springframework.amqp.core.TopicExchange
