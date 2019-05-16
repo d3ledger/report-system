@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*
 import java.util.stream.Collectors
 import javax.validation.constraints.NotNull
 
+@CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
 @Controller
 @RequestMapping("/report/billing/registeredAccounts")
 class RegisteredAccountsController {
