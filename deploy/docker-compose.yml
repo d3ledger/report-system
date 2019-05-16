@@ -19,6 +19,8 @@ services:
       SPRING_RABBITMQ_HOST: brvs-rmq
       IROHA_HOST: d3-iroha
       IROHA_PORT: 50051
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
 
   report-service:
     container_name: "report-service"
@@ -32,6 +34,8 @@ services:
     environment:
       POSTGRES_HOST: dc-postgres
       POSTGRES_DATABASE: postgres
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
 
   dc-postgres:
     image: postgres
