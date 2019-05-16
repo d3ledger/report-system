@@ -1,8 +1,10 @@
-package com.d3.datacollector.config
 /*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+ * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package com.d3.datacollector.config
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.EnableScheduling

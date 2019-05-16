@@ -1,7 +1,7 @@
 /*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+ * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package com.d3.report.tests.datajpa
 
 import com.d3.report.model.Block
@@ -10,7 +10,6 @@ import com.d3.report.model.Transaction
 import com.d3.report.repository.BlockRepository
 import com.d3.report.repository.SetAccountDetailRepo
 import com.d3.report.repository.TransactionRepo
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,7 +33,6 @@ class SetAccountDetailRepoTest {
     @Value("\${iroha.templates.clientsStorage}")
     private lateinit var clientsStorageTemplate: String
 
-    private val mapper = ObjectMapper()
     private val domain = "test"
 
     @Test

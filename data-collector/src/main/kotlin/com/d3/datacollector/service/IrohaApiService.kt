@@ -1,8 +1,10 @@
-package com.d3.datacollector.service
 /*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+ * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package com.d3.datacollector.service
+
 import com.d3.datacollector.utils.irohaBinaryKeyfromHex
 import iroha.protocol.QryResponses
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3

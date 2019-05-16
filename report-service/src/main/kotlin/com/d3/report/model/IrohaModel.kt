@@ -1,7 +1,7 @@
 /*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+ * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package com.d3.report.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -16,7 +16,7 @@ data class Block(
     @NotNull
     val blockNumber: Long? = null,
     @NotNull
-    val blockCreationTime: Long? = null
+    val blockCreationTime: Long = 0
 )
 
 @Entity

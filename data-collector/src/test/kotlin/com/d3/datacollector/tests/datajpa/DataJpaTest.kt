@@ -1,8 +1,10 @@
-package com.d3.datacollector.tests.datajpa
 /*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+ * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package com.d3.datacollector.tests.datajpa
+
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
 import org.assertj.core.api.Assertions.assertThat

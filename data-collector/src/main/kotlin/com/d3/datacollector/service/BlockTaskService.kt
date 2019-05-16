@@ -1,8 +1,10 @@
-package com.d3.datacollector.service
 /*
-* Copyright D3 Ledger, Inc. All Rights Reserved.
-* SPDX-License-Identifier: Apache-2.0
-*/
+ * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package com.d3.datacollector.service
+
 import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
@@ -34,6 +36,8 @@ class BlockTaskService {
     private lateinit var exchangeBillingTemplate: String
     @Value("\${iroha.templates.withdrawalBilling}")
     private lateinit var withdrawalBillingTemplate: String
+    @Value("\${iroha.latticePlaceholder}")
+    private lateinit var latticePlaceholder: String
     val LAST_PROCESSED_BLOCK_ROW_ID = 0L
     val LAST_REQUEST_ROW_ID = 1L
     @Autowired
@@ -176,7 +180,7 @@ class BlockTaskService {
                 null,
                 ad.accountId,
                 defineBillingType(ad.accountId),
-                ad.key.replace("_", "#"),
+                ad.key.replace(latticePlaceholder, "#"),
                 BigDecimal(ad.value)
             )
             performUpdates(billing)
