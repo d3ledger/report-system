@@ -54,6 +54,10 @@ class TranferAssetTest {
         transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction2))
         transferRepo.save(TransferAsset("srcAcc@$domain", "${transferBillingTemplate}$domain", "assetId@$domain", null, BigDecimal("1"), transaction2))
 
+        val transaction21 = transactionRepo.save(Transaction(null, block2, "mySelf@$domain", 1, false))
+        transferRepo.save(TransferAsset("srcTwoAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction21))
+        transferRepo.save(TransferAsset("srcTwoAcc@$domain", "${transferBillingTemplate}$domain", "assetId@$domain", null, BigDecimal("1"), transaction21))
+
         var block3 = blockRepo.save(Block(3, 5))
         var transaction3 = transactionRepo.save(Transaction(null, block3, "mySelf@$domain", 1, false))
         transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("1"), transaction3))

@@ -134,6 +134,10 @@ class TestTransferReport {
         transferRepo.save(TransferAsset(accountId, "destAcc@$domain", assetId, null, BigDecimal("10"), transaction2))
         transferRepo.save(TransferAsset(accountId, "${transferBillingTemplate}$domain", assetId, null, BigDecimal("1"), transaction2))
 
+        val transaction21 = transactionRepo.save(Transaction(null, block2, "mySelf@$domain", 1, false))
+        transferRepo.save(TransferAsset("otherSrc@$domain", "destAcc@$domain", assetId, null, BigDecimal("10"), transaction2))
+        transferRepo.save(TransferAsset("otherSrc@$domain", "${transferBillingTemplate}$domain", assetId, null, BigDecimal("1"), transaction2))
+
         var block3 = blockRepo.save(Block(3, 5))
         var transaction3 = transactionRepo.save(Transaction(null, block3, "mySelf@$domain", 1, false))
         transferRepo.save(TransferAsset(accountId, "destAcc@$domain", assetId, null, BigDecimal("1"), transaction3))
