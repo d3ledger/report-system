@@ -14,17 +14,14 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    // TODO: Remove wrapper installation as soon as PR#21 is merged
-                    sh "apk --no-cache add gradle"
-                    sh "gradle wrapper"
-                    sh "./gradlew build --info"
+                    sh "#!/bin/sh\n./gradlew build --info"
                 }
             }
         }
         stage('Test') {
             steps {
                 script {
-                    sh "./gradlew test --info"
+                    sh "#!/bin/sh\n./gradlew test --info"
                 }
             }
         }
@@ -35,9 +32,7 @@ pipeline {
                         DOCKER_TAGS = ['master': 'latest', 'develop': 'develop']
                         TAG = DOCKER_TAGS[env.BRANCH_NAME]
                         JARS = ['data-collector', 'report-service']
-                        sh """
-                            apk --no-cache add docker
-                        """
+                        sh "#!/bin/sh\napk --no-cache add docker"
                         withDockerRegistry(credentialsId: 'nexus-d3-docker', url: 'https://nexus.iroha.tech:19002') {
                             JARS.each {
                                 image = docker.build("nexus.iroha.tech:19002/d3-deploy/${it}:$TAG", "-f ${it}/Dockerfile ${it}")
