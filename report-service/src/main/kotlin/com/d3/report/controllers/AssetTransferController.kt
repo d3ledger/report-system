@@ -6,11 +6,13 @@
 package com.d3.report.controllers
 
 import com.d3.report.model.Transfer
+import com.d3.report.model.TransferAsset
 import com.d3.report.model.TransferReport
 import com.d3.report.repository.TransferAssetRepo
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.util.stream.Collectors
 import javax.validation.constraints.NotNull
+
 @CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
 @Controller
 @RequestMapping("/report/billing")
@@ -32,10 +35,58 @@ class AssetTransferController {
     private lateinit var transferBillingTemplate: String
 
     @Autowired
-    private lateinit var transaferRepo: TransferAssetRepo
+    private lateinit var transferRepo: TransferAssetRepo
 
-    @GetMapping("/transferAsset")
-    fun reportBillingTransferAsset(
+    @GetMapping("/account/transferAsset")
+    fun reportCustomerTransferAssetBilling(
+        @NotNull @RequestParam accountId: String,
+        @NotNull @RequestParam from: Long,
+        @NotNull @RequestParam to: Long,
+        @NotNull @RequestParam pageNum: Int = 1,
+        @NotNull @RequestParam pageSize: Int = 20,
+        @RequestParam assetId: String? = null
+    ): ResponseEntity<TransferReport> {
+        return try {
+            val report = TransferReport()
+            val domain = accountId.substring(accountId.indexOf('@') + 1)
+            var page: Page<TransferAsset>
+            if(assetId == null) {
+              page =
+                transferRepo.getDataBetween(
+                    accountId,
+                    "$transferBillingTemplate$domain",
+                    from,
+                    to,
+                    PageRequest.of(pageNum - 1, pageSize)
+                )
+            } else {
+                page = transferRepo.getDataBetweenForAsset(assetId,  accountId,
+                    "$transferBillingTemplate$domain",
+                    from,
+                    to,
+                    PageRequest.of(pageNum - 1, pageSize)
+                )
+            }
+
+            report.pages = page.totalPages
+            report.total = page.totalElements
+
+            mapTransfersWithItsCommissions(page, report)
+
+            ResponseEntity.ok<TransferReport>(report)
+        } catch (e: Exception) {
+            logger.error("Error creating transfer billing report for customer.", e)
+            ResponseEntity.status(HttpStatus.CONFLICT).body(
+                TransferReport(
+                    code = e.javaClass.simpleName,
+                    message = e.message
+                )
+            )
+        }
+    }
+
+    @GetMapping("/domain/transferAsset")
+    fun reportAgentBillingTransferAsset(
         @NotNull @RequestParam domain: String,
         @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long,
@@ -45,7 +96,7 @@ class AssetTransferController {
         val report = TransferReport()
         return try {
             val page =
-                transaferRepo.getDataBetween(
+                transferRepo.getDataBetween(
                     "$transferBillingTemplate$domain",
                     from,
                     to,
@@ -55,22 +106,11 @@ class AssetTransferController {
             report.pages = page.totalPages
             report.total = page.totalElements
 
-            page.get().collect(Collectors.toList())
-                .groupBy { it.transaction.id }
-                .forEach {
-                    var transfer = Transfer()
-                    it.value.forEach {
-                        if (it.destAccountId?.contains(transferBillingTemplate) == true) {
-                            transfer.fee = it
-                        } else {
-                            transfer.transfer = it
-                        }
-                    }
-                    report.transfers.add(transfer)
-                }
+            mapTransfersWithItsCommissions(page, report)
+
             ResponseEntity.ok<TransferReport>(report)
         } catch (e: Exception) {
-            logger.error("Error creating transfer billing report.", e)
+            logger.error("Error creating transfer billing report for agent.", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
                 TransferReport(
                     code = e.javaClass.simpleName,
@@ -78,5 +118,24 @@ class AssetTransferController {
                 )
             )
         }
+    }
+
+    private fun mapTransfersWithItsCommissions(
+        page: Page<TransferAsset>,
+        report: TransferReport
+    ) {
+        page.get().collect(Collectors.toList())
+            .groupBy { it.transaction.id }
+            .forEach {
+                var transfer = Transfer()
+                it.value.forEach {
+                    if (it.destAccountId?.contains(transferBillingTemplate) == true) {
+                        transfer.fee = it
+                    } else {
+                        transfer.transfer = it
+                    }
+                }
+                report.transfers.add(transfer)
+            }
     }
 }
