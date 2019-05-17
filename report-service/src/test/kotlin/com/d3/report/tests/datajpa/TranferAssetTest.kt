@@ -36,6 +36,33 @@ class TranferAssetTest {
     private lateinit var transferBillingTemplate: String
 
     private val domain = "author"
+
+    /**
+     * @given Some transactions and transfers in DB
+     * @when request all transfers for account in a period
+     * @then Should return all transfers where account is source account and transfer fee for transfer exists.
+     */
+    @Test
+    @Transactional
+    fun testAllTransfersForCustomer() {
+        val block1 = blockRepo.save(Block(1, 1))
+        val transaction1 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("1"), transaction1))
+
+        val block2 = blockRepo.save(Block(2, 2))
+        val transaction2 = transactionRepo.save(Transaction(null, block2, "mySelf@$domain", 1, false))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction2))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "${transferBillingTemplate}$domain", "assetId@$domain", null, BigDecimal("1"), transaction2))
+
+        var block3 = blockRepo.save(Block(3, 5))
+        var transaction3 = transactionRepo.save(Transaction(null, block3, "mySelf@$domain", 1, false))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("1"), transaction3))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "${transferBillingTemplate}$domain", "assetId@$domain", null, BigDecimal("1"), transaction3))
+
+        val page = transferRepo.getDataBetween("srcAcc@$domain", "${transferBillingTemplate}$domain", 2, 4, PageRequest.of(0, 5))
+        assertEquals(2,page.numberOfElements)
+    }
+
     /**
      * @given Some transactions in DB
      * @when request all transfer data for account
