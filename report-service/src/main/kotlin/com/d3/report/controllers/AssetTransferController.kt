@@ -27,15 +27,14 @@ import javax.validation.constraints.NotNull
 @CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
 @Controller
 @RequestMapping("/report/billing")
-class AssetTransferController {
+class AssetTransferController(
+    val transferRepo: TransferAssetRepo
+) {
 
     companion object : KLogging()
 
     @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
-
-    @Autowired
-    private lateinit var transferRepo: TransferAssetRepo
 
     @GetMapping("/account/transferAsset")
     fun reportCustomerTransferAssetBilling(

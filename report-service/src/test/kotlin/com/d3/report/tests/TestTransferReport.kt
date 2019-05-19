@@ -57,8 +57,14 @@ class TestTransferReport {
     @Transactional
     fun testTransferReportForCustomerAndAsset() {
         prepareDataForAccountAndAssetReportTest()
-        val page = transferRepo.getDataBetween("srcAcc@$domain", "${transferBillingTemplate}$domain", 2, 4, PageRequest.of(0, 5))
-        assertEquals(4,page.numberOfElements)
+        val page = transferRepo.getDataBetween(
+            "srcAcc@$domain",
+            "${transferBillingTemplate}$domain",
+            2,
+            4,
+            PageRequest.of(0, 5)
+        )
+        assertEquals(4, page.numberOfElements)
         var result: MvcResult = mvc
             .perform(
                 MockMvcRequestBuilders.get("/report/billing/account/transferAsset")
@@ -75,20 +81,26 @@ class TestTransferReport {
 
         assertEquals(1, respBody.transfers.size)
         assertNotNull(respBody.transfers[0].transfer)
-        assertEquals(BigDecimal("10"),respBody.transfers[0].transfer?.amount)
-        assertEquals(assetId,respBody.transfers[0].transfer?.assetId)
+        assertEquals(BigDecimal("10"), respBody.transfers[0].transfer?.amount)
+        assertEquals(assetId, respBody.transfers[0].transfer?.assetId)
 
         assertNotNull(respBody.transfers[0].fee)
         assertEquals(BigDecimal("1"), respBody.transfers[0].fee?.amount)
-        assertEquals(assetId,respBody.transfers[0].fee?.assetId)
+        assertEquals(assetId, respBody.transfers[0].fee?.assetId)
     }
 
     @Test
     @Transactional
     fun testTransferReportForCustomer() {
         prepareDataForAccountReportTest()
-        val page = transferRepo.getDataBetween("srcAcc@$domain", "${transferBillingTemplate}$domain", 2, 4, PageRequest.of(0, 5))
-        assertEquals(2,page.numberOfElements)
+        val page = transferRepo.getDataBetween(
+            "srcAcc@$domain",
+            "${transferBillingTemplate}$domain",
+            2,
+            4,
+            PageRequest.of(0, 5)
+        )
+        assertEquals(2, page.numberOfElements)
         var result: MvcResult = mvc
             .perform(
                 MockMvcRequestBuilders.get("/report/billing/account/transferAsset")
@@ -104,12 +116,12 @@ class TestTransferReport {
 
         assertEquals(1, respBody.transfers.size)
         assertNotNull(respBody.transfers[0].transfer)
-        assertEquals(BigDecimal("10"),respBody.transfers[0].transfer?.amount)
-        assertEquals(assetId,respBody.transfers[0].transfer?.assetId)
+        assertEquals(BigDecimal("10"), respBody.transfers[0].transfer?.amount)
+        assertEquals(assetId, respBody.transfers[0].transfer?.assetId)
 
         assertNotNull(respBody.transfers[0].fee)
         assertEquals(BigDecimal("1"), respBody.transfers[0].fee?.amount)
-        assertEquals(assetId,respBody.transfers[0].fee?.assetId)
+        assertEquals(assetId, respBody.transfers[0].fee?.assetId)
 
     }
 
@@ -118,30 +130,116 @@ class TestTransferReport {
         prepareDataForAccountReportTest()
         val block2 = blockRepo.findById(2)
 
-        val transaction = transactionRepo.save(Transaction(null, block2.get(), "mySelf@$domain", 1, false))
-        transferRepo.save(TransferAsset(accountId, "destAcc@$domain", "otherAsset@$domain", null, BigDecimal("10"), transaction))
-        transferRepo.save(TransferAsset(accountId, "${transferBillingTemplate}$domain", "otherAsset@$domain", null, BigDecimal("1"), transaction))
+        val transaction =
+            transactionRepo.save(Transaction(null, block2.get(), "mySelf@$domain", 1, false))
+        transferRepo.save(
+            TransferAsset(
+                accountId,
+                "destAcc@$domain",
+                "otherAsset@$domain",
+                null,
+                BigDecimal("10"),
+                transaction
+            )
+        )
+        transferRepo.save(
+            TransferAsset(
+                accountId,
+                "${transferBillingTemplate}$domain",
+                "otherAsset@$domain",
+                null,
+                BigDecimal("1"),
+                transaction
+            )
+        )
 
     }
 
     private fun prepareDataForAccountReportTest() {
         val block1 = blockRepo.save(Block(1, 1))
-        val transaction1 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
-        transferRepo.save(TransferAsset(accountId, "destAcc@$domain", assetId, null, BigDecimal("1"), transaction1))
+        val transaction1 =
+            transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
+        transferRepo.save(
+            TransferAsset(
+                accountId,
+                "destAcc@$domain",
+                assetId,
+                null,
+                BigDecimal("1"),
+                transaction1
+            )
+        )
 
         val block2 = blockRepo.save(Block(2, 2))
-        val transaction2 = transactionRepo.save(Transaction(null, block2, "mySelf@$domain", 1, false))
-        transferRepo.save(TransferAsset(accountId, "destAcc@$domain", assetId, null, BigDecimal("10"), transaction2))
-        transferRepo.save(TransferAsset(accountId, "${transferBillingTemplate}$domain", assetId, null, BigDecimal("1"), transaction2))
+        val transaction2 =
+            transactionRepo.save(Transaction(null, block2, "mySelf@$domain", 1, false))
+        transferRepo.save(
+            TransferAsset(
+                accountId,
+                "destAcc@$domain",
+                assetId,
+                null,
+                BigDecimal("10"),
+                transaction2
+            )
+        )
+        transferRepo.save(
+            TransferAsset(
+                accountId,
+                "${transferBillingTemplate}$domain",
+                assetId,
+                null,
+                BigDecimal("1"),
+                transaction2
+            )
+        )
 
-        val transaction21 = transactionRepo.save(Transaction(null, block2, "mySelf@$domain", 1, false))
-        transferRepo.save(TransferAsset("otherSrc@$domain", "destAcc@$domain", assetId, null, BigDecimal("10"), transaction2))
-        transferRepo.save(TransferAsset("otherSrc@$domain", "${transferBillingTemplate}$domain", assetId, null, BigDecimal("1"), transaction2))
+        val transaction21 =
+            transactionRepo.save(Transaction(null, block2, "mySelf@$domain", 1, false))
+        transferRepo.save(
+            TransferAsset(
+                "otherSrc@$domain",
+                "destAcc@$domain",
+                assetId,
+                null,
+                BigDecimal("10"),
+                transaction21
+            )
+        )
+        transferRepo.save(
+            TransferAsset(
+                "otherSrc@$domain",
+                "${transferBillingTemplate}$domain",
+                assetId,
+                null,
+                BigDecimal("1"),
+                transaction21
+            )
+        )
 
         var block3 = blockRepo.save(Block(3, 5))
-        var transaction3 = transactionRepo.save(Transaction(null, block3, "mySelf@$domain", 1, false))
-        transferRepo.save(TransferAsset(accountId, "destAcc@$domain", assetId, null, BigDecimal("1"), transaction3))
-        transferRepo.save(TransferAsset(accountId, "${transferBillingTemplate}$domain", assetId, null, BigDecimal("1"), transaction3))
+        var transaction3 =
+            transactionRepo.save(Transaction(null, block3, "mySelf@$domain", 1, false))
+        transferRepo.save(
+            TransferAsset(
+                accountId,
+                "destAcc@$domain",
+                assetId,
+                null,
+                BigDecimal("1"),
+                transaction3
+            )
+        )
+        transferRepo.save(
+            TransferAsset(
+                accountId,
+                "${transferBillingTemplate}$domain",
+                assetId,
+                null,
+                BigDecimal("1"),
+                transaction3
+            )
+        )
     }
 
     @Test
@@ -167,76 +265,95 @@ class TestTransferReport {
 
     private fun prepareDataForDomainReportTest() {
         val block1 = blockRepo.save(Block(1, 129))
-        val transaction1 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
-        transferRepo.save(TransferAsset(
-            "srcAcc@$domain",
-            "destAcc@$domain",
-            "assetId@$domain",
-            null,
-            BigDecimal("10"),
-            transaction1
-        ))
+        val transaction1 =
+            transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
+        transferRepo.save(
+            TransferAsset(
+                "srcAcc@$domain",
+                "destAcc@$domain",
+                "assetId@$domain",
+                null,
+                BigDecimal("10"),
+                transaction1
+            )
+        )
 
         val block2 = blockRepo.save(Block(2, 1299))
-        val transaction2 = transactionRepo.save(Transaction(null, block2, "mySelf@$domain", 1, false))
-        transferRepo.save(TransferAsset(
-            "srcAcc@$domain",
-            "destAcc@$domain",
-            "assetId@$domain",
-            null,
-            BigDecimal("20"),
-            transaction2
-        ))
+        val transaction2 =
+            transactionRepo.save(Transaction(null, block2, "mySelf@$domain", 1, false))
+        transferRepo.save(
+            TransferAsset(
+                "srcAcc@$domain",
+                "destAcc@$domain",
+                "assetId@$domain",
+                null,
+                BigDecimal("20"),
+                transaction2
+            )
+        )
 
         val block3 = blockRepo.save(Block(3, 1398))
-        val transaction3 = transactionRepo.save(Transaction(null, block3, "mySelf@$domain", 1, false))
-        transferRepo.save(TransferAsset(
-            "srcAcc@$domain",
-            "destAcc@$domain",
-            "assetId@$domain",
-            null,
-            BigDecimal("20"),
-            transaction3
-        ))
+        val transaction3 =
+            transactionRepo.save(Transaction(null, block3, "mySelf@$domain", 1, false))
+        transferRepo.save(
+            TransferAsset(
+                "srcAcc@$domain",
+                "destAcc@$domain",
+                "assetId@$domain",
+                null,
+                BigDecimal("20"),
+                transaction3
+            )
+        )
 
         val block4 = blockRepo.save(Block(4, 1499))
-        val transaction4 = transactionRepo.save(Transaction(null, block4, "mySelf@$domain", 1, true))
-        transferRepo.save(TransferAsset(
-            "srcAcc@$domain",
-            "destAcc@$domain",
-            "assetId@$domain",
-            null,
-            BigDecimal("20"),
-            transaction4
-        ))
+        val transaction4 =
+            transactionRepo.save(Transaction(null, block4, "mySelf@$domain", 1, true))
+        transferRepo.save(
+            TransferAsset(
+                "srcAcc@$domain",
+                "destAcc@$domain",
+                "assetId@$domain",
+                null,
+                BigDecimal("20"),
+                transaction4
+            )
+        )
 
-        transferRepo.save( TransferAsset(
-            "srcAcc@$domain",
-            "$transferBillingTemplate$domain",
-            "assetId@$domain",
-            null,
-            BigDecimal("0.2"),
-            transaction3
-        ))
+        transferRepo.save(
+            TransferAsset(
+                "srcAcc@$domain",
+                "$transferBillingTemplate$domain",
+                "assetId@$domain",
+                null,
+                BigDecimal("0.2"),
+                transaction3
+            )
+        )
 
         // Add other domain to test that it will be not included in report
-        var transaction6 = transactionRepo.save(Transaction(null, block3, "mySelf@$otherDomain", 1, false))
+        var transaction6 =
+            transactionRepo.save(Transaction(null, block3, "mySelf@$otherDomain", 1, false))
 
-        transferRepo.save(TransferAsset(
-            "srcAcc@$otherDomain",
-            "$transferBillingTemplate$otherDomain",
-            "assetId@$otherDomain",
-            null,
-            BigDecimal("0.2"),
-            transaction6
-        ))
-        transferRepo.save(TransferAsset(
-            "srcAcc@$otherDomain",
-            "destAcc@$otherDomain",
-            "assetId@$otherDomain",
-            null,
-            BigDecimal("2"),
-            transaction6
-        ))
+        transferRepo.save(
+            TransferAsset(
+                "srcAcc@$otherDomain",
+                "$transferBillingTemplate$otherDomain",
+                "assetId@$otherDomain",
+                null,
+                BigDecimal("0.2"),
+                transaction6
+            )
+        )
+        transferRepo.save(
+            TransferAsset(
+                "srcAcc@$otherDomain",
+                "destAcc@$otherDomain",
+                "assetId@$otherDomain",
+                null,
+                BigDecimal("2"),
+                transaction6
+            )
+        )
     }
 }

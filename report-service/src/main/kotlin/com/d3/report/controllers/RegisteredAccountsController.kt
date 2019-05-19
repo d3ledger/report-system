@@ -23,14 +23,13 @@ import javax.validation.constraints.NotNull
 @CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
 @Controller
 @RequestMapping("/report/billing/registeredAccounts")
-class RegisteredAccountsController {
+class RegisteredAccountsController(
+    val accountDetailsRepo: SetAccountDetailRepo,
+    val accountRepo: CreateAccountRepo
+) {
 
     companion object: KLogging()
 
-    @Autowired
-    private lateinit var accountDetailsRepo: SetAccountDetailRepo
-    @Autowired
-    private lateinit var accountRepo: CreateAccountRepo
     @Value("\${iroha.templates.clientsStorage}")
     private lateinit var clientsStorageTemplate: String
 

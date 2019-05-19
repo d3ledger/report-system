@@ -85,7 +85,7 @@ class DataJpaTest {
         accountRepo.save(CreateAccount(name, domain, "some public key", transaction))
         assertTrue(accountRepo.findByAccountId("$name@$domain").isPresent)
         val quorum = quorumRepo.save(SetAccountQuorum("$name@$domain", 2, transaction))
-        assertTrue(quorumRepo.existsById(quorum.id))
+        assertTrue(quorumRepo.existsById(quorum.id!!))
         assertTrue(quorumRepo.getQuorumByAccountId(quorum.accountId!!).isNotEmpty())
     }
 
