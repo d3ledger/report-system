@@ -71,7 +71,7 @@ class AssetTransferController(
             report.total = page.totalElements
 
             mapTransfersWithItsCommissions(page, report)
-
+          
             ResponseEntity.ok<TransferReport>(report)
         } catch (e: Exception) {
             logger.error("Error creating transfer billing report for customer.", e)

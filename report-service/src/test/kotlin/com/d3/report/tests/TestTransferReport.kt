@@ -57,6 +57,7 @@ class TestTransferReport {
     @Transactional
     fun testTransferReportForCustomerAndAsset() {
         prepareDataForAccountAndAssetReportTest()
+
         val page = transferRepo.getDataBetween(
             "srcAcc@$domain",
             "${transferBillingTemplate}$domain",
@@ -65,6 +66,7 @@ class TestTransferReport {
             PageRequest.of(0, 5)
         )
         assertEquals(4, page.numberOfElements)
+
         var result: MvcResult = mvc
             .perform(
                 MockMvcRequestBuilders.get("/report/billing/account/transferAsset")
@@ -101,6 +103,7 @@ class TestTransferReport {
             PageRequest.of(0, 5)
         )
         assertEquals(2, page.numberOfElements)
+
         var result: MvcResult = mvc
             .perform(
                 MockMvcRequestBuilders.get("/report/billing/account/transferAsset")
@@ -122,7 +125,6 @@ class TestTransferReport {
         assertNotNull(respBody.transfers[0].fee)
         assertEquals(BigDecimal("1"), respBody.transfers[0].fee?.amount)
         assertEquals(assetId, respBody.transfers[0].fee?.assetId)
-
     }
 
 
@@ -152,7 +154,6 @@ class TestTransferReport {
                 transaction
             )
         )
-
     }
 
     private fun prepareDataForAccountReportTest() {
