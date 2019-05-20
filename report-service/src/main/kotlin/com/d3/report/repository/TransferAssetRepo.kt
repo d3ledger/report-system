@@ -35,9 +35,9 @@ interface TransferAssetRepo : CrudRepository<TransferAsset, Long?> {
     fun getDataBetween(accountId:String, billingAccTemplate:String, from: Long, to: Long, pageable: Pageable): Page<TransferAsset>
 
     @Query("SELECT t FROM TransferAsset t WHERE t.transaction.rejected = false" +
-            " and exists (SELECT ta FROM TransferAsset ta WHERE ta.transaction.id = t.transaction.id and ta.destAccountId = :billingAccTemplate)" +
+            " and exists (SELECT ta FROM TransferAsset ta WHERE ta.transaction.id = t.transaction.id and ta.destAccountId = :billingAccount)" +
             " and t.srcAccountId = :accountId" +
             " and t.assetId = :assetId" +
             " and t.transaction.block.blockCreationTime Between :from and :to")
-    fun getDataBetweenForAsset(assetId:String, accountId:String, billingAccTemplate:String, from: Long, to: Long, pageable: Pageable): Page<TransferAsset>
+    fun getDataBetweenForAsset(assetId:String, accountId:String, billingAccount:String, from: Long, to: Long, pageable: Pageable): Page<TransferAsset>
 }
