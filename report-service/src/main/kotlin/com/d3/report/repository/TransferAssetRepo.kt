@@ -40,4 +40,5 @@ interface TransferAssetRepo : CrudRepository<TransferAsset, Long?> {
             " and t.assetId = :assetId" +
             " and t.transaction.block.blockCreationTime Between :from and :to")
     fun getDataBetweenForAsset(assetId:String, accountId:String, billingAccount:String, from: Long, to: Long, pageable: Pageable): Page<TransferAsset>
+
 }
