@@ -23,16 +23,13 @@ import javax.validation.constraints.NotNull
 
 @Controller
 @RequestMapping("/iroha")
-class AccountController(val accountRepo: CreateAccountRepo) {
+class AccountController(
+    val accountRepo: CreateAccountRepo,
+    val quorumRepo: SetAccountQuorumRepo) {
 
     companion object {
         val log = KLogging().logger
     }
-
-    @Autowired
-    private lateinit var iroha: IrohaApiService
-    @Autowired
-    private lateinit var quorumRepo: SetAccountQuorumRepo
 
     @GetMapping("/account/exists")
     fun checkAccountExists(

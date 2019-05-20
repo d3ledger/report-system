@@ -27,15 +27,14 @@ import javax.validation.constraints.NotNull
 @CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
 @Controller
 @RequestMapping("/report/billing")
-class AssetTransferController {
+class AssetTransferController(
+    val transferRepo: TransferAssetRepo
+) {
 
     companion object : KLogging()
 
     @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
-
-    @Autowired
-    private lateinit var transferRepo: TransferAssetRepo
 
     @GetMapping("/account/transferAsset")
     fun reportCustomerTransferAssetBilling(
@@ -72,7 +71,7 @@ class AssetTransferController {
             report.total = page.totalElements
 
             mapTransfersWithItsCommissions(page, report)
-
+          
             ResponseEntity.ok<TransferReport>(report)
         } catch (e: Exception) {
             logger.error("Error creating transfer billing report for customer.", e)

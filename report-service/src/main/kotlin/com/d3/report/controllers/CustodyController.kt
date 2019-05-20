@@ -25,14 +25,12 @@ import javax.validation.constraints.NotNull
 @CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
 @Controller
 @RequestMapping("/report/billing/custody")
-class CustodyController {
+class CustodyController(
+    val accountRepo: CreateAccountRepo,
+    val custodyService: CustodyService
+) {
 
     companion object : KLogging()
-
-    @Autowired
-    private lateinit var accountRepo: CreateAccountRepo
-    @Autowired
-    private lateinit var custodyService: CustodyService
 
     /**
      * Add from parameter and saving of daily snapshots.

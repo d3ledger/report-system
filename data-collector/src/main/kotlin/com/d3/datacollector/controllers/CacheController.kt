@@ -20,12 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping
 
 @Controller
 @RequestMapping("/cache")
-class CacheController {
+class CacheController(
+    val cache: CacheRepository
+) {
 
     private val log = KLogging().logger
-
-    @Autowired
-    lateinit var cache: CacheRepository
 
     @GetMapping("/get/billing")
     fun getAllBilling(): ResponseEntity<BillingResponse> {

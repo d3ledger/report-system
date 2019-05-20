@@ -43,7 +43,7 @@ class IrohaApiService {
 
     @Synchronized
     fun irohaQueryAccount(accountId: String): Optional<QryResponses.Account> {
-        val response = queryApi?.getAccount(accountId)
+        val response = queryApi.getAccount(accountId)
         if(response?.hasAccount() == true) {
             return Optional.of(response.account)
         }
@@ -57,7 +57,7 @@ class IrohaApiService {
         val q = Query.builder(userId, newRequestNumber + 1)
             .getBlock(newBlock)
             .buildSigned(keyPair)
-        val response = irohaApi!!.query(q)
+        val response = irohaApi.query(q)
         return response
     }
 }
