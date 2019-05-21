@@ -10,7 +10,6 @@ import com.d3.report.model.TransferAsset
 import com.d3.report.model.TransferReport
 import com.d3.report.repository.TransferAssetRepo
 import mu.KLogging
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -51,7 +50,7 @@ class AssetTransferController(
             var page: Page<TransferAsset>
             if(assetId == null) {
               page =
-                transferRepo.getDataBetween(
+                transferRepo.getDataBetweenForBillingAccount(
                     accountId,
                     "$transferBillingTemplate$domain",
                     from,
@@ -59,7 +58,7 @@ class AssetTransferController(
                     PageRequest.of(pageNum - 1, pageSize)
                 )
             } else {
-                page = transferRepo.getDataBetweenForAsset(assetId,  accountId,
+                page = transferRepo.getDataBetweenForAssetOfAccount(assetId,  accountId,
                     "$transferBillingTemplate$domain",
                     from,
                     to,
@@ -95,8 +94,42 @@ class AssetTransferController(
         val report = TransferReport()
         return try {
             val page =
-                transferRepo.getDataBetween(
+                transferRepo.getDataBetweenForBillingAccount(
                     "$transferBillingTemplate$domain",
+                    from,
+                    to,
+                    PageRequest.of(pageNum - 1, pageSize)
+                )
+
+            report.pages = page.totalPages
+            report.total = page.totalElements
+
+            mapTransfersWithItsCommissions(page, report)
+
+            ResponseEntity.ok<TransferReport>(report)
+        } catch (e: Exception) {
+            logger.error("Error creating transfer billing report for agent.", e)
+            ResponseEntity.status(HttpStatus.CONFLICT).body(
+                TransferReport(
+                    code = e.javaClass.simpleName,
+                    message = e.message
+                )
+            )
+        }
+    }
+
+    @GetMapping("/system/transferAsset")
+    fun reportSystemBillingTransferAsset(
+        @NotNull @RequestParam from: Long,
+        @NotNull @RequestParam to: Long,
+        @NotNull @RequestParam pageNum: Int = 1,
+        @NotNull @RequestParam pageSize: Int = 20
+    ): ResponseEntity<TransferReport> {
+        val report = TransferReport()
+        return try {
+            val page =
+                transferRepo.getDataBetweenForBillingAccountTemplate(
+                    transferBillingTemplate,
                     from,
                     to,
                     PageRequest.of(pageNum - 1, pageSize)

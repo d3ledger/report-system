@@ -53,12 +53,52 @@ class TestTransferReport {
     val accountId = "srcAcc@$domain"
     val assetId = "assetId@$domain"
 
+    /*
+    @given - three correct transfers with fee and one incorrect transfer without fee
+    @when - reust for all transfer fee in the system report
+    @then - should return data for all transfer billing accounts in specified period
+     */
+    @Test
+    @Transactional
+    fun testTransferReportForAllTheSystem() {
+        val block0 = blockRepo.save(Block(0, 0))
+        var transaction0 = transactionRepo.save(Transaction(null, block0, "mySelf@$domain", 1, false))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction0))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "$transferBillingTemplate$domain", "assetId@$domain", null, BigDecimal("0.2"), transaction0))
+
+        val block1 = blockRepo.save(Block(1, 1))
+        var transaction1 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction1))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "$transferBillingTemplate$domain", "assetId@$domain", null, BigDecimal("0.2"), transaction1))
+
+        var transaction2 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction2))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "${transferBillingTemplate}otherDomain", "assetId@$domain", null, BigDecimal("0.2"), transaction2))
+
+        var transaction3 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction3))
+        transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@otherDomain", "assetId@$domain", null, BigDecimal("0.2"), transaction3))
+
+        var result: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.get("/report/billing/system/transferAsset")
+                    .param("from", "1")
+                    .param("to", "4")
+                    .param("pageNum", "1")
+                    .param("pageSize", "10")
+            )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        var respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
+        assertEquals(2, respBody.transfers.size)
+    }
+
     @Test
     @Transactional
     fun testTransferReportForCustomerAndAsset() {
         prepareDataForAccountAndAssetReportTest()
 
-        val page = transferRepo.getDataBetween(
+        val page = transferRepo.getDataBetweenForBillingAccount(
             "srcAcc@$domain",
             "${transferBillingTemplate}$domain",
             2,
@@ -95,7 +135,7 @@ class TestTransferReport {
     @Transactional
     fun testTransferReportForCustomer() {
         prepareDataForAccountReportTest()
-        val page = transferRepo.getDataBetween(
+        val page = transferRepo.getDataBetweenForBillingAccount(
             "srcAcc@$domain",
             "${transferBillingTemplate}$domain",
             2,
