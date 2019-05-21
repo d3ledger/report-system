@@ -115,7 +115,7 @@ class TranferAssetTest {
         transferRepo.save(TransferAsset("srcAcc@domainTwo", "destAcc@$domain", "assetId@$domain", null, BigDecimal("12"), transaction1))
         transferRepo.save(TransferAsset("otherAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("14"), transaction1))
 
-        val page = transferRepo.getAllDataForAccount("srcAcc@$domain", PageRequest.of(0, 5))
+        val page = transferRepo.getAllTransfersForAccountInAndOut("srcAcc@$domain", PageRequest.of(0, 5))
         assertEquals(3,page.numberOfElements)
         /*
         Check order of transactions
@@ -153,7 +153,7 @@ class TranferAssetTest {
         transferRepo.save(TransferAsset("srcAcc@domainTwo", "destAcc@$domain", "assetId@$domain", null, BigDecimal("12"), transaction1))
         transferRepo.save(TransferAsset("otherAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("14"), transaction1))
 
-        val page = transferRepo.getTimedDataForAccount("srcAcc@$domain", 1200, PageRequest.of(0, 5))
+        val page = transferRepo.getTimedBilledTransfersForAccount("srcAcc@$domain", 1200, PageRequest.of(0, 5))
         assertEquals(3,page.numberOfElements)
         /*
         Check order of transactions

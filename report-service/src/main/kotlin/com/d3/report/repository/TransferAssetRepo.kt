@@ -20,7 +20,13 @@ interface TransferAssetRepo : CrudRepository<TransferAsset, Long?> {
     @Query("SELECT t FROM TransferAsset t WHERE t.transaction.rejected = false " +
             "and (t.srcAccountId = :account OR  t.destAccountId = :account) " +
             "ORDER BY t.transaction.block.blockCreationTime ASC")
-    fun getAllDataForAccount(account:String, pageable: Pageable): Page<TransferAsset>
+    fun getAllTransfersForAccountInAndOut(account:String, pageable: Pageable): Page<TransferAsset>
+
+    @Query("SELECT t FROM TransferAsset t WHERE t.transaction.rejected = false " +
+            "and (t.srcAccountId = :account OR  t.destAccountId = :account)" +
+            " and t.transaction.block.blockCreationTime < :to" +
+            " ORDER BY t.transaction.block.blockCreationTime ASC")
+    fun getAllTransfersForAccountInAndOutTillTo(account:String, to:Long, pageable: Pageable): Page<TransferAsset>
 
     @Query("SELECT t FROM TransferAsset t WHERE t.transaction.rejected = false " +
             "and exists (SELECT ta FROM TransferAsset ta WHERE ta.transaction.id = t.transaction.id and ta.destAccountId LIKE CONCAT(:billingAccountTemplate,'%')) " +
@@ -31,7 +37,7 @@ interface TransferAssetRepo : CrudRepository<TransferAsset, Long?> {
             "and (t.srcAccountId = :account OR  t.destAccountId = :account)" +
             " and t.transaction.block.blockCreationTime < :to" +
             " ORDER BY t.transaction.block.blockCreationTime ASC")
-    fun getTimedDataForAccount(account:String, to:Long, pageable: Pageable): Page<TransferAsset>
+    fun getTimedBilledTransfersForAccount(account:String, to:Long, pageable: Pageable): Page<TransferAsset>
 
     @Query("SELECT t FROM TransferAsset t WHERE t.transaction.rejected = false" +
             " and exists (SELECT ta FROM TransferAsset ta WHERE ta.transaction.id = t.transaction.id and ta.destAccountId = :billingAccount)" +
