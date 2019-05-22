@@ -37,6 +37,11 @@ class TranferAssetTest {
 
     private val domain = "author"
 
+    /**
+     * @given Some transactions in DB
+     * @when request data between moments for billing account template
+     * @then Should return all transfers with fee to current billing account
+     */
     @Test
     @Transactional
     fun testTransferAssetsForAllTheSystemRequest() {
