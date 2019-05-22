@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.transaction.Transactional
 import kotlin.test.assertEquals
 
@@ -141,8 +142,8 @@ class TestCustodyReport {
         assertEquals(accountOneId, respBody.accounts[0].accountId)
         assertEquals(1, respBody.accounts[0].assetCustody.size)
         assertEquals(
-            BigDecimal("1").setScale(8),
-            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8)
+            BigDecimal("1.5").setScale(8),
+            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8, RoundingMode.HALF_UP)
         )
     }
 
@@ -158,15 +159,17 @@ class TestCustodyReport {
 
         prepearBlockOneWithAccounts()
         prepareBlockTwoWithTransfersBeforePeriod()
-     //   prepareBlockThreeWithTransfersInPeriod()
+        prepareBlockThreeWithTransfersInPeriod()
         prepareBlockFourWithTransfersAfterPeriod()
     }
 
     private fun prepareBlockFourWithTransfersAfterPeriod() {
-        var block = blockRepo.save(Block(
-            4,
-            (Integer.valueOf(threeDays) + 10).toLong()
-        ))
+        var block = blockRepo.save(
+            Block(
+                4,
+                (Integer.valueOf(threeDays) + 10).toLong()
+            )
+        )
 
         val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
         // trasfer input to used account
@@ -183,10 +186,12 @@ class TestCustodyReport {
     }
 
     private fun prepareBlockThreeWithTransfersInPeriod() {
-        var block = blockRepo.save(Block(
-            3,
-            (Integer.valueOf(twoDays)).toLong()
-        ))
+        var block = blockRepo.save(
+            Block(
+                3,
+                (Integer.valueOf(twoDays - 2)).toLong()
+            )
+        )
 
         val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
         // trasfer input to used account
@@ -290,8 +295,8 @@ class TestCustodyReport {
             0,
             BigDecimal(10)
         )
-        custodyService.addFeePortion(assetCustodyContext,custodyPeriod*2, BigDecimal("0.1"))
+        custodyService.addFeePortion(assetCustodyContext, custodyPeriod * 2, BigDecimal("0.1"))
 
-        assertEquals(BigDecimal("2"),assetCustodyContext.commulativeFeeAmount.setScale(0))
+        assertEquals(BigDecimal("2"), assetCustodyContext.commulativeFeeAmount.setScale(0))
     }
 }
