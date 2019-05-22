@@ -6,6 +6,7 @@ package com.d3.report.controllers
 
 import com.d3.report.model.AccountCustody
 import com.d3.report.model.Billing
+import com.d3.report.model.CreateAccount
 import com.d3.report.model.CustodyReport
 import com.d3.report.repository.CreateAccountRepo
 import com.d3.report.service.CustodyService
@@ -38,7 +39,7 @@ class CustodyController(
      */
     @GetMapping("/agent")
     @Transactional
-    fun reportBillingTransferAsset(
+    fun reportBillingTransferAssetForAgent(
         @NotNull @RequestParam domain: String,
         @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long,
@@ -68,6 +69,49 @@ class CustodyController(
                     accounts = custodyFees.values.stream().collect(Collectors.toList()),
                     total = accountsPage.totalElements,
                     pages = accountsPage.totalPages
+                )
+            )
+        } catch (e: Exception) {
+            logger.error("Error making Custody report: ", e)
+            ResponseEntity.status(HttpStatus.CONFLICT).body(
+                CustodyReport(
+                    code = e.javaClass.simpleName,
+                    message = e.message
+                )
+            )
+        }
+    }
+
+    /**
+     * Add from parameter and saving of daily snapshots.
+     * To calculate fees for a period on a finished dayly basis. Not to recalculate all values for every request.
+     */
+    @GetMapping("/customer")
+    @Transactional
+    fun reportBillingTransferAssetForCustomer(
+        @NotNull @RequestParam accountId: String,
+        @NotNull @RequestParam from: Long,
+        @NotNull @RequestParam to: Long
+    ): ResponseEntity<CustodyReport> {
+        return try {
+            val billingStore = HashMap<String, Billing>()
+            /*
+                 Collection with custody Fee
+            */
+            val custodyFees = HashMap<String, AccountCustody>()
+
+            custodyService.processAccount(
+                CreateAccount(accountId.substring(0, accountId.indexOf('@')), accountId.substring(accountId.indexOf('@')+1)),
+                from,
+                to,
+                billingStore,
+                custodyFees
+            )
+
+            ResponseEntity.ok(
+                CustodyReport(
+                    accounts = custodyFees.values.stream().collect(Collectors.toList()),
+                    total = custodyFees.size.toLong()
                 )
             )
         } catch (e: Exception) {

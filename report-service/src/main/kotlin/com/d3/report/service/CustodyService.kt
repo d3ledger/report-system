@@ -76,15 +76,14 @@ class CustodyService {
             /*
              Calculation context for asset of account
             */
-            processAccount(account, from, to, pageNum, billingStore, custodyFees)
+            processAccount(account, from, to, billingStore, custodyFees)
         }
     }
 
-    private fun processAccount(
+    fun processAccount(
         account: CreateAccount,
         from: Long,
         to: Long,
-        pageNum: Int,
         billingStore: HashMap<String, Billing>,
         custodyFees: HashMap<String, AccountCustody>
     ) {
@@ -96,7 +95,7 @@ class CustodyService {
 
         var calculatedTransferPages = 0
         do {
-            val transfersPage = getTransferPage(account, to, pageNum)
+            val transfersPage = getTransferPage(account, to, calculatedTransferPages)
             processTransferPage(
                 transfersPage,
                 accountCustodyContext,
@@ -109,6 +108,10 @@ class CustodyService {
 
         val assetCustodies = HashMap<String, BigDecimal>()
         accountCustodyContext.assetsContexts.forEach {
+            /**
+             * Calculation algorothm step 3.
+             * Calculate Commissions between last transfer for the selected period and 'to' date
+             */
             addFeePortion(it.value, to, billingStore[it.key]!!.feeFraction)
             assetCustodies.put(it.key, it.value.commulativeFeeAmount)
         }
@@ -154,8 +157,38 @@ class CustodyService {
                 account,
                 from
             )
-        /* Get billing propertires */
-        val billing = billingStore.computeIfAbsent(
+
+        val billing = getBillingProperties(billingStore, transfer, account, assetId)
+
+        /**
+         * Fee calculation algorithm step 2
+         * Calculate commissions between control points and transfers inside report period
+         */
+        if (assetCustodyContextForAccount.lastControlTimestamp > from) {
+            addFeePortion(
+                assetCustodyContextForAccount,
+                transfer.transaction.block!!.blockCreationTime,
+                billing.feeFraction
+            )
+        }
+
+        updateAssetCustodyContextForAccount(assetCustodyContextForAccount, transfer, account, billing.feeFraction)
+      
+        manageContextSnapshotsInDb(
+            account,
+            assetId,
+            from,
+            assetCustodyContextForAccount
+        )
+    }
+
+    private fun getBillingProperties(
+        billingStore: HashMap<String, Billing>,
+        transfer: TransferAsset,
+        account: CreateAccount,
+        assetId: String
+    ): Billing {
+        return billingStore.computeIfAbsent(
             transfer.assetId!!
         )
         {
@@ -165,36 +198,30 @@ class CustodyService {
                 Billing.BillingTypeEnum.CUSTODY
             ).get()
         }
-
-        if (assetCustodyContextForAccount.lastControlTimestamp > from) {
-            addFeePortion(
-                assetCustodyContextForAccount,
-                transfer.transaction.block!!.blockCreationTime,
-                billing.feeFraction
-            )
-        }
-
-        updateAssetCustodyContextForAccount(assetCustodyContextForAccount, transfer, account)
-
-        manageContextSnapshotsInDb(
-            account,
-            assetId,
-            from,
-            assetCustodyContextForAccount
-        )
     }
 
     private fun updateAssetCustodyContextForAccount(
         assetCustodyContextForAccount: AssetCustodyContext,
         transfer: TransferAsset,
-        account: CreateAccount
+        account: CreateAccount,
+        feeFraction: BigDecimal
     ) {
         if (assetCustodyContextForAccount.lastControlTimestamp <
             transfer.transaction.block!!.blockCreationTime
         ) {
+            /**
+             * Fee calculation Algorithm step 1
+             * Calculate fee from 'from' dae to first transfer
+             */
+            addFeePortion(
+                assetCustodyContextForAccount,
+                transfer.transaction.block.blockCreationTime,
+                feeFraction
+            )
             assetCustodyContextForAccount.lastControlTimestamp =
                 transfer.transaction.block.blockCreationTime
         }
+
         if (transfer.destAccountId!!.contentEquals(getAccountId(account))) {
             assetCustodyContextForAccount.lastAssetSum =
                 assetCustodyContextForAccount.lastAssetSum.add(transfer.amount)
@@ -271,6 +298,10 @@ class CustodyService {
         val assetCustodyContextForAccount =
             accountCustodyContext.assetsContexts.computeIfAbsent(transfer.assetId!!) {
                 AssetCustodyContext(
+                    /**
+                     * Set starting control point to 'from' date for reporting
+                     * period because we are not interested to calculate fee for previous points.
+                     */
                     lastControlTimestamp = from
                 )
             }
@@ -285,7 +316,7 @@ class CustodyService {
         return transaferRepo.getAllTransfersForAccountInAndOutTillTo(
             getAccountId(account),
             to,
-            PageRequest.of(pageNum - 1, 200)
+            PageRequest.of(pageNum, 200)
         )
     }
 }

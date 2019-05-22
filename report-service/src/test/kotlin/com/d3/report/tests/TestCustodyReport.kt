@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.transaction.Transactional
 import kotlin.test.assertEquals
 
@@ -62,6 +63,36 @@ class TestCustodyReport {
     val oneDay = 86400000
     val twoDays = 172800002
     val threeDays = 259200000
+
+    /**
+     * @given account with one transfer
+     * @when custody report calculated for two days
+     * @then fee should be equal fee of two days
+     */
+    @Test
+    @Transactional
+    fun testCustodyFeeReportDataCustomer() {
+        prepeareData()
+
+        val result: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.get("/report/billing/custody/customer")
+                    .param("accountId", accountOneId)
+                    .param("to", (threeDays).toString())
+                    .param("from", oneDay.toString())
+            )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        val respBody = mapper.readValue(result.response.contentAsString, CustodyReport::class.java)
+        assertEquals(1, respBody.accounts.size)
+        assertEquals(accountOneId, respBody.accounts[0].accountId)
+        assertEquals(1, respBody.accounts[0].assetCustody.size)
+        assertEquals(
+            BigDecimal("1.5").setScale(8),
+            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8)
+        )
+    }
+
     /**
      * @given no data
      * @when custody report calculated
@@ -111,8 +142,8 @@ class TestCustodyReport {
         assertEquals(accountOneId, respBody.accounts[0].accountId)
         assertEquals(1, respBody.accounts[0].assetCustody.size)
         assertEquals(
-            BigDecimal("1").setScale(8),
-            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8)
+            BigDecimal("1.5").setScale(8),
+            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8, RoundingMode.HALF_UP)
         )
     }
 
@@ -128,15 +159,17 @@ class TestCustodyReport {
 
         prepearBlockOneWithAccounts()
         prepareBlockTwoWithTransfersBeforePeriod()
-     //   prepareBlockThreeWithTransfersInPeriod()
+        prepareBlockThreeWithTransfersInPeriod()
         prepareBlockFourWithTransfersAfterPeriod()
     }
 
     private fun prepareBlockFourWithTransfersAfterPeriod() {
-        var block = blockRepo.save(Block(
-            4,
-            (Integer.valueOf(threeDays) + 10).toLong()
-        ))
+        var block = blockRepo.save(
+            Block(
+                4,
+                (Integer.valueOf(threeDays) + 10).toLong()
+            )
+        )
 
         val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
         // trasfer input to used account
@@ -153,17 +186,19 @@ class TestCustodyReport {
     }
 
     private fun prepareBlockThreeWithTransfersInPeriod() {
-        var block = blockRepo.save(Block(
-            3,
-            (Integer.valueOf(twoDays)).toLong()
-        ))
+        var block = blockRepo.save(
+            Block(
+                3,
+                (Integer.valueOf(twoDays - 2)).toLong()
+            )
+        )
 
         val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
         // trasfer input to used account
         transferRepo.save(
             TransferAsset(
-                accountOneId,
                 otherAccountId,
+                accountOneId,
                 assetId,
                 null,
                 BigDecimal("5"),
@@ -260,8 +295,8 @@ class TestCustodyReport {
             0,
             BigDecimal(10)
         )
-        custodyService.addFeePortion(assetCustodyContext,custodyPeriod*2, BigDecimal("0.1"))
+        custodyService.addFeePortion(assetCustodyContext, custodyPeriod * 2, BigDecimal("0.1"))
 
-        assertEquals(BigDecimal("2"),assetCustodyContext.commulativeFeeAmount.setScale(0))
+        assertEquals(BigDecimal("2"), assetCustodyContext.commulativeFeeAmount.setScale(0))
     }
 }
