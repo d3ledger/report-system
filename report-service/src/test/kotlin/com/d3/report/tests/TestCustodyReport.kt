@@ -88,7 +88,7 @@ class TestCustodyReport {
         assertEquals(accountOneId, respBody.accounts[0].accountId)
         assertEquals(1, respBody.accounts[0].assetCustody.size)
         assertEquals(
-            BigDecimal("1").setScale(8),
+            BigDecimal("1.5").setScale(8),
             respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8)
         )
     }

@@ -109,7 +109,7 @@ class CustodyService {
         val assetCustodies = HashMap<String, BigDecimal>()
         accountCustodyContext.assetsContexts.forEach {
             /**
-             * Calculation algorothm step 5.
+             * Calculation algorothm step 3.
              * Calculate Commissions between last transfer for the selected period and 'to' date
              */
             addFeePortion(it.value, to, billingStore[it.key]!!.feeFraction)
@@ -160,6 +160,10 @@ class CustodyService {
 
         val billing = getBillingProperties(billingStore, transfer, account, assetId)
 
+        /**
+         * Fee calculation algorithm step 2
+         * Calculate commissions between control points and transfers inside report period
+         */
         if (assetCustodyContextForAccount.lastControlTimestamp > from) {
             addFeePortion(
                 assetCustodyContextForAccount,
@@ -204,6 +208,10 @@ class CustodyService {
         if (assetCustodyContextForAccount.lastControlTimestamp <
             transfer.transaction.block!!.blockCreationTime
         ) {
+            /**
+             * Fee calculation Algorithm step 1
+             * Calculate fee from 'from' dae to first transfer
+             */
             addFeePortion(
                 assetCustodyContextForAccount,
                 transfer.transaction.block.blockCreationTime,
@@ -289,6 +297,10 @@ class CustodyService {
         val assetCustodyContextForAccount =
             accountCustodyContext.assetsContexts.computeIfAbsent(transfer.assetId!!) {
                 AssetCustodyContext(
+                    /**
+                     * Set starting control point to 'from' date for reporting
+                     * period because we are not interested to calculate fee for previous points.
+                     */
                     lastControlTimestamp = from
                 )
             }
