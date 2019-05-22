@@ -167,8 +167,9 @@ class CustodyService {
                 billing.feeFraction
             )
         }
-        updateAssetCustodyContextForAccount(assetCustodyContextForAccount, transfer, account, billing.feeFraction)
 
+        updateAssetCustodyContextForAccount(assetCustodyContextForAccount, transfer, account, billing.feeFraction)
+      
         manageContextSnapshotsInDb(
             account,
             assetId,
