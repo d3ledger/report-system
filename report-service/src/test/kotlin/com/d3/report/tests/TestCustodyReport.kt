@@ -92,7 +92,7 @@ class TestCustodyReport {
      */
     @Test
     @Transactional
-    fun testCustodyFeeReport() {
+    fun testCustodyFeeReportData() {
         prepeareData()
 
         val result: MvcResult = mvc
@@ -128,12 +128,13 @@ class TestCustodyReport {
 
         prepearBlockOneWithAccounts()
         prepareBlockTwoWithTransfersBeforePeriod()
-        prepareBlockThreeWithTransfersOutOfPeriod()
+     //   prepareBlockThreeWithTransfersInPeriod()
+        prepareBlockFourWithTransfersAfterPeriod()
     }
 
-    private fun prepareBlockThreeWithTransfersOutOfPeriod() {
+    private fun prepareBlockFourWithTransfersAfterPeriod() {
         var block = blockRepo.save(Block(
-            3,
+            4,
             (Integer.valueOf(threeDays) + 10).toLong()
         ))
 
@@ -143,6 +144,26 @@ class TestCustodyReport {
             TransferAsset(
                 otherAccountId,
                 accountOneId,
+                assetId,
+                null,
+                BigDecimal("5"),
+                transaction
+            )
+        )
+    }
+
+    private fun prepareBlockThreeWithTransfersInPeriod() {
+        var block = blockRepo.save(Block(
+            3,
+            (Integer.valueOf(twoDays)).toLong()
+        ))
+
+        val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
+        // trasfer input to used account
+        transferRepo.save(
+            TransferAsset(
+                accountOneId,
+                otherAccountId,
                 assetId,
                 null,
                 BigDecimal("5"),

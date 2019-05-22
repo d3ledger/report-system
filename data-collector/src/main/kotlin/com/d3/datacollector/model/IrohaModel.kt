@@ -54,7 +54,6 @@ open class Command(
 )
 
 @Entity
-@Table(name = "transfer_asset")
 class TransferAsset(
     val srcAccountId: String? = null,
     val destAccountId: String? = null,
@@ -65,7 +64,6 @@ class TransferAsset(
 ) : Command(transaction = transaction)
 
 @Entity
-@Table(name = "create_account")
 class CreateAccount(
     val accountName: String? = null,
     val domainId: String? = null,
@@ -74,7 +72,6 @@ class CreateAccount(
 ) : Command(transaction = transaction)
 
 @Entity
-@Table(name = "create_asset")
 class CreateAsset(
     val assetName: String,
     val domainId: String,
@@ -83,7 +80,6 @@ class CreateAsset(
 ) : Command(transaction = transaction)
 
 @Entity
-@Table(name = "set_account_detail")
 class SetAccountDetail(
     val accountId: String? = null,
     val detailKey: String? = null,
@@ -92,7 +88,6 @@ class SetAccountDetail(
 ) : Command(transaction = transaction)
 
 @Entity
-@Table(name = "set_account_quorum")
 class SetAccountQuorum(
     val accountId: String? = null,
     val quorum: Int = 1,
@@ -100,7 +95,6 @@ class SetAccountQuorum(
 ) : Command(transaction = transaction)
 
 @Entity
-@Table(name = "add_signatory")
 class AddSignatory(
     val accountId: String? = null,
     val publicKey: String? = null,
