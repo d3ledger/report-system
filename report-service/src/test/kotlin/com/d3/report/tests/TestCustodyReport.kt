@@ -59,7 +59,9 @@ class TestCustodyReport {
     val accountOneId = "$accountOne@$testDomain"
     val otherAccountId = "$accountOne@$otherDomain"
     val assetId = "assetOne@$otherDomain"
-
+    val oneDay = 86400000
+    val twoDays = 172800002
+    val threeDays = 259200000
     /**
      * @given no data
      * @when custody report calculated
@@ -90,15 +92,15 @@ class TestCustodyReport {
      */
     @Test
     @Transactional
-    fun testCustodyFeeReport() {
+    fun testCustodyFeeReportData() {
         prepeareData()
 
         val result: MvcResult = mvc
             .perform(
                 MockMvcRequestBuilders.get("/report/billing/custody/agent")
                     .param("domain", testDomain)
-                    .param("to", "172800002")
-                    .param("from", "2")
+                    .param("to", (threeDays).toString())
+                    .param("from", oneDay.toString())
                     .param("pageNum", "1")
                     .param("pageSize", "10")
             )
@@ -125,14 +127,55 @@ class TestCustodyReport {
         )
 
         prepearBlockOneWithAccounts()
-
-        prepareBlockTwoWithTransfers()
+        prepareBlockTwoWithTransfersBeforePeriod()
+     //   prepareBlockThreeWithTransfersInPeriod()
+        prepareBlockFourWithTransfersAfterPeriod()
     }
 
-    private fun prepareBlockTwoWithTransfers() {
+    private fun prepareBlockFourWithTransfersAfterPeriod() {
+        var block = blockRepo.save(Block(
+            4,
+            (Integer.valueOf(threeDays) + 10).toLong()
+        ))
+
+        val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
+        // trasfer input to used account
+        transferRepo.save(
+            TransferAsset(
+                otherAccountId,
+                accountOneId,
+                assetId,
+                null,
+                BigDecimal("5"),
+                transaction
+            )
+        )
+    }
+
+    private fun prepareBlockThreeWithTransfersInPeriod() {
+        var block = blockRepo.save(Block(
+            3,
+            (Integer.valueOf(twoDays)).toLong()
+        ))
+
+        val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
+        // trasfer input to used account
+        transferRepo.save(
+            TransferAsset(
+                accountOneId,
+                otherAccountId,
+                assetId,
+                null,
+                BigDecimal("5"),
+                transaction
+            )
+        )
+    }
+
+    private fun prepareBlockTwoWithTransfersBeforePeriod() {
         var block2 = Block(
             2,
-            2
+            2L
         )
         block2 = blockRepo.save(block2)
 
@@ -148,7 +191,7 @@ class TestCustodyReport {
                 transaction1
             )
         )
-        // transfer output to used account
+        // transfer output from used account
         transferRepo.save(
             TransferAsset(
                 accountOneId,
