@@ -76,15 +76,14 @@ class CustodyService {
             /*
              Calculation context for asset of account
             */
-            processAccount(account, from, to, pageNum, billingStore, custodyFees)
+            processAccount(account, from, to, billingStore, custodyFees)
         }
     }
 
-    private fun processAccount(
+    fun processAccount(
         account: CreateAccount,
         from: Long,
         to: Long,
-        pageNum: Int,
         billingStore: HashMap<String, Billing>,
         custodyFees: HashMap<String, AccountCustody>
     ) {
@@ -96,7 +95,7 @@ class CustodyService {
 
         var calculatedTransferPages = 0
         do {
-            val transfersPage = getTransferPage(account, to, pageNum)
+            val transfersPage = getTransferPage(account, to, calculatedTransferPages)
             processTransferPage(
                 transfersPage,
                 accountCustodyContext,
@@ -285,7 +284,7 @@ class CustodyService {
         return transaferRepo.getAllTransfersForAccountInAndOutTillTo(
             getAccountId(account),
             to,
-            PageRequest.of(pageNum - 1, 200)
+            PageRequest.of(pageNum, 200)
         )
     }
 }

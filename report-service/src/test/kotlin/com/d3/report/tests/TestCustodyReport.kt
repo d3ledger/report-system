@@ -62,6 +62,36 @@ class TestCustodyReport {
     val oneDay = 86400000
     val twoDays = 172800002
     val threeDays = 259200000
+
+    /**
+     * @given account with one transfer
+     * @when custody report calculated for two days
+     * @then fee should be equal fee of two days
+     */
+    @Test
+    @Transactional
+    fun testCustodyFeeReportDataCustomer() {
+        prepeareData()
+
+        val result: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.get("/report/billing/custody/customer")
+                    .param("accountId", accountOneId)
+                    .param("to", (threeDays).toString())
+                    .param("from", oneDay.toString())
+            )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        val respBody = mapper.readValue(result.response.contentAsString, CustodyReport::class.java)
+        assertEquals(1, respBody.accounts.size)
+        assertEquals(accountOneId, respBody.accounts[0].accountId)
+        assertEquals(1, respBody.accounts[0].assetCustody.size)
+        assertEquals(
+            BigDecimal("1").setScale(8),
+            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8)
+        )
+    }
+
     /**
      * @given no data
      * @when custody report calculated
