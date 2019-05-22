@@ -93,10 +93,8 @@ class CustodyController(
         @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long
     ): ResponseEntity<CustodyReport> {
-        val billingStore = HashMap<String, Billing>()
         return try {
             val billingStore = HashMap<String, Billing>()
-
             /*
                  Collection with custody Fee
             */

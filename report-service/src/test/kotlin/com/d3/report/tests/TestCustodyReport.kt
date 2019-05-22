@@ -192,8 +192,8 @@ class TestCustodyReport {
         // trasfer input to used account
         transferRepo.save(
             TransferAsset(
-                accountOneId,
                 otherAccountId,
+                accountOneId,
                 assetId,
                 null,
                 BigDecimal("5"),
