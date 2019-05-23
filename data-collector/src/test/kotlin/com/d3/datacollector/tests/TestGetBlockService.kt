@@ -7,6 +7,7 @@ package com.d3.datacollector.tests
 import iroha.protocol.*
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import com.d3.datacollector.cache.CacheRepository
+import com.d3.datacollector.engine.TestEnv
 import com.d3.datacollector.model.AddSignatory
 import com.d3.datacollector.model.CreateAccount
 import com.d3.datacollector.model.SetAccountDetail
@@ -28,6 +29,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
+import org.testcontainers.utility.TestEnvironment
 
 import java.math.BigDecimal
 import java.security.KeyPair
@@ -39,17 +41,9 @@ import kotlin.test.assertEquals
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @TestPropertySource(properties = arrayOf("app.scheduling.enable=false", "app.rabbitmq.enable=false"))
-class TestGetBlockService {
+class TestGetBlockService : TestEnv() {
     private val log = KLogging().logger
 
-    @Value("\${iroha.latticePlaceholder}")
-    private lateinit var latticePlaceholder: String
-    @Value("\${iroha.user.publicKeyHex}")
-    lateinit var dataCollectorPublicKey: String
-    @Autowired
-    lateinit var blockTaskService: BlockTaskService
-    @Autowired
-    lateinit var stateRepo: StateRepository
     @Autowired
     lateinit var cache: CacheRepository
     @Autowired
@@ -64,48 +58,6 @@ class TestGetBlockService {
     lateinit var accountQuorumRepo: SetAccountQuorumRepo
     @Autowired
     lateinit var addSignatoryRepo: AddSignatoryRepository
-
-    private val bankDomain = "bank"
-    private val notaryDomain = "notary"
-    private val userRole = "user"
-    private val usdName = "usd"
-    private val dataCollectorRole = "dataCollector"
-    private val transferBillingAccountName = "transfer_billing"
-    private val transferBillingAccountId = "$transferBillingAccountName@$bankDomain"
-    private val custodyAccountName = "custody_billing"
-    private val custodyBillingAccountId = "$custodyAccountName@$bankDomain"
-    private val accountCreationBillingAccountName = "account_creation_billing"
-    private val accountCreationBillingAccountId = "$accountCreationBillingAccountName@$bankDomain"
-    private val exchangeBillingAccountName = "exchange_billing"
-    private val exchangeBillingAccountId = "$exchangeBillingAccountName@$bankDomain"
-    private val withdrawalBillingAccountName = "withdrawal_billing"
-    private val withdrawalBillingAccountId = "$withdrawalBillingAccountName@$bankDomain"
-
-    private val crypto = Ed25519Sha3()
-
-    private val peerKeypair = crypto.generateKeypair()
-
-    private val useraKeypair = crypto.generateKeypair()
-    private val userbKeypair = crypto.generateKeypair()
-    private val transaferBillingKeyPair = crypto.generateKeypair()
-    private val custodyKeyPair = crypto.generateKeypair()
-    private val accountCreationKeyPair = crypto.generateKeypair()
-    private val exchangeKeyPair = crypto.generateKeypair()
-    private val withdrawalKeyPair = crypto.generateKeypair()
-
-    private val detailKey = "bing"
-    private val detailValue = "bong"
-
-
-    private fun user(name: String): String {
-        return String.format("%s@%s", name, bankDomain)
-    }
-
-    private val usd = String.format(
-        "%s#%s",
-        usdName,
-        bankDomain
-    )
 
     @Test
     @Transactional
@@ -162,10 +114,10 @@ class TestGetBlockService {
             .setAccountQuorum(custodyBillingAccountId, 2)
             .sign(custodyKeyPair)
             .build()
+        val stateTxs = listOf(tx, tx2, tx3, tx4, tx5, tx6, tx7, tx8, tx9)
+        prepareState(api, stateTxs)
 
-        prepareState(api, listOf(tx, tx2, tx3, tx4, tx5, tx6, tx7, tx8, tx9))
-
-        for (i in 1L..10L) {
+        for (i in 1L..stateTxs.size + 1) {
             getBlockAndCheck(i)
         }
 
@@ -200,15 +152,15 @@ class TestGetBlockService {
         assertEquals(1, addSignatoryList.size)
 
         try {
-            val transaferBilling = cache.getTransferFee(bankDomain, usd)
+            val transaferBilling = cache.getTransferFee(bankDomain, usdName)
             assertEquals(BigDecimal("0.5"), transaferBilling.feeFraction)
-            val custody = cache.getCustodyFee(bankDomain, usd)
+            val custody = cache.getCustodyFee(bankDomain, usdName)
             assertEquals(BigDecimal("0.1"), custody.feeFraction)
-            val accountFee = cache.getAccountCreationFee(bankDomain, usd)
+            val accountFee = cache.getAccountCreationFee(bankDomain, usdName)
             assertEquals(BigDecimal("0.2"), accountFee.feeFraction)
-            val exchangeFee = cache.getExchangeFee(bankDomain, usd)
+            val exchangeFee = cache.getExchangeFee(bankDomain, usdName)
             assertEquals(BigDecimal("0.3"), exchangeFee.feeFraction)
-            val withdrawalFee = cache.getWithdrawalFee(bankDomain, usd)
+            val withdrawalFee = cache.getWithdrawalFee(bankDomain, usdName)
             assertEquals(BigDecimal("0.4"), withdrawalFee.feeFraction)
             billingRepo.findAll().forEach {
                 log.info("Received asset: ${it.asset}")
@@ -228,149 +180,4 @@ class TestGetBlockService {
         assertEquals(2, custodyQuorum.size)
         assertEquals(2, custodyQuorum[0].quorum)
     }
-
-    private fun getBlockAndCheck(number: Long): String {
-        blockTaskService.processBlockTask()
-        var lastProcessedBlock = stateRepo.findById(blockTaskService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
-        assertTrue(lastProcessedBlock.toLong() == number)
-        return lastProcessedBlock
-    }
-
-    private fun prepareState(
-        api: IrohaAPI,
-        txs: List<TransactionOuterClass.Transaction?>
-    ) {
-        val observer = inlineTransactionStatusObserver()
-        // blocking send.
-        // use .subscribe() for async sending
-        txs.forEach {
-            api.transaction(it)
-                .blockingSubscribe(observer)
-        }
-
-        /// now lets query balances
-        val balanceUserA = getBalance(
-            api,
-            user("user_a"),
-            useraKeypair
-        )
-        val balanceUserB = getBalance(
-            api,
-            user("user_b"),
-            userbKeypair
-        )
-        // ensure we got correct balances
-        assert(balanceUserA == 90)
-        assert(balanceUserB == 10)
-    }
-
-    /**
-     * create transaction observer
-     * here you can specify any kind of handlers on transaction statuses
-     */
-    private fun inlineTransactionStatusObserver(): InlineTransactionStatusObserver? {
-
-        return TransactionStatusObserver.builder()
-            // executed when stateless or stateful validation is failed
-            .onTransactionFailed { t ->
-                println(
-                    String.format(
-                        "transaction %s failed with msg: %s",
-                        t.txHash,
-                        t.errOrCmdName
-                    )
-                )
-            }
-            // executed when got any exception in handlers or grpc
-            .onError { e -> println("Failed with exception: $e") }
-            // executed when we receive "committed" status
-            .onTransactionCommitted { println("Committed :)") }
-            // executed when transfer is complete (failed or succeed) and observable is closed
-            .onComplete { println("Complete") }
-            .build()
-    }
-
-    /**
-     * Custom facade over GRPC Query
-     */
-    fun getBalance(api: IrohaAPI, userId: String, keyPair: KeyPair): Int {
-        // build protobuf query, sign it
-        val q = Query.builder(userId, 1)
-            .getAccountAssets(userId)
-            .buildSigned(keyPair)
-
-        // execute query, get response
-        val res = api.query(q)
-
-        // get list of assets from our response
-        val assets = res.accountAssetsResponse.accountAssetsList
-
-        // find usd asset
-        val assetUsdOptional = assets
-            .stream()
-            .filter { a -> a.assetId == usd }
-            .findFirst()
-
-        // numbers are small, so we use int here for simplicity
-        return assetUsdOptional
-            .map { a -> Integer.parseInt(a.balance) }
-            .orElse(0)
-    }
-
-
-    // don't forget to add peer keypair to config
-    val peerConfig: PeerConfig
-        get() {
-            val config = PeerConfig.builder()
-                .genesisBlock(genesisBlock)
-                .build()
-            config.withPeerKeyPair(peerKeypair)
-            return config
-        }
-
-    private val genesisBlock: BlockOuterClass.Block
-        get() = GenesisBlockBuilder()
-            .addTransaction(
-                Transaction.builder(null)
-                    .addPeer("0.0.0.0:10001", peerKeypair.public)
-                    .createRole(
-                        userRole,
-                        Arrays.asList<Primitive.RolePermission>(
-                            Primitive.RolePermission.can_transfer,
-                            Primitive.RolePermission.can_get_my_acc_ast,
-                            Primitive.RolePermission.can_get_my_txs,
-                            Primitive.RolePermission.can_receive,
-                            Primitive.RolePermission.can_set_quorum,
-                            Primitive.RolePermission.can_add_signatory
-                        )
-                    )
-                    .createRole(
-                        dataCollectorRole,
-                        Arrays.asList<Primitive.RolePermission>(
-                            Primitive.RolePermission.can_get_blocks
-                        )
-                    )
-                    .createDomain(bankDomain, userRole)
-                    .createDomain(notaryDomain, dataCollectorRole)
-                    .createAccount(transferBillingAccountName, bankDomain, transaferBillingKeyPair.public)
-                    .createAccount(custodyAccountName, bankDomain, custodyKeyPair.public)
-                    .createAccount(exchangeBillingAccountName, bankDomain, exchangeKeyPair.public)
-                    .createAccount(withdrawalBillingAccountName, bankDomain, withdrawalKeyPair.public)
-                    .createAccount(accountCreationBillingAccountName, bankDomain, accountCreationKeyPair.public)
-                    .createAccount("data_collector", notaryDomain, Utils.parseHexPublicKey(dataCollectorPublicKey))
-                    .createAccount("user_a", bankDomain, useraKeypair.public)
-                    .createAccount("user_b", bankDomain, userbKeypair.public)
-                    .createAsset(usdName, bankDomain, 2)
-                    .setAccountDetail("user_a@$bankDomain", detailKey, detailValue)
-                    .setAccountQuorum(custodyBillingAccountId, 1)
-                    .build()
-                    .build()
-            )
-            .addTransaction(
-                Transaction.builder(user("user_a"))
-                    .addAssetQuantity(usd, BigDecimal("100"))
-                    .build()
-                    .build()
-            )
-            .build()
 }

@@ -91,6 +91,7 @@ class BlockTaskService {
                         .commandsList
                         .stream()
                         .forEach {
+                            log.info("Command received: $it")
                             if (it.hasSetAccountDetail()) {
                                 processBillingAccountDetail(it.setAccountDetail)
                                 val ad = it.setAccountDetail
