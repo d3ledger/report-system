@@ -1,7 +1,9 @@
 package com.d3.datacollector.engine
 
-import com.d3.datacollector.repository.StateRepository
+import com.d3.datacollector.cache.CacheRepository
+import com.d3.datacollector.repository.*
 import com.d3.datacollector.service.BlockTaskService
+import com.fasterxml.jackson.databind.ObjectMapper
 import iroha.protocol.BlockOuterClass
 import iroha.protocol.Primitive
 import iroha.protocol.TransactionOuterClass
@@ -10,14 +12,21 @@ import jp.co.soramitsu.iroha.java.*
 import jp.co.soramitsu.iroha.java.detail.InlineTransactionStatusObserver
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
+import jp.co.soramitsu.iroha.testcontainers.detail.IrohaConfig
 import junit.framework.TestCase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.test.web.servlet.MockMvc
 import java.math.BigDecimal
 import java.security.KeyPair
 import java.util.*
 
 open class TestEnv {
+
+    val mapper = ObjectMapper()
+
+    @Autowired
+    lateinit var mvc: MockMvc
 
     @Value("\${iroha.latticePlaceholder}")
     lateinit var latticePlaceholder: String
@@ -27,6 +36,20 @@ open class TestEnv {
     lateinit var blockTaskService: BlockTaskService
     @Autowired
     lateinit var stateRepo: StateRepository
+    @Autowired
+    lateinit var cache: CacheRepository
+    @Autowired
+    lateinit var billingRepo: BillingRepository
+    @Autowired
+    lateinit var transferAssetRepo: TransferAssetRepo
+    @Autowired
+    lateinit var createAccountRepo: CreateAccountRepo
+    @Autowired
+    lateinit var accountDetailRepo: SetAccountDetailRepo
+    @Autowired
+    lateinit var accountQuorumRepo: SetAccountQuorumRepo
+    @Autowired
+    lateinit var addSignatoryRepo: AddSignatoryRepository
 
     val bankDomain = "bank"
     val notaryDomain = "notary"

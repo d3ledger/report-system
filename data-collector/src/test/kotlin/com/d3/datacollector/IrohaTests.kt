@@ -1,63 +1,35 @@
-/*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
-package com.d3.datacollector.tests
+package com.d3.datacollector
 
-import iroha.protocol.*
-import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
-import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.engine.TestEnv
-import com.d3.datacollector.model.AddSignatory
-import com.d3.datacollector.model.CreateAccount
-import com.d3.datacollector.model.SetAccountDetail
-import com.d3.datacollector.model.TransferAsset
-import com.d3.datacollector.repository.*
-import com.d3.datacollector.service.BlockTaskService
-import jp.co.soramitsu.iroha.java.*
-import jp.co.soramitsu.iroha.java.detail.InlineTransactionStatusObserver
+import com.d3.datacollector.model.*
+import jp.co.soramitsu.iroha.java.IrohaAPI
+import jp.co.soramitsu.iroha.java.Transaction
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
-import jp.co.soramitsu.iroha.testcontainers.PeerConfig
-import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
-import junit.framework.TestCase.*
+import junit.framework.TestCase
 import mu.KLogging
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
-import org.testcontainers.utility.TestEnvironment
-
+import org.springframework.test.web.servlet.MvcResult
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
-import java.security.KeyPair
-import java.util.Arrays
 import javax.transaction.Transactional
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @TestPropertySource(properties = arrayOf("app.scheduling.enable=false", "app.rabbitmq.enable=false"))
-class TestGetBlockService : TestEnv() {
-    private val log = KLogging().logger
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+class IrohaTests : TestEnv() {
 
-    @Autowired
-    lateinit var cache: CacheRepository
-    @Autowired
-    lateinit var billingRepo: BillingRepository
-    @Autowired
-    lateinit var transferAssetRepo: TransferAssetRepo
-    @Autowired
-    lateinit var createAccountRepo: CreateAccountRepo
-    @Autowired
-    lateinit var accountDetailRepo: SetAccountDetailRepo
-    @Autowired
-    lateinit var accountQuorumRepo: SetAccountQuorumRepo
-    @Autowired
-    lateinit var addSignatoryRepo: AddSignatoryRepository
+    private val log = KLogging().logger
 
     @Test
     @Transactional
@@ -130,8 +102,8 @@ class TestGetBlockService : TestEnv() {
         assertEquals(userAId, trnsfr.srcAccountId)
         assertEquals(transferDescription, trnsfr.description)
         assertEquals(BigDecimal(transferAmount), trnsfr.amount)
-        assertNotNull(trnsfr.transaction)
-        assertNotNull(trnsfr.transaction.creatorId)
+        TestCase.assertNotNull(trnsfr.transaction)
+        TestCase.assertNotNull(trnsfr.transaction.creatorId)
         assertEquals(false, trnsfr.transaction.rejected)
 
 
@@ -139,11 +111,11 @@ class TestGetBlockService : TestEnv() {
         dbCrtAccout.addAll(createAccountRepo.findAll())
         assertEquals(8, dbCrtAccout.size)
         dbCrtAccout.forEach {
-            assertNotNull(it.accountName)
-            assertNotNull(it.domainId)
-            assertNotNull(it.publicKey)
-            assertNotNull(it.transaction)
-            assertNotNull(it.transaction.creatorId)
+            TestCase.assertNotNull(it.accountName)
+            TestCase.assertNotNull(it.domainId)
+            TestCase.assertNotNull(it.publicKey)
+            TestCase.assertNotNull(it.transaction)
+            TestCase.assertNotNull(it.transaction.creatorId)
             assertEquals(1, it.transaction.block?.blockNumber)
         }
 
@@ -164,9 +136,9 @@ class TestGetBlockService : TestEnv() {
             assertEquals(BigDecimal("0.4"), withdrawalFee.feeFraction)
             billingRepo.findAll().forEach {
                 log.info("Received asset: ${it.asset}")
-                assertTrue(it.asset.contains('#'))
-                assertFalse(it.accountId.isNullOrEmpty())
-                assertNotNull(it.billingType)
+                TestCase.assertTrue(it.asset.contains('#'))
+                TestCase.assertFalse(it.accountId.isNullOrEmpty())
+                TestCase.assertNotNull(it.billingType)
             }
             val detailList = ArrayList<SetAccountDetail>()
             detailList.addAll(accountDetailRepo.findAll())
@@ -174,10 +146,89 @@ class TestGetBlockService : TestEnv() {
             assertEquals(detailValue, detailValue)
         } catch (e: RuntimeException) {
             log.error("Error getting billing", e)
-            fail()
+            TestCase.fail()
         }
         val custodyQuorum = accountQuorumRepo.getQuorumByAccountId(custodyBillingAccountId)
         assertEquals(2, custodyQuorum.size)
         assertEquals(2, custodyQuorum[0].quorum)
+        iroha.stop()
+    }
+
+    @Test
+    @Transactional
+    fun testGetBilllingWithIroha() {
+        val fee = "0.6"
+        val iroha = IrohaContainer()
+            .withPeerConfig(peerConfig)
+        // start the peer. blocking call
+        iroha.start()
+        blockTaskService.irohaService.toriiAddress = iroha.toriiAddress.toString()
+
+        // create API wrapper
+        val api = IrohaAPI(iroha.toriiAddress)
+
+        val tx1 = Transaction.builder(transferBillingAccountId)
+            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
+            .sign(transaferBillingKeyPair)
+            .build()
+        val txList = listOf(tx1)
+        prepareState(api, txList)
+
+        for (i in 1L..txList.size + 1) {
+            getBlockAndCheck(i)
+        }
+
+        var result: MvcResult = mvc
+            .perform(MockMvcRequestBuilders.get("/cache/get/billing"))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        var respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
+        assertNull(respBody.errorCode)
+        assertNull(respBody.message)
+        assertEquals(
+            BigDecimal(fee),
+            respBody.transfer[bankDomain]!![usd]!!.feeFraction
+        )
+        iroha.stop()
+    }
+
+    @Test
+    @Transactional
+    fun testGetSingleBilllingWithIroha() {
+        val iroha = IrohaContainer()
+            .withPeerConfig(peerConfig)
+        // start the peer. blocking call
+        iroha.start()
+        blockTaskService.irohaService.toriiAddress = iroha.toriiAddress.toString()
+        val fee = "0.6"
+        // create API wrapper
+        val api = IrohaAPI(iroha.toriiAddress)
+
+        val tx1 = Transaction.builder(transferBillingAccountId)
+            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
+            .sign(transaferBillingKeyPair)
+            .build()
+        val txList = listOf(tx1)
+        prepareState(api, txList)
+
+        for (i in 1L..txList.size + 1) {
+            getBlockAndCheck(i)
+        }
+
+        val domain = bankDomain
+        val asset = usdName
+
+        var result: MvcResult = mvc
+            .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$asset/TRANSFER"))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        var respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
+        assertNull(respBody.errorCode)
+        assertNull(respBody.message)
+        assertEquals(
+            BigDecimal(fee),
+            respBody.billing.feeFraction
+        )
+        iroha.stop()
     }
 }

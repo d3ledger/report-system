@@ -36,14 +36,6 @@ import kotlin.test.assertNull
 @TestPropertySource(properties = arrayOf("app.scheduling.enable=false", "app.rabbitmq.enable=false"))
 class CacheControllerTest : TestEnv() {
 
-    private val mapper = ObjectMapper()
-
-    @Autowired
-    lateinit var mvc: MockMvc
-
-    @Autowired
-    lateinit var cache: CacheRepository
-
     /**
      * TODO Update test. Add all type of fees testing
      */
@@ -94,82 +86,6 @@ class CacheControllerTest : TestEnv() {
 
         var result: MvcResult = mvc
             .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$someAsset/TRANSFER"))
-            .andExpect(MockMvcResultMatchers.status().isOk)
-            .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
-        assertNull(respBody.errorCode)
-        assertNull(respBody.message)
-        assertEquals(
-            BigDecimal(fee),
-            respBody.billing.feeFraction
-        )
-    }
-
-    @Test
-    @Transactional
-    fun testGetBilllingWithIroha() {
-        val fee = "0.6"
-        val iroha = IrohaContainer()
-            .withPeerConfig(peerConfig)
-        // start the peer. blocking call
-        iroha.start()
-        blockTaskService.irohaService.toriiAddress = iroha.toriiAddress.toString()
-
-        // create API wrapper
-        val api = IrohaAPI(iroha.toriiAddress)
-
-        val tx1 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
-            .sign(transaferBillingKeyPair)
-            .build()
-        val txList = listOf(tx1)
-        prepareState(api, txList)
-
-        for (i in 1L..txList.size + 1) {
-            getBlockAndCheck(i)
-        }
-
-        var result: MvcResult = mvc
-            .perform(MockMvcRequestBuilders.get("/cache/get/billing"))
-            .andExpect(MockMvcResultMatchers.status().isOk)
-            .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
-        assertNull(respBody.errorCode)
-        assertNull(respBody.message)
-        assertEquals(
-            BigDecimal(fee),
-            respBody.transfer[bankDomain]!![usd]!!.feeFraction
-        )
-    }
-
-    @Test
-    @Transactional
-    fun testGetSingleBilllingWithIroha() {
-        val iroha = IrohaContainer()
-            .withPeerConfig(peerConfig)
-        // start the peer. blocking call
-        iroha.start()
-        blockTaskService.irohaService.toriiAddress = iroha.toriiAddress.toString()
-        val fee = "0.6"
-        // create API wrapper
-        val api = IrohaAPI(iroha.toriiAddress)
-
-        val tx1 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
-            .sign(transaferBillingKeyPair)
-            .build()
-        val txList = listOf(tx1)
-        prepareState(api, txList)
-
-        for (i in 1L..txList.size + 1) {
-            getBlockAndCheck(i)
-        }
-
-        val domain = bankDomain
-        val asset = usdName
-
-        var result: MvcResult = mvc
-            .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$asset/TRANSFER"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
         var respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
