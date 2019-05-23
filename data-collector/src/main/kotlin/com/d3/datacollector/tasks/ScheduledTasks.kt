@@ -20,8 +20,12 @@ class ScheduledTasks {
 
     @Scheduled(fixedDelayString = "\${scheduling.iroha.block.request}", initialDelay = 5000)
     fun getBlockTask() {
-        log.debug("Block downloading job started")
-        service.processBlockTask()
-        log.debug("Block downloading job finished")
+        try {
+            log.debug("Block downloading job started")
+            service.processBlockTask()
+            log.debug("Block downloading job finished")
+        } catch(e: Exception) {
+            log.debug("Error block processing job", e)
+        }
     }
 }

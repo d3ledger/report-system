@@ -84,8 +84,8 @@ class CacheRepository {
         title: Billing.BillingTypeEnum
     ): Billing {
         if (billingMap.contains(domain)) {
-            if (billingMap[domain]!!.contains(asset)) {
-                return billingMap[domain]!![asset]!!
+            if (billingMap[domain]!!.contains("$asset#$domain")) {
+                return billingMap[domain]!!["$asset#$domain"]!!
             }
         }
         throw RuntimeException("No ${title.name} billing found for: $domain, $asset")
