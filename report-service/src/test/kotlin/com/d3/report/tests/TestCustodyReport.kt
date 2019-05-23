@@ -65,7 +65,43 @@ class TestCustodyReport {
     val threeDays = 259200000
 
     /**
-     * @given account with one transfer
+     * @given accounts it two domains with transfers. And some transfers without account which should be ignored
+     * @when custody report calculated for two days
+     * @then fee should be equal fee of two days and two accouts from different domains should be returned
+     */
+    @Test
+    @Transactional
+    fun testCustodyFeeReportDataForSystem() {
+        prepeareData()
+
+        val result: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.get("/report/billing/custody/system")
+                    .param("to", (threeDays).toString())
+                    .param("from", oneDay.toString())
+                    .param("pageNum", "1")
+                    .param("pageSize", "10")
+            )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        val respBody = mapper.readValue(result.response.contentAsString, CustodyReport::class.java)
+        assertEquals(2, respBody.accounts.size)
+        assertEquals(otherAccountId, respBody.accounts[0].accountId)
+        assertEquals(accountOneId, respBody.accounts[1].accountId)
+        assertEquals(1, respBody.accounts[0].assetCustody.size)
+        assertEquals(1, respBody.accounts[1].assetCustody.size)
+        assertEquals(
+            BigDecimal("1.0").setScale(1),
+            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(1, RoundingMode.HALF_UP)
+        )
+        assertEquals(
+            BigDecimal("1.5").setScale(8),
+            respBody.accounts[1].assetCustody.get(assetId)!!.setScale(8, RoundingMode.HALF_UP)
+        )
+    }
+
+    /**
+     * @given accounts with transfers
      * @when custody report calculated for two days
      * @then fee should be equal fee of two days
      */
@@ -175,7 +211,7 @@ class TestCustodyReport {
         // trasfer input to used account
         transferRepo.save(
             TransferAsset(
-                otherAccountId,
+                "not_analysed_account@domainId",
                 accountOneId,
                 assetId,
                 null,
@@ -197,7 +233,7 @@ class TestCustodyReport {
         // trasfer input to used account
         transferRepo.save(
             TransferAsset(
-                otherAccountId,
+                "not_analysed_account@domainId",
                 accountOneId,
                 assetId,
                 null,
@@ -269,9 +305,20 @@ class TestCustodyReport {
          */
         accountRepo.save(
             CreateAccount(
-                "accountOther",
+                accountOne,
                 otherDomain,
                 "publicKeyNotTest",
+                transaction1
+            )
+        )
+
+        transferRepo.save(
+            TransferAsset(
+                "not_analysed_account@domainId",
+                otherAccountId,
+                assetId,
+                null,
+                BigDecimal("10"),
                 transaction1
             )
         )
