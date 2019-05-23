@@ -65,7 +65,7 @@ class TestCustodyReport {
     val threeDays = 259200000
 
     /**
-     * @given accounts it two domains with transfers. And some transfers without account which should be ignored
+     * @given accounts in two domains with transfers. And some transfers without account which should be ignored
      * @when custody report calculated for two days
      * @then fee should be equal fee of two days and two accouts from different domains should be returned
      */
