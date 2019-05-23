@@ -69,10 +69,10 @@ class BlockTaskService {
         val newBlockNumber = lastBlockState.value.toLong() + 1
         val newRequestNumber = lastRequest.value.toLong() + 1
         val response = irohaService.irohaBlockQuery(newBlockNumber, newRequestNumber)
+        log.debug("Response : " + response.toString())
+        log.debug("Response all fields: " + response.allFields)
 
         if (response.hasBlockResponse()) {
-            log.debug("Successful Iroha block query: $response")
-
             if (response.blockResponse.block.hasBlockV1()) {
                 val blockV1 = response.blockResponse.block.blockV1
                 val rejectedTrxs = blockV1.payload.rejectedTransactionsHashesList

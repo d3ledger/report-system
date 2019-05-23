@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
+import java.net.URI
 import javax.transaction.Transactional
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -41,7 +42,7 @@ class IrohaTests : TestEnv() {
         blockTaskService.irohaService.toriiAddress = iroha.toriiAddress.toString()
 
         // create API wrapper
-        val api = IrohaAPI(iroha.toriiAddress)
+        val api = IrohaAPI(URI(iroha.toriiAddress.toString()))
 
         // transfer 100 usd from user_a to user_b
         val userAId = "user_a@bank"
