@@ -4,9 +4,11 @@ import com.d3.datacollector.engine.TestEnv
 import com.d3.datacollector.model.*
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.Transaction
+import jp.co.soramitsu.iroha.java.Utils
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import junit.framework.TestCase
 import mu.KLogging
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -19,9 +21,12 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
 import java.net.URI
+import java.util.*
 import javax.transaction.Transactional
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -31,6 +36,69 @@ import kotlin.test.assertNull
 class IrohaTests : TestEnv() {
 
     private val log = KLogging().logger
+
+    @Test
+    @Transactional
+    @Ignore
+    fun testBatchExchange() {
+        val iroha = IrohaContainer()
+            .withPeerConfig(peerConfig)
+        iroha.start()
+        blockTaskService.irohaService.toriiAddress = iroha.toriiAddress.toString()
+        val api = IrohaAPI(URI(iroha.toriiAddress.toString()))
+
+        // transfer 100 usd from user_a to user_b
+        val userAId = "user_a@bank"
+        val userBId = "user_b@bank"
+        val transferDescription = "For pizza"
+        val transferAmount = "10"
+        val tx = Transaction.builder(userAId)
+            .transferAsset(
+                userAId, userBId,
+                usd, transferDescription, transferAmount
+            ).sign(userAKeypair)
+            .build()
+
+        //To test Exchange batches
+        val tx1 = Transaction.builder(userAId)
+            .transferAsset(
+                userAId, userBId,
+                usd, "Exchange", "5"
+            ).sign(userAKeypair)
+            .build()
+        val tx2 = Transaction.builder(userBId)
+            .transferAsset(
+                userBId, userAId,
+                usd, "Exchange", "5"
+            ).sign(userBKeypair)
+            .build()
+        val tx3 = Transaction.builder(userAId)
+            .transferAsset(
+                userAId, "$exchangeBillingAccountName@$bankDomain",
+                usd, "Exchange commission", "1"
+            ).sign(userAKeypair)
+            .build()
+        val tx4 = Transaction.builder(userBId)
+            .transferAsset(
+                userBId, "$exchangeBillingAccountName@$bankDomain",
+                usd, "Exchange commission", "1"
+            ).sign(userBKeypair)
+            .build()
+
+        val batch = listOf(tx1,tx2,tx3,tx4)
+        val atomicBatch = Utils.createTxAtomicBatch(batch, userAKeypair)
+        api.transactionListSync(atomicBatch)
+
+        val txList = listOf(tx,tx1,tx2,tx3,tx4)
+        prepareState(api, txList)
+
+        for (i in 1L..txList.size + 1) {
+            getBlockAndCheck(i)
+        }
+
+        assertTrue(txBatchRepo.findAll().toCollection(ArrayList()).isNotEmpty())
+        iroha.stop()
+    }
 
     @Test
     @Transactional
@@ -53,7 +121,7 @@ class IrohaTests : TestEnv() {
             .transferAsset(
                 userAId, userBId,
                 usd, transferDescription, transferAmount
-            ).sign(useraKeypair)
+            ).sign(userAKeypair)
             .build()
         val tx2 = Transaction.builder(transferBillingAccountId)
             .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), "0.6")
@@ -80,13 +148,14 @@ class IrohaTests : TestEnv() {
             .sign(transaferBillingKeyPair)
             .build()
         val tx8 = Transaction.builder(custodyBillingAccountId)
-            .addSignatory(custodyBillingAccountId, useraKeypair.public)
+            .addSignatory(custodyBillingAccountId, userAKeypair.public)
             .sign(custodyKeyPair)
             .build()
         val tx9 = Transaction.builder(custodyBillingAccountId)
             .setAccountQuorum(custodyBillingAccountId, 2)
             .sign(custodyKeyPair)
             .build()
+
         val stateTxs = listOf(tx, tx2, tx3, tx4, tx5, tx6, tx7, tx8, tx9)
         prepareState(api, stateTxs)
 
@@ -106,7 +175,6 @@ class IrohaTests : TestEnv() {
         TestCase.assertNotNull(trnsfr.transaction)
         TestCase.assertNotNull(trnsfr.transaction.creatorId)
         assertEquals(false, trnsfr.transaction.rejected)
-
 
         val dbCrtAccout = ArrayList<CreateAccount>()
         dbCrtAccout.addAll(createAccountRepo.findAll())
@@ -141,6 +209,7 @@ class IrohaTests : TestEnv() {
                 TestCase.assertFalse(it.accountId.isNullOrEmpty())
                 TestCase.assertNotNull(it.billingType)
             }
+
             val detailList = ArrayList<SetAccountDetail>()
             detailList.addAll(accountDetailRepo.findAll())
             assertEquals(detailKey, detailList[0].detailKey)
