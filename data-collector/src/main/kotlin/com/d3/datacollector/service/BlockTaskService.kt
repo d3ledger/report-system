@@ -72,6 +72,7 @@ class BlockTaskService {
         val newBlockNumber = lastBlockState.value.toLong() + 1
         val newRequestNumber = lastRequest.value.toLong() + 1
         val response = irohaService.irohaBlockQuery(newBlockNumber, newRequestNumber)
+
         log.debug("Block response : " + response.toString())
         log.debug("Block all fields: " + response.allFields)
 

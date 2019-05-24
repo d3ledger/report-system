@@ -21,8 +21,6 @@ import java.security.KeyPair
 import java.util.*
 import jp.co.soramitsu.iroha.java.subscription.WaitForTerminalStatus
 
-
-
 open class TestEnv {
 
     val mapper = ObjectMapper()
