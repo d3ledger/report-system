@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.util.ArrayList
 import javax.transaction.Transactional
 
 @Service
@@ -61,6 +62,8 @@ class BlockTaskService {
     lateinit var accountQuorumRepo: SetAccountQuorumRepo
     @Autowired
     lateinit var addSignatoryRepo: AddSignatoryRepository
+    @Autowired
+    lateinit var txBatchRepo: TransactionBatchRepo
 
     @Transactional
     fun processBlockTask(): Boolean {
@@ -69,92 +72,114 @@ class BlockTaskService {
         val newBlockNumber = lastBlockState.value.toLong() + 1
         val newRequestNumber = lastRequest.value.toLong() + 1
         val response = irohaService.irohaBlockQuery(newBlockNumber, newRequestNumber)
-        log.debug("Response : " + response.toString())
-        log.debug("Response all fields: " + response.allFields)
+
+        log.debug("Block response : " + response.toString())
+        log.debug("Block all fields: " + response.allFields)
 
         if (response.hasBlockResponse()) {
             if (response.blockResponse.block.hasBlockV1()) {
                 val blockV1 = response.blockResponse.block.blockV1
                 val rejectedTrxs = blockV1.payload.rejectedTransactionsHashesList
                 val dbBlock = blockRepo.save(Block(newBlockNumber, blockV1.payload.createdTime))
-                blockV1.payload.transactionsList.forEach { tx ->
-                    val reducedPayload = tx.payload.reducedPayload
-                    var commitedTransaction = transactionRepo.save(
-                        Transaction(
-                            block = dbBlock,
-                            creatorId = reducedPayload.creatorAccountId,
-                            quorum = reducedPayload.quorum,
-                            rejected = !checkTrxAccepted(tx, rejectedTrxs)
-                        )
-                    )
-                    reducedPayload
-                        .commandsList
-                        .stream()
-                        .forEach {
-                            log.info("Command received: $it")
-                            if (it.hasSetAccountDetail()) {
-                                processBillingAccountDetail(it.setAccountDetail)
-                                val ad = it.setAccountDetail
-                                accountDetailRepo.save(
-                                    SetAccountDetail(
-                                        ad.accountId,
-                                        ad.key,
-                                        ad.value,
-                                        commitedTransaction
-                                    )
-                                )
-                            } else if (it.hasTransferAsset()) {
-                                val assetTransfer = it.transferAsset
-                                transferRepo.save(
-                                    TransferAsset(
-                                        assetTransfer.srcAccountId,
-                                        assetTransfer.destAccountId,
-                                        assetTransfer.assetId,
-                                        assetTransfer.description,
-                                        BigDecimal(assetTransfer.amount),
-                                        commitedTransaction
-                                    )
-                                )
-                            } else if (it.hasCreateAccount()) {
-                                val ca = it.createAccount
-                                createAccountRepo.save(
-                                    CreateAccount(
-                                        ca.accountName,
-                                        ca.domainId,
-                                        ca.publicKey,
-                                        commitedTransaction
-                                    )
-                                )
-                            } else if (it.hasCreateAsset()) {
-                                val asset = it.createAsset
-                                createAssetRepo.save(
-                                    CreateAsset(
-                                        asset.assetName,
-                                        asset.domainId,
-                                        asset.precision,
-                                        commitedTransaction
-                                    )
-                                )
-                            } else if (it.hasSetAccountQuorum()) {
-                                val quorum = it.setAccountQuorum
-                                accountQuorumRepo.save(
-                                    SetAccountQuorum(
-                                        quorum.accountId,
-                                        quorum.quorum,
-                                        commitedTransaction
-                                    )
-                                )
-                            } else if (it.hasAddSignatory()) {
-                                val signatory = it.addSignatory
-                                addSignatoryRepo.save(
-                                    AddSignatory(
-                                        signatory.accountId,
-                                        signatory.publicKey,
-                                        commitedTransaction
-                                        )
-                                )
-                            }
+                val transactionBatches = constructBatches(blockV1.payload.transactionsList)
+
+                transactionBatches.filter { it.transactionList.isNotEmpty() }.forEach {
+                    var complexBatch: TransactionBatchEntity? = null
+                    if (it.transactionList.size > 1) {
+                        if (isItExchangeBatch(it.transactionList[0].payload.reducedPayload)) {
+                            complexBatch = TransactionBatchEntity(
+                                batchType = TransactionBatchEntity.BatchType.EXCHANGE
+                            )
+                        } else {
+                            complexBatch = TransactionBatchEntity(
+                                batchType = TransactionBatchEntity.BatchType.UNDEFINED
+                            )
                         }
+                        complexBatch = txBatchRepo.save(complexBatch)
+                    }
+
+                    val batch = it.transactionList
+                    for (tx in batch) {
+
+                        val reducedPayload = tx.payload.reducedPayload
+                        var commitedTransaction = transactionRepo.save(
+                            Transaction(
+                                block = dbBlock,
+                                creatorId = reducedPayload.creatorAccountId,
+                                quorum = reducedPayload.quorum,
+                                rejected = !checkTrxAccepted(tx, rejectedTrxs),
+                                batch = complexBatch
+                            )
+                        )
+                        reducedPayload
+                            .commandsList
+                            .stream()
+                            .forEach {
+                                log.info("Command received: $it")
+                                if (it.hasSetAccountDetail()) {
+                                    processBillingAccountDetail(it.setAccountDetail)
+                                    val ad = it.setAccountDetail
+                                    accountDetailRepo.save(
+                                        SetAccountDetail(
+                                            ad.accountId,
+                                            ad.key,
+                                            ad.value,
+                                            commitedTransaction
+                                        )
+                                    )
+                                } else if (it.hasTransferAsset()) {
+                                    val assetTransfer = it.transferAsset
+                                    transferRepo.save(
+                                        TransferAsset(
+                                            assetTransfer.srcAccountId,
+                                            assetTransfer.destAccountId,
+                                            assetTransfer.assetId,
+                                            assetTransfer.description,
+                                            BigDecimal(assetTransfer.amount),
+                                            commitedTransaction
+                                        )
+                                    )
+                                } else if (it.hasCreateAccount()) {
+                                    val ca = it.createAccount
+                                    createAccountRepo.save(
+                                        CreateAccount(
+                                            ca.accountName,
+                                            ca.domainId,
+                                            ca.publicKey,
+                                            commitedTransaction
+                                        )
+                                    )
+                                } else if (it.hasCreateAsset()) {
+                                    val asset = it.createAsset
+                                    createAssetRepo.save(
+                                        CreateAsset(
+                                            asset.assetName,
+                                            asset.domainId,
+                                            asset.precision,
+                                            commitedTransaction
+                                        )
+                                    )
+                                } else if (it.hasSetAccountQuorum()) {
+                                    val quorum = it.setAccountQuorum
+                                    accountQuorumRepo.save(
+                                        SetAccountQuorum(
+                                            quorum.accountId,
+                                            quorum.quorum,
+                                            commitedTransaction
+                                        )
+                                    )
+                                } else if (it.hasAddSignatory()) {
+                                    val signatory = it.addSignatory
+                                    addSignatoryRepo.save(
+                                        AddSignatory(
+                                            signatory.accountId,
+                                            signatory.publicKey,
+                                            commitedTransaction
+                                        )
+                                    )
+                                }
+                            }
+                    }
                 }
             } else {
                 log.error("Block response of unsupported version: $response")
@@ -173,6 +198,17 @@ class BlockTaskService {
             log.error("No block or error response caught from Iroha: $response")
             return false
         }
+    }
+
+    private fun isItExchangeBatch(reducedPayload: TransactionOuterClass.Transaction.Payload.ReducedPayload): Boolean {
+        return reducedPayload
+            .commandsList
+            .filter {
+                it.hasTransferAsset() &&
+                        it.transferAsset
+                            .destAccountId
+                            .contains(exchangeBillingTemplate)
+            }.isNotEmpty()
     }
 
     private fun processBillingAccountDetail(ad: Commands.SetAccountDetail) {
@@ -239,5 +275,31 @@ class BlockTaskService {
         accountId.contains(exchangeBillingTemplate) -> Billing.BillingTypeEnum.EXCHANGE
         accountId.contains(withdrawalBillingTemplate) -> Billing.BillingTypeEnum.WITHDRAWAL
         else -> Billing.BillingTypeEnum.NOT_FOUND
+    }
+
+    /**
+     * Converts Iroha transactions to Data Collector batches
+     *
+     * @param transactions transaction list to be converted
+     * @return [List] of [TransactionBatch] of input
+     */
+    private fun constructBatches(transactions: List<TransactionOuterClass.Transaction>): List<TransactionBatch> {
+        val transactionBatches = ArrayList<TransactionBatch>()
+        var i = 0
+        while (i < transactions.size) {
+            val transactionListForBatch = ArrayList<TransactionOuterClass.Transaction>()
+            val hashesCount = transactions[i]
+                .payload
+                .batch
+                .reducedHashesCount
+            val toInclude = if (hashesCount == 0) 1 else hashesCount
+
+            for (j in 0 until toInclude) {
+                transactionListForBatch.add(transactions[i + j])
+            }
+            i += toInclude
+            transactionBatches.add(TransactionBatch(transactionListForBatch))
+        }
+        return transactionBatches
     }
 }

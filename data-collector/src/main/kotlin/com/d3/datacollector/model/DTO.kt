@@ -43,3 +43,12 @@ class IntegerWrapper(
     errorCode: String? = null,
     errorMessage: String? = null
 ) : Conflictable(errorCode,errorMessage)
+
+class AssetsResponse(
+    val currencies: Map<String?,String?> = HashMap(),
+    val securities: Map<String?,String?> = HashMap(),
+    val utilityAssets: Map<String?,String?> = HashMap(),
+    val privateAssets: Map<String?,String?> = HashMap(),
+    errorCode: String? = null,
+    errorMessage: String? = null
+) : Conflictable(errorCode,errorMessage)

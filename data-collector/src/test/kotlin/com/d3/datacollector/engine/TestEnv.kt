@@ -12,7 +12,6 @@ import jp.co.soramitsu.iroha.java.*
 import jp.co.soramitsu.iroha.java.detail.InlineTransactionStatusObserver
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
-import jp.co.soramitsu.iroha.testcontainers.detail.IrohaConfig
 import junit.framework.TestCase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -20,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc
 import java.math.BigDecimal
 import java.security.KeyPair
 import java.util.*
+import jp.co.soramitsu.iroha.java.subscription.WaitForTerminalStatus
 
 open class TestEnv {
 
@@ -27,6 +27,8 @@ open class TestEnv {
 
     @Autowired
     lateinit var mvc: MockMvc
+
+    val irohaTxWaiter = WaitForTerminalStatus()
 
     @Value("\${iroha.latticePlaceholder}")
     lateinit var latticePlaceholder: String
@@ -50,6 +52,8 @@ open class TestEnv {
     lateinit var accountQuorumRepo: SetAccountQuorumRepo
     @Autowired
     lateinit var addSignatoryRepo: AddSignatoryRepository
+    @Autowired
+    lateinit var txBatchRepo: TransactionBatchRepo
 
     val bankDomain = "bank"
     val notaryDomain = "notary"
@@ -71,8 +75,8 @@ open class TestEnv {
 
     val peerKeypair = crypto.generateKeypair()
 
-    val useraKeypair = crypto.generateKeypair()
-    val userbKeypair = crypto.generateKeypair()
+    val userAKeypair = crypto.generateKeypair()
+    val userBKeypair = crypto.generateKeypair()
     val transaferBillingKeyPair = crypto.generateKeypair()
     val custodyKeyPair = crypto.generateKeypair()
     val accountCreationKeyPair = crypto.generateKeypair()
@@ -122,8 +126,8 @@ open class TestEnv {
                     .createAccount(withdrawalBillingAccountName, bankDomain, withdrawalKeyPair.public)
                     .createAccount(accountCreationBillingAccountName, bankDomain, accountCreationKeyPair.public)
                     .createAccount("data_collector", notaryDomain, Utils.parseHexPublicKey(dataCollectorPublicKey))
-                    .createAccount("user_a", bankDomain, useraKeypair.public)
-                    .createAccount("user_b", bankDomain, userbKeypair.public)
+                    .createAccount("user_a", bankDomain, userAKeypair.public)
+                    .createAccount("user_b", bankDomain, userBKeypair.public)
                     .createAsset(usdName, bankDomain, 2)
                     .setAccountDetail("user_a@$bankDomain", detailKey, detailValue)
                     .setAccountQuorum(custodyBillingAccountId, 1)

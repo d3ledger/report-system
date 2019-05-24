@@ -8,15 +8,25 @@ CREATE TABLE block
   CONSTRAINT block_pkey PRIMARY KEY (block_number)
 )
 
+--changeset yvinogradov:create_table_transactionBatch
+CREATE TABLE public.transaction_batch (
+	id bigserial NOT NULL,
+	batch_type varchar(128) NULL,
+	CONSTRAINT transaction_batch_pkey PRIMARY KEY (id)
+);
+
+
 --changeset yvinogradov:create_table_transaction
 CREATE TABLE transaction (
 	id bigserial NOT NULL,
 	creator_id varchar(255) NULL,
 	quorum int4 NULL,
 	rejected bool NOT NULL,
-	block_number int8 NULL,
+	batch_id bigint NULL,
+	block_number bigint NULL,
 	CONSTRAINT transaction_pkey PRIMARY KEY (id),
-	CONSTRAINT fk2bc78pqajc8yuds2kh88vi0ic FOREIGN KEY (block_number) REFERENCES block(block_number)
+	CONSTRAINT fk2bc78pqajc8yuds2kh88vi0ic FOREIGN KEY (block_number) REFERENCES block(block_number),
+	CONSTRAINT fkkv0fdmcpe8erod3aho90kiemy FOREIGN KEY (batch_id) REFERENCES transaction_batch(id)
 );
 
 --changeset yvinogradov:create_table_command
@@ -37,7 +47,7 @@ CREATE TABLE public.command (
 	decimal_precision int4 NULL,
 	domain_id varchar(255) NULL,
 	account_name varchar(255) NULL,
-	transaction_id int8 NULL,
+	transaction_id bigint NULL,
 	CONSTRAINT command_pkey PRIMARY KEY (id),
 	CONSTRAINT fkc90i3gykxnwq7xqlwttfnquya FOREIGN KEY (transaction_id) REFERENCES transaction(id)
 );
