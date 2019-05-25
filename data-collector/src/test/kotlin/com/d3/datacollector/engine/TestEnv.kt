@@ -1,6 +1,7 @@
 package com.d3.datacollector.engine
 
 import com.d3.datacollector.cache.CacheRepository
+import com.d3.datacollector.controllers.IrohaController
 import com.d3.datacollector.repository.*
 import com.d3.datacollector.service.BlockTaskService
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -54,8 +55,15 @@ open class TestEnv {
     lateinit var addSignatoryRepo: AddSignatoryRepository
     @Autowired
     lateinit var txBatchRepo: TransactionBatchRepo
+    @Autowired
+    lateinit var irohaController: IrohaController
+
+    val userAId = "user_a@bank"
+    val userBId = "user_b@bank"
+    val securitiesUser = "securities_user@bank"
 
     val bankDomain = "bank"
+    val securityDomain = "security"
     val notaryDomain = "notary"
     val userRole = "user"
     val usdName = "usd"
@@ -77,6 +85,7 @@ open class TestEnv {
 
     val userAKeypair = crypto.generateKeypair()
     val userBKeypair = crypto.generateKeypair()
+    val securitiesUserKeyPair = crypto.generateKeypair()
     val transaferBillingKeyPair = crypto.generateKeypair()
     val custodyKeyPair = crypto.generateKeypair()
     val accountCreationKeyPair = crypto.generateKeypair()
@@ -109,7 +118,8 @@ open class TestEnv {
                             Primitive.RolePermission.can_get_my_txs,
                             Primitive.RolePermission.can_receive,
                             Primitive.RolePermission.can_set_quorum,
-                            Primitive.RolePermission.can_add_signatory
+                            Primitive.RolePermission.can_add_signatory,
+                            Primitive.RolePermission.can_get_my_acc_detail
                         )
                     )
                     .createRole(
@@ -120,6 +130,7 @@ open class TestEnv {
                     )
                     .createDomain(bankDomain, userRole)
                     .createDomain(notaryDomain, dataCollectorRole)
+                    .createDomain(securityDomain, userRole)
                     .createAccount(transferBillingAccountName, bankDomain, transaferBillingKeyPair.public)
                     .createAccount(custodyAccountName, bankDomain, custodyKeyPair.public)
                     .createAccount(exchangeBillingAccountName, bankDomain, exchangeKeyPair.public)
@@ -128,6 +139,7 @@ open class TestEnv {
                     .createAccount("data_collector", notaryDomain, Utils.parseHexPublicKey(dataCollectorPublicKey))
                     .createAccount("user_a", bankDomain, userAKeypair.public)
                     .createAccount("user_b", bankDomain, userBKeypair.public)
+                    .createAccount(irohaController.assetList,securityDomain, securitiesUserKeyPair.public)
                     .createAsset(usdName, bankDomain, 2)
                     .setAccountDetail("user_a@$bankDomain", detailKey, detailValue)
                     .setAccountQuorum(custodyBillingAccountId, 1)

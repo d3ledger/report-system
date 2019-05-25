@@ -31,7 +31,7 @@ import kotlin.test.assertTrue
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @TestPropertySource(properties = arrayOf("app.scheduling.enable=false", "app.rabbitmq.enable=false"))
-class AcountControllerTest {
+class IrohaControllerTest {
 
     private val mapper = ObjectMapper()
 
@@ -52,6 +52,12 @@ class AcountControllerTest {
 
     val name = "best"
     val domain = "iroha"
+
+    @Test
+    @Transactional
+    fun testGetAllAssets() {
+
+    }
 
     @Test
     @Transactional

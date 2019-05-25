@@ -40,7 +40,7 @@ class IrohaController(
         val log = KLogging().logger
     }
 
-    val assetList = "assets_list@"
+    val assetList = "assets_list"
     val currencyAccount = "$assetList@currency"
     val securityAccount = "$assetList@security"
     val utilityAccount = "$assetList@utility"

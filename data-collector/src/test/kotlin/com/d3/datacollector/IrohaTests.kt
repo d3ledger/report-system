@@ -2,6 +2,7 @@ package com.d3.datacollector
 
 import com.d3.datacollector.engine.TestEnv
 import com.d3.datacollector.model.*
+import iroha.protocol.TransactionOuterClass
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.Transaction
 import jp.co.soramitsu.iroha.java.Utils
@@ -100,6 +101,31 @@ class IrohaTests : TestEnv() {
     }
 
     @Test
+    fun testGetAllAssets() {
+        val iroha = IrohaContainer()
+            .withPeerConfig(peerConfig)
+        iroha.start()
+        blockTaskService.irohaService.toriiAddress = iroha.toriiAddress.toString()
+        val api = IrohaAPI(URI(iroha.toriiAddress.toString()))
+
+        val securityKey = "secureAsset"
+        val securityValue = "secureValue"
+
+        val tx1 = Transaction.builder(securitiesUser)
+            .setAccountDetail(irohaController.securityAccount,securityKey, securityValue)
+            .sign(userAKeypair)
+            .build()
+
+        val stateTxs = listOf(tx1)
+        processState(api, stateTxs)
+
+        assertEquals(1, accountDetailRepo.getAllDetailsForAccountId(irohaController.securityAccount).size)
+
+
+        iroha.stop()
+    }
+
+    @Test
     @Transactional
     fun testGetBlockWithIroha() {
         val iroha = IrohaContainer()
@@ -112,8 +138,6 @@ class IrohaTests : TestEnv() {
         val api = IrohaAPI(URI(iroha.toriiAddress.toString()))
 
         // transfer 100 usd from user_a to user_b
-        val userAId = "user_a@bank"
-        val userBId = "user_b@bank"
         val transferDescription = "For pizza"
         val transferAmount = "10"
         val tx = Transaction.builder(userAId)
@@ -156,11 +180,7 @@ class IrohaTests : TestEnv() {
             .build()
 
         val stateTxs = listOf(tx, tx2, tx3, tx4, tx5, tx6, tx7, tx8, tx9)
-        prepareState(api, stateTxs)
-
-        for (i in 1L..stateTxs.size + 1) {
-            getBlockAndCheck(i)
-        }
+        processState(api, stateTxs)
 
         val dbTrAss = ArrayList<TransferAsset>()
         dbTrAss.addAll(transferAssetRepo.findAll())
@@ -221,6 +241,17 @@ class IrohaTests : TestEnv() {
         assertEquals(2, custodyQuorum.size)
         assertEquals(2, custodyQuorum[0].quorum)
         iroha.stop()
+    }
+
+    private fun processState(
+        api: IrohaAPI,
+        stateTxs: List<TransactionOuterClass.Transaction>
+    ) {
+        prepareState(api, stateTxs)
+
+        for (i in 1L..stateTxs.size + 1) {
+            getBlockAndCheck(i)
+        }
     }
 
     @Test

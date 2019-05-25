@@ -11,6 +11,6 @@ import org.springframework.data.repository.CrudRepository
 
 interface SetAccountDetailRepo : CrudRepository<SetAccountDetail, Long?> {
 
-    @Query("SELECT d FROM SetAccountDetail d WHERE d.accountId = : accountId")
+    @Query("SELECT d FROM SetAccountDetail d WHERE d.accountId = :accountId")
     fun getAllDetailsForAccountId(accountId: String): List<SetAccountDetail>
 }
