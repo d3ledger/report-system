@@ -95,9 +95,9 @@ class CreateAccount(
 
 @Entity
 class CreateAsset(
-    val assetName: String,
-    val domainId: String,
-    val decimalPrecision: Int,
+    val assetName: String = "empty Asset name",
+    val domainId: String = "empty domain Id",
+    val decimalPrecision: Int = 8,
     transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
 

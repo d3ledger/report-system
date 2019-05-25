@@ -73,11 +73,10 @@ class CreateAccount(
 ) : Command(transaction = transaction)
 
 @Entity
-@Table(name = "create_asset")
 class CreateAsset(
-    val assetName: String,
-    val domainId: String,
-    val decimalPrecision: Int,
+    val assetName: String = "empty Asset name",
+    val domainId: String = "empty domain Id",
+    val decimalPrecision: Int = 8,
     transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
 
