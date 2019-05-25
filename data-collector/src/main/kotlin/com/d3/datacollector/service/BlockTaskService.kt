@@ -73,7 +73,7 @@ class BlockTaskService {
         val newRequestNumber = lastRequest.value.toLong() + 1
         val response = irohaService.irohaBlockQuery(newBlockNumber, newRequestNumber)
 
-        log.debug("Block response : " + response.toString())
+        log.info("Block response : " + response.toString())
         log.debug("Block all fields: " + response.allFields)
 
         if (response.hasBlockResponse()) {
@@ -115,7 +115,7 @@ class BlockTaskService {
                             .commandsList
                             .stream()
                             .forEach {
-                                log.info("Command received: $it")
+                                log.debug("Command received: $it")
                                 if (it.hasSetAccountDetail()) {
                                     processBillingAccountDetail(it.setAccountDetail)
                                     val ad = it.setAccountDetail

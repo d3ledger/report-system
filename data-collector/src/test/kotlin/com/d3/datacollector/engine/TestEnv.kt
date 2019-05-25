@@ -60,7 +60,7 @@ open class TestEnv {
 
     val userAId = "user_a@bank"
     val userBId = "user_b@bank"
-    val securitiesUser = "securities_user@bank"
+    val securitiesUser = "assets_list@security"
 
     val bankDomain = "bank"
     val securityDomain = "security"

@@ -113,7 +113,7 @@ class IrohaTests : TestEnv() {
 
         val tx1 = Transaction.builder(securitiesUser)
             .setAccountDetail(irohaController.securityAccount,securityKey, securityValue)
-            .sign(userAKeypair)
+            .sign(securitiesUserKeyPair)
             .build()
 
         val stateTxs = listOf(tx1)
@@ -121,6 +121,17 @@ class IrohaTests : TestEnv() {
 
         assertEquals(1, accountDetailRepo.getAllDetailsForAccountId(irohaController.securityAccount).size)
 
+        var result: MvcResult = mvc
+            .perform(MockMvcRequestBuilders.get("/iroha/asset/getAll"))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        var respBody = mapper.readValue(result.response.contentAsString, AssetsResponse::class.java)
+        assertNull(respBody.errorCode)
+        assertNull(respBody.message)
+        assertEquals(
+            1,
+            respBody.securities.size
+        )
 
         iroha.stop()
     }
