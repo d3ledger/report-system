@@ -208,7 +208,7 @@ class IrohaTests : TestEnv() {
 
         val dbCrtAccout = ArrayList<CreateAccount>()
         dbCrtAccout.addAll(createAccountRepo.findAll())
-        assertEquals(8, dbCrtAccout.size)
+        assertEquals(9, dbCrtAccout.size)
         dbCrtAccout.forEach {
             TestCase.assertNotNull(it.accountName)
             TestCase.assertNotNull(it.domainId)
