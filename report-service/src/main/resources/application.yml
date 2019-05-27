@@ -33,7 +33,7 @@ spring:
   output:
     ansi:
       enabled: NEVER
-      
+
 server:
   port: 8090
 
