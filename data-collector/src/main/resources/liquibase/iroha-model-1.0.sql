@@ -37,7 +37,7 @@ CREATE TABLE public.command (
 	detail_key varchar(255) NULL,
 	detail_value varchar(255) NULL,
 	public_key varchar(255) NULL,
-	amount numeric(19,2) NULL,
+	amount numeric NULL,
 	asset_id varchar(255) NULL,
 	description varchar(255) NULL,
 	dest_account_id varchar(255) NULL,

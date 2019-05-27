@@ -17,10 +17,7 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 import java.math.BigDecimal
 import javax.transaction.Transactional
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 @RunWith(SpringRunner::class)
 @DataJpaTest
@@ -47,6 +44,9 @@ class DataJpaTest {
 
     @Autowired
     lateinit var blockRepo:BlockRepository
+
+    @Autowired
+    lateinit var transferRepo:TransferAssetRepo
 
     /**
      * Test Find Account by accountId
@@ -147,5 +147,33 @@ class DataJpaTest {
         // then
         assertThat(found.get().value)
             .isEqualTo(state1.value)
+    }
+
+    /**
+     * Test Very big transfer amount value
+     * @given nothing
+     * @when Transfer asset with very big amount sae
+     * @then value of saved is the same as of original
+     */
+    @Test
+    @Transactional
+    fun testBiggestAmounts() {
+        try {
+            val block = blockRepo.save(Block(1, 11))
+            val transaction = transactionRepo.save((Transaction(block = block)))
+            val transfer = transferRepo.save(
+                TransferAsset(
+                    "srcAccountId",
+                    "destAccountId",
+                    "assetId",
+                    "any decription",
+                    BigDecimal("1618033988749894848204586834"),
+                    transaction
+                )
+            )
+            assertTrue(transfer.id != null)
+        } catch (e:Exception) {
+            fail()
+        }
     }
 }
