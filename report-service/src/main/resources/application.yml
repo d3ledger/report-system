@@ -30,6 +30,10 @@ spring:
       # To be updated in real production usage! Possible values none;update;create
       ddl-auto: none
     show-sql: true
+  output:
+    ansi:
+      enabled: NEVER
+      
 server:
   port: 8090
 
