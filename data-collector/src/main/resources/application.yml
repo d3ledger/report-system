@@ -46,6 +46,9 @@ spring:
     username: guest
     password: guest
     virtual-host: /
+  output:
+    ansi:
+      enabled: NEVER
 
 server:
   port: 8080
