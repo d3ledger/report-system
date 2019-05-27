@@ -37,7 +37,7 @@ spring:
     hibernate:
       # To be updated in real production usage! Possible values none;update;create
       ddl-auto: none
-    show-sql: true
+    show-sql: false
   liquibase:
     change-log: classpath:liquibase-master.xml
   rabbitmq:
