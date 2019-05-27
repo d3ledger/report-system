@@ -31,15 +31,15 @@ CREATE TABLE transaction (
 
 --changeset yvinogradov:create_table_command
 CREATE TABLE public.command (
-	dtype varchar(31) NOT NULL,
+	dtype varchar(32) NOT NULL,
 	id bigserial NOT NULL,
 	account_id varchar(255) NULL,
 	detail_key varchar(255) NULL,
-	detail_value varchar(255) NULL,
+	detail_value varchar(10485760) NULL,
 	public_key varchar(255) NULL,
 	amount numeric NULL,
 	asset_id varchar(255) NULL,
-	description varchar(255) NULL,
+	description varchar(8000) NULL,
 	dest_account_id varchar(255) NULL,
 	src_account_id varchar(255) NULL,
 	quorum int4 NULL,
