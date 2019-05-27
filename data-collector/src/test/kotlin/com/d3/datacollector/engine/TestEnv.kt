@@ -58,8 +58,10 @@ open class TestEnv {
     @Autowired
     lateinit var irohaController: IrohaController
 
-    val userAId = "user_a@bank"
-    val userBId = "user_b@bank"
+    val userAName = "user_a"
+    val userBName = "user_b"
+    val userAId = "$userAName@bank"
+    val userBId = "$userBName@bank"
     val securitiesUser = "assets_list@security"
 
     val bankDomain = "bank"
@@ -137,17 +139,17 @@ open class TestEnv {
                     .createAccount(withdrawalBillingAccountName, bankDomain, withdrawalKeyPair.public)
                     .createAccount(accountCreationBillingAccountName, bankDomain, accountCreationKeyPair.public)
                     .createAccount("data_collector", notaryDomain, Utils.parseHexPublicKey(dataCollectorPublicKey))
-                    .createAccount("user_a", bankDomain, userAKeypair.public)
-                    .createAccount("user_b", bankDomain, userBKeypair.public)
+                    .createAccount(userAName, bankDomain, userAKeypair.public)
+                    .createAccount(userBName, bankDomain, userBKeypair.public)
                     .createAccount(irohaController.assetList,securityDomain, securitiesUserKeyPair.public)
                     .createAsset(usdName, bankDomain, 2)
-                    .setAccountDetail("user_a@$bankDomain", detailKey, detailValue)
+                    .setAccountDetail("$userAName@$bankDomain", detailKey, detailValue)
                     .setAccountQuorum(custodyBillingAccountId, 1)
                     .build()
                     .build()
             )
             .addTransaction(
-                Transaction.builder(user("user_a"))
+                Transaction.builder(user(userAName))
                     .addAssetQuantity(usd, BigDecimal("100"))
                     .build()
                     .build()

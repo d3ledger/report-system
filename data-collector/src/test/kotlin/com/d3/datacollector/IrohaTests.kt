@@ -27,6 +27,9 @@ import javax.transaction.Transactional
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import jp.co.soramitsu.iroha.java.subscription.WaitForTerminalStatus
+
+
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -37,9 +40,11 @@ class IrohaTests : TestEnv() {
 
     private val log = KLogging().logger
 
+    private val waiter = WaitForTerminalStatus()
+
     @Test
     @Transactional
-    @Ignore
+    // @Ignore
     fun testBatchExchange() {
         val iroha = IrohaContainer()
             .withPeerConfig(peerConfig)
@@ -48,8 +53,6 @@ class IrohaTests : TestEnv() {
         val api = IrohaAPI(URI(iroha.toriiAddress.toString()))
 
         // transfer 100 usd from user_a to user_b
-        val userAId = "user_a@bank"
-        val userBId = "user_b@bank"
         val transferDescription = "For pizza"
         val transferAmount = "10"
         val tx = Transaction.builder(userAId)
@@ -64,37 +67,51 @@ class IrohaTests : TestEnv() {
             .transferAsset(
                 userAId, userBId,
                 usd, "Exchange", "5"
-            ).sign(userAKeypair)
-            .build()
-        val tx2 = Transaction.builder(userBId)
-            .transferAsset(
-                userBId, userAId,
-                usd, "Exchange", "5"
-            ).sign(userBKeypair)
-            .build()
-        val tx3 = Transaction.builder(userAId)
+            )
             .transferAsset(
                 userAId, "$exchangeBillingAccountName@$bankDomain",
                 usd, "Exchange commission", "1"
             ).sign(userAKeypair)
             .build()
-        val tx4 = Transaction.builder(userBId)
+
+        val tx2 = Transaction.builder(userAId)
             .transferAsset(
-                userBId, "$exchangeBillingAccountName@$bankDomain",
+                userAId, userBId,
+                usd, "Exchange", "5"
+            )
+            .transferAsset(
+                userAId, "$exchangeBillingAccountName@$bankDomain",
                 usd, "Exchange commission", "1"
-            ).sign(userBKeypair)
+            ).sign(userAKeypair)
             .build()
 
-        val batch = listOf(tx1,tx2,tx3,tx4)
+        val batch = listOf(tx1, tx2)
         val atomicBatch = Utils.createTxAtomicBatch(batch, userAKeypair)
         api.transactionListSync(atomicBatch)
 
-        val txList = listOf(tx,tx1,tx2,tx3,tx4)
+        val txList = listOf(tx)
+
+        val observer = inlineTransactionStatusObserver()
+
+        for (tx in atomicBatch) {
+            val hash = Utils.hash(tx)
+            waiter.subscribe(api, hash)
+                .blockingSubscribe(observer)
+        }
+
         prepareState(api, txList)
 
         for (i in 1L..txList.size + 1) {
             getBlockAndCheck(i)
         }
+
+
+        val balanceUserA = getBalance(api, userAId, userAKeypair)
+        val balanceUserB = getBalance(api, userBId, userBKeypair)
+
+        // ensure we got correct balances
+        assertEquals(78, balanceUserA)
+        assertEquals(20, balanceUserB)
 
         assertTrue(txBatchRepo.findAll().toCollection(ArrayList()).isNotEmpty())
         iroha.stop()
@@ -112,7 +129,7 @@ class IrohaTests : TestEnv() {
         val securityValue = "secureValue"
 
         val tx1 = Transaction.builder(securitiesUser)
-            .setAccountDetail(irohaController.securityAccount,securityKey, securityValue)
+            .setAccountDetail(irohaController.securityAccount, securityKey, securityValue)
             .sign(securitiesUserKeyPair)
             .build()
 
