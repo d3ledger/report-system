@@ -13,10 +13,42 @@ interface TransactionBatchRepo : CrudRepository<TransactionBatchEntity, Long> {
                 " exists (SELECT tx FROM Transaction tx WHERE" +
                 " tx.batch.id = tb.id" +
                 " and tx.rejected = false" +
+                " and exists (SELECT ta FROM TransferAsset ta WHERE ta.transaction.id = tx.id and ta.destAccountId LIKE CONCAT(:billingAccountTemplate,'%'))" +
+                " and tx.block.blockCreationTime Between :from and :to)"
+    )
+    fun getDataBetweenForbillingAccountTemplate(
+        billingAccountTemplate: String,
+        from: Long,
+        to: Long,
+        pageable: Pageable
+    ): Page<TransactionBatchEntity>
+
+    @Query(
+        "SELECT tb FROM TransactionBatchEntity tb WHERE" +
+                " exists (SELECT tx FROM Transaction tx WHERE" +
+                " tx.batch.id = tb.id" +
+                " and tx.rejected = false" +
                 " and exists (SELECT ta FROM TransferAsset ta WHERE ta.transaction.id = tx.id and ta.destAccountId = :billingAccountId)" +
                 " and tx.block.blockCreationTime Between :from and :to)"
     )
     fun getDataBetweenForBillingAccount(
+        billingAccountId: String,
+        from: Long,
+        to: Long,
+        pageable: Pageable
+    ): Page<TransactionBatchEntity>
+
+    @Query(
+        "SELECT tb FROM TransactionBatchEntity tb WHERE" +
+                " exists (SELECT tx FROM Transaction tx WHERE" +
+                " tx.batch.id = tb.id" +
+                " and tx.rejected = false" +
+                " and tx.creatorId = :accountId" +
+                " and exists (SELECT ta FROM TransferAsset ta WHERE ta.transaction.id = tx.id and ta.destAccountId = :billingAccountId)" +
+                " and tx.block.blockCreationTime Between :from and :to)"
+    )
+    fun getDataBetweenForBillingAccountAndCustomer(
+        accountId: String,
         billingAccountId: String,
         from: Long,
         to: Long,

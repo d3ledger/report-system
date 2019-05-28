@@ -55,7 +55,7 @@ class RegisteredAccountsController(
                 .map {
                     AccountRegistration(
                         it.detailKey,
-                        it.transaction.block?.blockCreationTime
+                        it.transaction?.block?.blockCreationTime
                     )
                 }
 
@@ -102,7 +102,7 @@ class RegisteredAccountsController(
                 .map {
                     AccountRegistration(
                         it.detailKey,
-                        it.transaction.block?.blockCreationTime
+                        it.transaction?.block?.blockCreationTime
                     )
                 }
 

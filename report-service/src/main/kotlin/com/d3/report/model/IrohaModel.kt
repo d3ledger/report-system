@@ -35,9 +35,8 @@ data class Transaction(
     val quorum: Int? = null,
     @NotNull
     var rejected: Boolean = false,
-    @JsonIgnore
-    @OneToMany(mappedBy = "transaction", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
-    val commands: List<Command> = ArrayList(),
+    @OneToMany(mappedBy = "transaction", cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
+    val commands: MutableList<Command> = ArrayList(),
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batchId")
@@ -51,9 +50,10 @@ open class Command(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
     @NotNull
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "transactionId")
-    val transaction: Transaction
+    val transaction: Transaction? = null
 )
 
 @Entity
@@ -116,8 +116,8 @@ data class TransactionBatchEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-    @OneToMany(mappedBy = "batch", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
-    val transactions: List<Transaction> = ArrayList(),
+    @OneToMany(mappedBy = "batch", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    var transactions: List<Transaction> = ArrayList(),
     @Enumerated(EnumType.STRING)
     val batchType: BatchType = BatchType.UNDEFINED
 ) {

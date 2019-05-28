@@ -157,7 +157,7 @@ class AssetTransferController(
         report: TransferReport
     ) {
         page.get().collect(Collectors.toList())
-            .groupBy { it.transaction.id }
+            .groupBy { it.transaction?.id }
             .forEach {
                 var transfer = Transfer()
                 it.value.forEach {

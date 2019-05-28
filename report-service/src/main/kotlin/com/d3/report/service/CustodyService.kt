@@ -165,7 +165,7 @@ class CustodyService(
         if (assetCustodyContextForAccount.lastControlTimestamp > from) {
             addFeePortion(
                 assetCustodyContextForAccount,
-                transfer.transaction.block!!.blockCreationTime,
+                transfer.transaction?.block!!.blockCreationTime,
                 billing.feeFraction
             )
         }
@@ -205,7 +205,7 @@ class CustodyService(
         feeFraction: BigDecimal
     ) {
         if (assetCustodyContextForAccount.lastControlTimestamp <
-            transfer.transaction.block!!.blockCreationTime
+            transfer.transaction?.block!!.blockCreationTime
         ) {
             /**
              * Fee calculation Algorithm step 1
