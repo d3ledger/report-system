@@ -37,7 +37,11 @@ data class Transaction(
     var rejected: Boolean = false,
     @JsonIgnore
     @OneToMany(mappedBy = "transaction", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
-    val commands: List<Command> = ArrayList()
+    val commands: List<Command> = ArrayList(),
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "batchId")
+    val batch: TransactionBatchEntity? = null
 )
 
 @Entity
@@ -104,3 +108,21 @@ class AddSignatory(
     val publicKey: String? = null,
     transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
+
+
+@Entity
+@Table(name = "transaction_batch")
+data class TransactionBatchEntity(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
+    @OneToMany(mappedBy = "batch", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    val transactions: List<Transaction> = ArrayList(),
+    @Enumerated(EnumType.STRING)
+    val batchType: BatchType = BatchType.UNDEFINED
+) {
+    enum class BatchType {
+        UNDEFINED,
+        EXCHANGE
+    }
+}
