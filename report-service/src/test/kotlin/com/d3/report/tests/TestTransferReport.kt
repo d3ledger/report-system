@@ -82,7 +82,7 @@ class TestTransferReport {
         assertEquals(BigDecimal("10"), transafer1.transfer?.amount)
         assertEquals(BigDecimal("0.2"), transafer1.fee?.amount)
         assertEquals("srcAcc@author", transafer1.transfer?.srcAccountId)
-        assertEquals("transfer_billing@otherDomain", transafer1.fee.destAccountId)
+        assertEquals("transfer_billing@otherDomain", transafer1.fee?.destAccountId)
 
     }
 
