@@ -354,7 +354,7 @@ class TestExchangeReport {
         transferRepo.save(
             TransferAsset(
                 "otherSelf@otherDomain",
-                "hisSelf@$domain",
+                "hisSelf@otherDomain",
                 "assetId@$domain",
                 null,
                 BigDecimal("10"),
@@ -364,7 +364,7 @@ class TestExchangeReport {
         transferRepo.save(
             TransferAsset(
                 "otherSelf@otherDomain",
-                "$exchangeBillingTemplate$domain",
+                "${exchangeBillingTemplate}otherDomain",
                 "assetId@$domain",
                 null,
                 BigDecimal("0.2"),
@@ -375,7 +375,7 @@ class TestExchangeReport {
         transferRepo.save(
             TransferAsset(
                 "hisSelf@otherDomain",
-                "otherSelf@$domain",
+                "otherSelf@otherDomain",
                 "assetId@$domain",
                 null,
                 BigDecimal("10"),
@@ -385,7 +385,7 @@ class TestExchangeReport {
         transferRepo.save(
             TransferAsset(
                 "hisSelf@otherDomain",
-                "$exchangeBillingTemplate$domain",
+                "${exchangeBillingTemplate}otherDomain",
                 "assetId@$domain",
                 null,
                 BigDecimal("0.2"),
