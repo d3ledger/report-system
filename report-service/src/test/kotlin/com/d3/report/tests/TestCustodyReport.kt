@@ -1,8 +1,7 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package com.d3.report.tests
 
 import com.d3.report.model.AssetCustodyContext
@@ -200,7 +199,7 @@ class TestCustodyReport {
     }
 
     private fun prepareBlockFourWithTransfersAfterPeriod() {
-        var block = blockRepo.save(
+        val block = blockRepo.save(
             Block(
                 4,
                 (Integer.valueOf(threeDays) + 10).toLong()
@@ -222,7 +221,7 @@ class TestCustodyReport {
     }
 
     private fun prepareBlockThreeWithTransfersInPeriod() {
-        var block = blockRepo.save(
+        val block = blockRepo.save(
             Block(
                 3,
                 (Integer.valueOf(twoDays - 2)).toLong()

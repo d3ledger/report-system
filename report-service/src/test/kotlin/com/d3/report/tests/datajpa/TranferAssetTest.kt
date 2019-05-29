@@ -1,5 +1,5 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.d3.report.tests.datajpa
@@ -46,20 +46,20 @@ class TranferAssetTest {
     @Transactional
     fun testTransferAssetsForAllTheSystemRequest() {
         val block0 = blockRepo.save(Block(0, 0))
-        var transaction0 = transactionRepo.save(Transaction(null, block0, "mySelf@$domain", 1, false))
+        val transaction0 = transactionRepo.save(Transaction(null, block0, "mySelf@$domain", 1, false))
         transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction0))
         transferRepo.save(TransferAsset("srcAcc@$domain", "$transferBillingTemplate$domain", "assetId@$domain", null, BigDecimal("0.2"), transaction0))
 
         val block1 = blockRepo.save(Block(1, 1))
-        var transaction1 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
+        val transaction1 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
         transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction1))
         transferRepo.save(TransferAsset("srcAcc@$domain", "$transferBillingTemplate$domain", "assetId@$domain", null, BigDecimal("0.2"), transaction1))
 
-        var transaction2 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
+        val transaction2 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
         transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction2))
         transferRepo.save(TransferAsset("srcAcc@$domain", "${transferBillingTemplate}otherDomain", "assetId@$domain", null, BigDecimal("0.2"), transaction2))
 
-        var transaction3 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
+        val transaction3 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
         transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction3))
         transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@otherDomain", "assetId@$domain", null, BigDecimal("0.2"), transaction3))
 
@@ -88,8 +88,8 @@ class TranferAssetTest {
         transferRepo.save(TransferAsset("srcTwoAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("10"), transaction21))
         transferRepo.save(TransferAsset("srcTwoAcc@$domain", "${transferBillingTemplate}$domain", "assetId@$domain", null, BigDecimal("1"), transaction21))
 
-        var block3 = blockRepo.save(Block(3, 5))
-        var transaction3 = transactionRepo.save(Transaction(null, block3, "mySelf@$domain", 1, false))
+        val block3 = blockRepo.save(Block(3, 5))
+        val transaction3 = transactionRepo.save(Transaction(null, block3, "mySelf@$domain", 1, false))
         transferRepo.save(TransferAsset("srcAcc@$domain", "destAcc@$domain", "assetId@$domain", null, BigDecimal("1"), transaction3))
         transferRepo.save(TransferAsset("srcAcc@$domain", "${transferBillingTemplate}$domain", "assetId@$domain", null, BigDecimal("1"), transaction3))
 

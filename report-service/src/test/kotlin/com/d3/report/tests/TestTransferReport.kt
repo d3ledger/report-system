@@ -1,5 +1,5 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.d3.report.tests
@@ -63,7 +63,7 @@ class TestTransferReport {
     fun testTransferReportForAllTheSystem() {
         prepeareData()
 
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(
                 MockMvcRequestBuilders.get("/report/billing/system/transferAsset")
                     .param("from", "1")
@@ -73,11 +73,10 @@ class TestTransferReport {
             )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
         assertEquals(
             2, respBody.transfers.size)
             val transafer1 = respBody . transfers [0]
-        val transafer2 = respBody.transfers[1]
 
         assertEquals(BigDecimal("10"), transafer1.transfer?.amount)
         assertEquals(BigDecimal("0.2"), transafer1.fee?.amount)
@@ -88,7 +87,7 @@ class TestTransferReport {
 
     private fun prepeareData() {
         val block0 = blockRepo.save(Block(0, 0))
-        var transaction0 = transactionRepo.save(Transaction(null, block0, "mySelf@$domain", 1, false))
+        val transaction0 = transactionRepo.save(Transaction(null, block0, "mySelf@$domain", 1, false))
         transferRepo.save(
             TransferAsset(
                 "srcAcc@$domain",
@@ -111,7 +110,7 @@ class TestTransferReport {
         )
 
         val block1 = blockRepo.save(Block(1, 1))
-        var transaction1 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
+        val transaction1 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
         transferRepo.save(
             TransferAsset(
                 "srcAcc@$domain",
@@ -155,7 +154,7 @@ class TestTransferReport {
             )
         )
 
-        var transaction3 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
+        val transaction3 = transactionRepo.save(Transaction(null, block1, "mySelf@$domain", 1, false))
         transferRepo.save(
             TransferAsset(
                 "srcAcc@$domain",
@@ -192,7 +191,7 @@ class TestTransferReport {
         )
         assertEquals(4, page.numberOfElements)
 
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(
                 MockMvcRequestBuilders.get("/report/billing/account/transferAsset")
                     .param("accountId", accountId)
@@ -204,7 +203,7 @@ class TestTransferReport {
             )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
 
         assertEquals(1, respBody.transfers.size)
         assertNotNull(respBody.transfers[0].transfer)
@@ -229,7 +228,7 @@ class TestTransferReport {
         )
         assertEquals(2, page.numberOfElements)
 
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(
                 MockMvcRequestBuilders.get("/report/billing/account/transferAsset")
                     .param("accountId", accountId)
@@ -240,7 +239,7 @@ class TestTransferReport {
             )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
 
         assertEquals(1, respBody.transfers.size)
         assertNotNull(respBody.transfers[0].transfer)
@@ -343,8 +342,8 @@ class TestTransferReport {
             )
         )
 
-        var block3 = blockRepo.save(Block(3, 5))
-        var transaction3 =
+        val block3 = blockRepo.save(Block(3, 5))
+        val transaction3 =
             transactionRepo.save(Transaction(null, block3, "mySelf@$domain", 1, false))
         transferRepo.save(
             TransferAsset(
@@ -372,7 +371,7 @@ class TestTransferReport {
     @Transactional
     fun testTransferReportForAgent() {
         prepareDataForDomainReportTest()
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(
                 MockMvcRequestBuilders.get("/report/billing/domain/transferAsset")
                     .param("from", "1")
@@ -383,7 +382,7 @@ class TestTransferReport {
             )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
 
         assertEquals(1, respBody.transfers.size)
         assertNotNull(respBody.transfers[0].fee)
@@ -458,7 +457,7 @@ class TestTransferReport {
         )
 
         // Add other domain to test that it will be not included in report
-        var transaction6 =
+        val transaction6 =
             transactionRepo.save(Transaction(null, block3, "mySelf@$otherDomain", 1, false))
 
         transferRepo.save(
