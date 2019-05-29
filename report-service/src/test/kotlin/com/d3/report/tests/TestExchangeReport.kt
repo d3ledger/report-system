@@ -96,12 +96,12 @@ class TestExchangeReport {
      */
     @Test
     @Transactional
-    fun testGetExchangeReportForAgent() {
+    fun testGetExchangeReportForDomain() {
         prepareData()
 
         var result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/exchange/agent")
+                MockMvcRequestBuilders.get("/report/billing/exchange/domain")
                     .param("domain", domain)
                     .param("from", "1")
                     .param("to", "3")

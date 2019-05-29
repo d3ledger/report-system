@@ -65,7 +65,7 @@ class TestTransferReport {
 
         val result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/system/transferAsset")
+                MockMvcRequestBuilders.get("/report/billing/transferAsset/system")
                     .param("from", "1")
                     .param("to", "4")
                     .param("pageNum", "1")
@@ -193,7 +193,7 @@ class TestTransferReport {
 
         val result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/account/transferAsset")
+                MockMvcRequestBuilders.get("/report/billing/transferAsset/account")
                     .param("accountId", accountId)
                     .param("from", "2")
                     .param("to", "4")
@@ -230,7 +230,7 @@ class TestTransferReport {
 
         val result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/account/transferAsset")
+                MockMvcRequestBuilders.get("/report/billing/transferAsset/account")
                     .param("accountId", accountId)
                     .param("from", "2")
                     .param("to", "4")
@@ -369,11 +369,11 @@ class TestTransferReport {
 
     @Test
     @Transactional
-    fun testTransferReportForAgent() {
+    fun testTransferReportForDomain() {
         prepareDataForDomainReportTest()
         val result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/domain/transferAsset")
+                MockMvcRequestBuilders.get("/report/billing/transferAsset/domain")
                     .param("from", "1")
                     .param("to", "99999")
                     .param("pageNum", "1")

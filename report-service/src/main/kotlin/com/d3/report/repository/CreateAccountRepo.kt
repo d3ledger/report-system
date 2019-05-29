@@ -14,8 +14,8 @@ import org.springframework.data.repository.CrudRepository
 interface CreateAccountRepo : CrudRepository<CreateAccount, Long?> {
 
 
-    @Query("SELECT ca FROM CreateAccount ca WHERE ca.accountName LIKE CONCAT(:accTemplate,'%')")
-    fun findAccountsByName(accTemplate:String):List<CreateAccount>
+    @Query("SELECT ca FROM CreateAccount ca WHERE ca.accountName = :accName")
+    fun findAccountsByName(accName:String):List<CreateAccount>
 
     @Query("SELECT ca FROM CreateAccount ca WHERE ca.transaction.rejected = false " +
             "and ca.domainId = :domain")

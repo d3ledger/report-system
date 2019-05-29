@@ -25,7 +25,7 @@ import javax.validation.constraints.NotNull
 
 @CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
 @Controller
-@RequestMapping("/report/billing")
+@RequestMapping("/report/billing/transferAsset")
 class AssetTransferController(
     val transferRepo: TransferAssetRepo
 ) {
@@ -35,7 +35,7 @@ class AssetTransferController(
     @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
 
-    @GetMapping("/account/transferAsset")
+    @GetMapping("/account")
     fun reportCustomerTransferAssetBilling(
         @NotNull @RequestParam accountId: String,
         @NotNull @RequestParam from: Long,
@@ -83,7 +83,7 @@ class AssetTransferController(
         }
     }
 
-    @GetMapping("/domain/transferAsset")
+    @GetMapping("/domain")
     fun reportAgentBillingTransferAsset(
         @NotNull @RequestParam domain: String,
         @NotNull @RequestParam from: Long,
@@ -118,7 +118,7 @@ class AssetTransferController(
         }
     }
 
-    @GetMapping("/system/transferAsset")
+    @GetMapping("/system")
     fun reportSystemBillingTransferAsset(
         @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long,

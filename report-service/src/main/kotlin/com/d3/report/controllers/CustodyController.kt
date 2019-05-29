@@ -37,7 +37,7 @@ class CustodyController(
      * Add from parameter and saving of daily snapshots.
      * To calculate fees for a period on a finished dayly basis. Not to recalculate all values for every request.
      */
-    @GetMapping("/agent")
+    @GetMapping("/domain")
     @Transactional
     fun reportBillingTransferAssetForAgent(
         @NotNull @RequestParam domain: String,

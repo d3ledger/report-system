@@ -44,7 +44,6 @@ class IrohaTests : TestEnv() {
 
     @Test
     @Transactional
-    // @Ignore
     fun testBatchExchange() {
         val iroha = IrohaContainer()
             .withPeerConfig(peerConfig)
@@ -93,8 +92,8 @@ class IrohaTests : TestEnv() {
 
         val observer = inlineTransactionStatusObserver()
 
-        for (tx in atomicBatch) {
-            val hash = Utils.hash(tx)
+        for (btx in atomicBatch) {
+            val hash = Utils.hash(btx)
             waiter.subscribe(api, hash)
                 .blockingSubscribe(observer)
         }
@@ -104,7 +103,6 @@ class IrohaTests : TestEnv() {
         for (i in 1L..txList.size + 1) {
             getBlockAndCheck(i)
         }
-
 
         val balanceUserA = getBalance(api, userAId, userAKeypair)
         val balanceUserB = getBalance(api, userBId, userBKeypair)
