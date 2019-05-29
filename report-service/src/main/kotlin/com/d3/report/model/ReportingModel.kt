@@ -1,5 +1,5 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.d3.report.model
@@ -50,6 +50,14 @@ class RegistrationReport(
 
 class CustodyReport(
     val accounts: List<AccountCustody> = emptyList(),
+    total: Long = 0,
+    pages: Int = 0,
+    code: String? = null,
+    message: String? = null
+) : BaseReport(total, pages, code, message)
+
+class ExchangeReport(
+    val batches: List<TransactionBatchEntity> = emptyList(),
     total: Long = 0,
     pages: Int = 0,
     code: String? = null,

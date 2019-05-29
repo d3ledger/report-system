@@ -1,8 +1,7 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package com.d3.datacollector.config
 
 import com.d3.datacollector.service.RabbitMqService
@@ -18,6 +17,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 @ConditionalOnProperty(value = ["app.rabbitmq.enable"], havingValue = "true", matchIfMissing = true)
 @Configuration
 class RabbitConfig {
+
     val outRoutingKeyPrefix = "d3.data-collector"
     val transaferBillingUdateRoutingKey = "$outRoutingKeyPrefix.transfer-billing.update"
     val dataCollectorExchange = "data-collector"

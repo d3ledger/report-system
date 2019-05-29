@@ -1,5 +1,5 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -47,7 +47,7 @@ class AssetTransferController(
         return try {
             val report = TransferReport()
             val domain = accountId.substring(accountId.indexOf('@') + 1)
-            var page: Page<TransferAsset>
+            val page: Page<TransferAsset>
             if(assetId == null) {
               page =
                 transferRepo.getDataBetweenForBillingAccount(
@@ -157,9 +157,10 @@ class AssetTransferController(
         report: TransferReport
     ) {
         page.get().collect(Collectors.toList())
-            .groupBy { it.transaction.id }
+            .filter { it.transaction != null }
+            .groupBy { it.transaction?.id }
             .forEach {
-                var transfer = Transfer()
+                val transfer = Transfer()
                 it.value.forEach {
                     if (it.destAccountId?.contains(transferBillingTemplate) == true) {
                         transfer.fee = it

@@ -1,5 +1,5 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -102,7 +102,7 @@ class BlockTaskService {
                     for (tx in batch) {
 
                         val reducedPayload = tx.payload.reducedPayload
-                        var commitedTransaction = transactionRepo.save(
+                        val commitedTransaction = transactionRepo.save(
                             Transaction(
                                 block = dbBlock,
                                 creatorId = reducedPayload.creatorAccountId,

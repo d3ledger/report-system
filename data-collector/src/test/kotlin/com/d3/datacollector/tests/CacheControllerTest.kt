@@ -1,5 +1,5 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.d3.datacollector.tests
@@ -51,11 +51,11 @@ class CacheControllerTest : TestEnv() {
             )
         )
 
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(MockMvcRequestBuilders.get("/cache/get/billing"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
         val domain = getDomainFromAccountId(bittingGlobbaly)
@@ -81,11 +81,11 @@ class CacheControllerTest : TestEnv() {
             )
         )
 
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$someAsset/TRANSFER"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
         assertEquals(

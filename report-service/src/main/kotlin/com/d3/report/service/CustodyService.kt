@@ -1,5 +1,5 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Inc. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -165,7 +165,7 @@ class CustodyService(
         if (assetCustodyContextForAccount.lastControlTimestamp > from) {
             addFeePortion(
                 assetCustodyContextForAccount,
-                transfer.transaction.block!!.blockCreationTime,
+                transfer.transaction?.block!!.blockCreationTime,
                 billing.feeFraction
             )
         }
@@ -205,7 +205,7 @@ class CustodyService(
         feeFraction: BigDecimal
     ) {
         if (assetCustodyContextForAccount.lastControlTimestamp <
-            transfer.transaction.block!!.blockCreationTime
+            transfer.transaction?.block!!.blockCreationTime
         ) {
             /**
              * Fee calculation Algorithm step 1

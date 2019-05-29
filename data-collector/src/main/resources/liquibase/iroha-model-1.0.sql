@@ -35,7 +35,7 @@ CREATE TABLE public.command (
 	id bigserial NOT NULL,
 	account_id varchar(255) NULL,
 	detail_key varchar(255) NULL,
-	detail_value varchar(40000) NULL,
+	detail_value varchar(120000) NULL,
 	public_key varchar(255) NULL,
 	amount numeric NULL,
 	asset_id varchar(255) NULL,

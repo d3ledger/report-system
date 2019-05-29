@@ -1,5 +1,5 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.d3.report.tests
@@ -52,7 +52,7 @@ class TestAgentRegistrationsReport {
     fun testAgentRegistrationsReport() {
         prepareData()
 
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(
                 MockMvcRequestBuilders.get("/report/billing/registeredAccounts/agent")
                     .param("domain", domain)
@@ -63,7 +63,7 @@ class TestAgentRegistrationsReport {
             )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, RegistrationReport::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, RegistrationReport::class.java)
 
         assertEquals(1, respBody.accounts.size)
         assertEquals("title2@$domain",respBody.accounts[0].accountId)
