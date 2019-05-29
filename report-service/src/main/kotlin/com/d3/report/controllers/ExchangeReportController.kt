@@ -39,7 +39,7 @@ class ExchangeReportController(
     private lateinit var exchangeBillingTemplate: String
     val queryString = "SELECT * FROM Command c WHERE c.transaction_id = ?1"
 
-    @GetMapping("/agent")
+    @GetMapping("/domain")
     @Transactional
     fun reportBillingExchangeForAgent(
         @NotNull @RequestParam domain: String,

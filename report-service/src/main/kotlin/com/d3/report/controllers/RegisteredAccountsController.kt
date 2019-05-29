@@ -32,7 +32,7 @@ class RegisteredAccountsController(
     @Value("\${iroha.templates.clientsStorage}")
     private lateinit var clientsStorageTemplate: String
 
-    @GetMapping("/agent")
+    @GetMapping("/domain")
     fun reportRegistrations(
         @NotNull @RequestParam domain: String,
         @NotNull @RequestParam from: Long,
@@ -76,7 +76,7 @@ class RegisteredAccountsController(
         }
     }
 
-    @GetMapping("/network")
+    @GetMapping("/system")
     fun reportNetworkRegistrations(
         @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long,
@@ -84,8 +84,9 @@ class RegisteredAccountsController(
         @NotNull @RequestParam pageSize: Int = 20
     ): ResponseEntity<RegistrationReport> {
         return try {
+            val storageName = clientsStorageTemplate.removeSuffix("@")
             val storageAccounts = accountRepo
-                .findAccountsByName(clientsStorageTemplate.replace("@", ""))
+                .findAccountsByName(storageName)
                 .map { "${it.accountName}@${it.domainId}" }
 
             val accDetailsList =

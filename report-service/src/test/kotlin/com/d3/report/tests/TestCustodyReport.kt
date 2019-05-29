@@ -138,7 +138,7 @@ class TestCustodyReport {
     fun testCustodyFeeReportEmpty() {
         val result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/custody/agent")
+                MockMvcRequestBuilders.get("/report/billing/custody/domain")
                     .param("domain", "test_domain")
                     .param("to", "99")
                     .param("from", "0")
@@ -163,7 +163,7 @@ class TestCustodyReport {
 
         val result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/custody/agent")
+                MockMvcRequestBuilders.get("/report/billing/custody/domain")
                     .param("domain", testDomain)
                     .param("to", (threeDays).toString())
                     .param("from", oneDay.toString())
