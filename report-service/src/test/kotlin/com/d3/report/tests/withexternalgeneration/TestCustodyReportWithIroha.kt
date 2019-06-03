@@ -39,7 +39,6 @@ class TestCustodyReportWithIroha {
      * @then fee should be equal fee of two days
      */
     @Test
-    @Transactional
     @Ignore
     fun testCustodyFeeReportDataCustomer() {
 

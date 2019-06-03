@@ -43,8 +43,8 @@ class CustodyController(
         @NotNull @RequestParam domain: String,
         @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long,
-        @NotNull @RequestParam pageNum: Int = 1,
-        @NotNull @RequestParam pageSize: Int = 20
+        @NotNull @RequestParam pageNum: Int,
+        @NotNull @RequestParam pageSize: Int
     ): ResponseEntity<CustodyReport> {
         val billingStore = HashMap<String, Billing>()
         return try {

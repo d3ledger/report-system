@@ -10,6 +10,7 @@ import com.d3.report.repository.AccountAssetCustodyContextRepo
 import com.d3.report.repository.BillingRepository
 import com.d3.report.repository.TransferAssetRepo
 import com.d3.report.utils.getAccountId
+import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
@@ -17,6 +18,8 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.*
+import kotlin.collections.HashMap
 
 @Service
 class CustodyService(
@@ -24,6 +27,8 @@ class CustodyService(
     val billingRepo: BillingRepository,
     val custodyContextRepo: AccountAssetCustodyContextRepo
 ) {
+
+    companion object : KLogging()
 
     @Value("\${billing.custody.period}")
     private var custodyPeriod: Long = 86400000
@@ -107,11 +112,13 @@ class CustodyService(
         val assetCustodies = HashMap<String, BigDecimal>()
         accountCustodyContext.assetsContexts.forEach {
             /**
-             * Calculation algorothm step 3.
+             * Calculation algorithm step 3.
              * Calculate Commissions between last transfer for the selected period and 'to' date
              */
-            addFeePortion(it.value, to, billingStore[it.key]!!.feeFraction)
-            assetCustodies.put(it.key, it.value.commulativeFeeAmount)
+            if(billingStore[it.key] != null) {
+                addFeePortion(it.value, to, billingStore[it.key]!!.feeFraction)
+                assetCustodies.put(it.key, it.value.commulativeFeeAmount)
+            }
         }
         custodyFees.put(
             getAccountId(account),
@@ -129,14 +136,18 @@ class CustodyService(
         transfersPage
             .get()
             .forEach { transfer ->
-                processTransfer(
-                    accountCustodyContext,
-                    transfer,
-                    account,
-                    from,
-                    billingStore,
-                    transfer.assetId!!
-                )
+                try {
+                    processTransfer(
+                        accountCustodyContext,
+                        transfer,
+                        account,
+                        from,
+                        billingStore,
+                        transfer.assetId!!
+                    )
+                } catch (e: BillingNotFoundException) {
+                    logger.error("Skipping transfer because of exception", e)
+                }
             }
     }
 
@@ -148,6 +159,7 @@ class CustodyService(
         billingStore: HashMap<String, Billing>,
         assetId: String
     ) {
+
         val assetCustodyContextForAccount =
             getAssetCustodyContext(
                 accountCustodyContext,
@@ -171,7 +183,7 @@ class CustodyService(
         }
 
         updateAssetCustodyContextForAccount(assetCustodyContextForAccount, transfer, account, billing.feeFraction)
-      
+
         manageContextSnapshotsInDb(
             account,
             assetId,
@@ -190,11 +202,17 @@ class CustodyService(
             transfer.assetId!!
         )
         {
-            billingRepo.selectByAccountIdBillingTypeAndAsset(
+            val billing = billingRepo.selectByAccountIdBillingTypeAndAsset(
                 "$custodyAccountTemplate${account.domainId}",
                 assetId,
                 Billing.BillingTypeEnum.CUSTODY
-            ).get()
+            )
+            if (billing.isPresent) {
+                billing.get()
+            } else {
+                val errorMessage = "Billing ${Billing.BillingTypeEnum.CUSTODY} not found for: domain=${account.domainId}, asset: $assetId"
+                throw BillingNotFoundException(errorMessage)
+            }
         }
     }
 

@@ -66,3 +66,5 @@ data class Billing(
         updated = Date().time
     }
 }
+
+class BillingNotFoundException(message:String): Exception(message)
