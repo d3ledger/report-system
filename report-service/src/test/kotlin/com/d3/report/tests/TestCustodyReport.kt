@@ -185,7 +185,7 @@ class TestCustodyReport {
     private fun prepeareData() {
         billingRepo.save(
             Billing(
-                accountId = "$custodyBillingTemplate@$testDomain",
+                accountId = "$custodyBillingTemplate$testDomain",
                 billingType = Billing.BillingTypeEnum.CUSTODY,
                 asset = assetId,
                 feeFraction = BigDecimal("0.1")

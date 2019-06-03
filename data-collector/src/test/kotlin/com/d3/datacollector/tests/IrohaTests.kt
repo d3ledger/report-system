@@ -1,4 +1,4 @@
-package com.d3.datacollector
+package com.d3.datacollector.tests
 
 import com.d3.datacollector.engine.TestEnv
 import com.d3.datacollector.model.*
@@ -9,7 +9,6 @@ import jp.co.soramitsu.iroha.java.Utils
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import junit.framework.TestCase
 import mu.KLogging
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc

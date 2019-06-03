@@ -88,7 +88,7 @@ class CustodyController(
      */
     @GetMapping("/customer")
     @Transactional
-    fun reportBillingTransferAssetForCustomer(
+    fun reportCustodyForCustomer(
         @NotNull @RequestParam accountId: String,
         @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long

@@ -191,7 +191,7 @@ class CustodyService(
         )
         {
             billingRepo.selectByAccountIdBillingTypeAndAsset(
-                "$custodyAccountTemplate@${account.domainId}",
+                "$custodyAccountTemplate${account.domainId}",
                 assetId,
                 Billing.BillingTypeEnum.CUSTODY
             ).get()
