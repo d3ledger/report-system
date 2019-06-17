@@ -2,18 +2,15 @@ version: '3.1'
 
 services:
   data-collector:
+    image: nexus.iroha.tech:19002/d3-deploy/data-collector:develop
     container_name: "data-collector"
-    build:
-      context: ../data-collector/
-      dockerfile: Dockerfile
+    restart: on-failure
     ports:
       - 8080:8080
     depends_on:
       - dc-postgres
       - brvs-rmq
     environment:
-      WAIT_HOSTS:  dc-postgres:5432, brvs-rmq:5672
-      WAIT_BEFORE_HOSTS: 10
       POSTGRES_HOST: dc-postgres
       POSTGRES_DATABASE: postgres
       SPRING_RABBITMQ_HOST: brvs-rmq
@@ -23,10 +20,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: test
 
   report-service:
+    image: nexus.iroha.tech:19002/d3-deploy/report-service:develop
     container_name: "report-service"
-    build:
-      context: ../report-service/
-      dockerfile: Dockerfile
+    restart: on-failure
     ports:
       - 8090:8090
     depends_on:
@@ -47,9 +43,3 @@ services:
   brvs-rmq:
     image: rabbitmq:3-management
     container_name: "brvs-rmq"
-
-networks:
-  # Specify the network Iroha is present in if needed
-  default:
-    external:
-      name: deploy_d3-network

@@ -31,13 +31,13 @@ pipeline {
                     if (env.BRANCH_NAME ==~ /(master|develop)/) {
                         DOCKER_TAGS = ['master': 'latest', 'develop': 'develop']
                         TAG = DOCKER_TAGS[env.BRANCH_NAME]
-                        JARS = ['data-collector', 'report-service']
-                        sh "#!/bin/sh\napk --no-cache add docker"
-                        withDockerRegistry(credentialsId: 'nexus-d3-docker', url: 'https://nexus.iroha.tech:19002') {
-                            JARS.each {
-                                image = docker.build("nexus.iroha.tech:19002/d3-deploy/${it}:$TAG", "-f ${it}/Dockerfile ${it}")
-                                image.push()
-                            }
+                        withCredentials([usernamePassword(credentialsId: 'nexus-d3-docker', usernameVariable: 'login', passwordVariable: 'password')]) {
+                          TAG = env.TAG_NAME ? env.TAG_NAME : env.BRANCH_NAME
+                          env.DOCKER_REGISTRY_URL="https://nexus.iroha.tech:19002"
+                          env.DOCKER_REGISTRY_USERNAME="${login}"
+                          env.DOCKER_REGISTRY_PASSWORD="${password}"
+                          env.TAG="${TAG}"
+                          sh "#!/bin/sh\n./gradlew dockerPush"
                         }
                     }
                 }

@@ -45,7 +45,7 @@ allprojects {
 
         implementation "io.springfox:springfox-swagger2:$springfoxSwagger2Version"
         implementation "io.springfox:springfox-swagger-ui:$springfoxSwagger2Version"
-        implementation "org.springframework.boot:spring-boot-starter-actuator"
+        implementation "org.springframework.boot:spring-boot-starter-actuator:$spring_boot_version"
 
 
         //logging
