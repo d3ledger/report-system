@@ -1,0 +1,46 @@
+iroha:
+  templates:
+    transferBilling: transfer_billing@
+    custodyBilling: custody_billing@
+    accountCreationBilling: account_creation_billing@
+    exchangeBilling: exchange_billing@
+    withdrawalBilling: withdrawal_billing@
+    clientsStorage: client_accounts@
+
+billing:
+  custody:
+    # 86400000 - one day in millisec
+    period: 86400000
+
+postgres:
+  host:     localhost
+  port:     5432
+  database: data_collector
+
+spring:
+  # Spring JDBC configuration
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url:      jdbc:postgresql://${postgres.host}:${postgres.port}/${postgres.database}?useSSL=false
+    username: postgres
+    password: postgres
+  # Spring Data JPA configuration
+  jpa:
+    hibernate:
+      # To be updated in real production usage! Possible values none;update;create
+      ddl-auto: none
+    show-sql: true
+  output:
+    ansi:
+      enabled: NEVER
+
+server:
+  port: 8090
+
+hibernate:
+  hbm2ddl:
+    auto: update
+
+logging:
+  level:
+    org.hibernate.engine.jdbc.env.internal.LobCreatorBuilderImpl: ERROR

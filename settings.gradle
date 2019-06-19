@@ -1,4 +1,3 @@
 rootProject.name = 'report-system'
 include 'data-collector'
-
-
+include 'report-service'
