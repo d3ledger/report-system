@@ -14,30 +14,28 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    sh "#!/bin/sh\n./gradlew build --info"
+                    sh "./gradlew build --info"
                 }
             }
         }
         stage('Test') {
             steps {
                 script {
-                    sh "#!/bin/sh\n./gradlew test --info"
+                    sh "./gradlew test --info"
                 }
             }
         }
         stage('Build artifacts') {
             steps {
                 script {
-                    if (env.BRANCH_NAME ==~ /(master|develop)/) {
+                    if (env.BRANCH_NAME ==~ /(master|develop)/ || env.TAG_NAME) {
                         DOCKER_TAGS = ['master': 'latest', 'develop': 'develop']
-                        TAG = DOCKER_TAGS[env.BRANCH_NAME]
                         withCredentials([usernamePassword(credentialsId: 'nexus-d3-docker', usernameVariable: 'login', passwordVariable: 'password')]) {
-                          TAG = env.TAG_NAME ? env.TAG_NAME : env.BRANCH_NAME
-                          env.DOCKER_REGISTRY_URL="https://nexus.iroha.tech:19002"
-                          env.DOCKER_REGISTRY_USERNAME="${login}"
-                          env.DOCKER_REGISTRY_PASSWORD="${password}"
-                          env.TAG="${TAG}"
-                          sh "#!/bin/sh\n./gradlew dockerPush"
+                          env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19002"
+                          env.DOCKER_REGISTRY_USERNAME = "${login}"
+                          env.DOCKER_REGISTRY_PASSWORD = "${password}"
+                          env.TAG = env.TAG_NAME ? env.TAG_NAME : DOCKER_TAGS[env.BRANCH_NAME]
+                          sh "./gradlew dockerPush"
                         }
                     }
                 }
