@@ -30,14 +30,14 @@ spring:
   datasource:
     driverClassName: org.postgresql.Driver
     url:      jdbc:postgresql://${postgres.host}:${postgres.port}/${postgres.database}?useSSL=false
-    username: postgres
-    password: postgres
+    username: test
+    password: test
   # Spring Data JPA configuration
   jpa:
     hibernate:
       # To be updated in real production usage! Possible values none;update;create
       ddl-auto: none
-    show-sql: true
+    show-sql: false
   liquibase:
     change-log: classpath:liquibase-master.xml
   rabbitmq:
@@ -46,6 +46,9 @@ spring:
     username: guest
     password: guest
     virtual-host: /
+  output:
+    ansi:
+      enabled: NEVER
 
 server:
   port: 8080

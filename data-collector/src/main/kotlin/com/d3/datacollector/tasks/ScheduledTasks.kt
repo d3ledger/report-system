@@ -1,8 +1,7 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package com.d3.datacollector.tasks
 
 import com.d3.datacollector.service.BlockTaskService
@@ -20,8 +19,12 @@ class ScheduledTasks {
 
     @Scheduled(fixedDelayString = "\${scheduling.iroha.block.request}", initialDelay = 5000)
     fun getBlockTask() {
-        log.debug("Block downloading job started")
-        service.processBlockTask()
-        log.debug("Block downloading job finished")
+        try {
+            log.debug("Block downloading job started")
+            service.processBlockTask()
+            log.debug("Block downloading job finished")
+        } catch(e: Exception) {
+            log.debug("Error block processing job", e)
+        }
     }
 }

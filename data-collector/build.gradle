@@ -1,10 +1,9 @@
-group 'd3'
-version '1.0'
-
 buildscript {
     repositories {
         mavenCentral()
         jcenter()
+        // gradle plugins repository
+        gradlePluginPortal()
     }
     dependencies {
         //Spring-boot
@@ -12,13 +11,30 @@ buildscript {
     }
 }
 
+plugins {
+    id 'jp.co.soramitsu.sora-plugin' version '0.1.2'
+}
+
+group 'd3'
+version '1.0'
+
 apply plugin: 'application'
 apply plugin: "kotlin-spring" // See https://kotlinlang.org/docs/reference/compiler-plugins.html#kotlin-spring-compiler-plugin
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'idea'
 
-version = '1.0'
+// sora-plugin configs
+soramitsu {
+    projectGroup = 'd3-deploy'
+    docker {
+        // docker tag
+        tag = System.getenv("TAG")
+        // jar file that is used in the generated Dockerfile
+        jar = new File("build/libs/${project.name}-${project.version}.jar")
+        // the rest in configured using env variables
+    }
+}
 
 dependencies {
 

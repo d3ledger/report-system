@@ -1,8 +1,7 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package com.d3.report.controllers
 
 import com.d3.report.model.AccountRegistration
@@ -33,7 +32,7 @@ class RegisteredAccountsController(
     @Value("\${iroha.templates.clientsStorage}")
     private lateinit var clientsStorageTemplate: String
 
-    @GetMapping("/agent")
+    @GetMapping("/domain")
     fun reportRegistrations(
         @NotNull @RequestParam domain: String,
         @NotNull @RequestParam from: Long,
@@ -55,7 +54,7 @@ class RegisteredAccountsController(
                 .map {
                     AccountRegistration(
                         it.detailKey,
-                        it.transaction.block?.blockCreationTime
+                        it.transaction?.block?.blockCreationTime
                     )
                 }
 
@@ -77,7 +76,7 @@ class RegisteredAccountsController(
         }
     }
 
-    @GetMapping("/network")
+    @GetMapping("/system")
     fun reportNetworkRegistrations(
         @NotNull @RequestParam from: Long,
         @NotNull @RequestParam to: Long,
@@ -85,8 +84,9 @@ class RegisteredAccountsController(
         @NotNull @RequestParam pageSize: Int = 20
     ): ResponseEntity<RegistrationReport> {
         return try {
+            val storageName = clientsStorageTemplate.removeSuffix("@")
             val storageAccounts = accountRepo
-                .findAccountsByName(clientsStorageTemplate.replace("@", ""))
+                .findAccountsByName(storageName)
                 .map { "${it.accountName}@${it.domainId}" }
 
             val accDetailsList =
@@ -102,7 +102,7 @@ class RegisteredAccountsController(
                 .map {
                     AccountRegistration(
                         it.detailKey,
-                        it.transaction.block?.blockCreationTime
+                        it.transaction?.block?.blockCreationTime
                     )
                 }
 

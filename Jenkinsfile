@@ -14,30 +14,28 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    sh "#!/bin/sh\n./gradlew build --info"
+                    sh "./gradlew build --info"
                 }
             }
         }
         stage('Test') {
             steps {
                 script {
-                    sh "#!/bin/sh\n./gradlew test --info"
+                    sh "./gradlew test --info"
                 }
             }
         }
         stage('Build artifacts') {
             steps {
                 script {
-                    if (env.BRANCH_NAME ==~ /(master|develop)/) {
+                    if (env.BRANCH_NAME ==~ /(master|develop)/ || env.TAG_NAME) {
                         DOCKER_TAGS = ['master': 'latest', 'develop': 'develop']
-                        TAG = DOCKER_TAGS[env.BRANCH_NAME]
-                        JARS = ['data-collector', 'report-service']
-                        sh "#!/bin/sh\napk --no-cache add docker"
-                        withDockerRegistry(credentialsId: 'nexus-d3-docker', url: 'https://nexus.iroha.tech:19002') {
-                            JARS.each {
-                                image = docker.build("nexus.iroha.tech:19002/d3-deploy/${it}:$TAG", "-f ${it}/Dockerfile ${it}")
-                                image.push()
-                            }
+                        withCredentials([usernamePassword(credentialsId: 'nexus-d3-docker', usernameVariable: 'login', passwordVariable: 'password')]) {
+                          env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19002"
+                          env.DOCKER_REGISTRY_USERNAME = "${login}"
+                          env.DOCKER_REGISTRY_PASSWORD = "${password}"
+                          env.TAG = env.TAG_NAME ? env.TAG_NAME : DOCKER_TAGS[env.BRANCH_NAME]
+                          sh "./gradlew dockerPush"
                         }
                     }
                 }

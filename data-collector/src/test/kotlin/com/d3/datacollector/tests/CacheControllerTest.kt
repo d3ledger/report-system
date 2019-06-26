@@ -1,23 +1,24 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.d3.datacollector.tests
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.d3.datacollector.cache.CacheRepository
+import com.d3.datacollector.engine.TestEnv
 import com.d3.datacollector.model.Billing
 import com.d3.datacollector.model.BillingResponse
 import com.d3.datacollector.model.SingleBillingResponse
 import com.d3.datacollector.utils.getDomainFromAccountId
+import com.fasterxml.jackson.databind.ObjectMapper
+import jp.co.soramitsu.iroha.java.IrohaAPI
+import jp.co.soramitsu.iroha.java.Transaction
+import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
-import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
@@ -30,15 +31,7 @@ import kotlin.test.assertNull
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @TestPropertySource(properties = arrayOf("app.scheduling.enable=false", "app.rabbitmq.enable=false"))
-class CacheControllerTest {
-
-    private val mapper = ObjectMapper()
-
-    @Autowired
-    lateinit var mvc: MockMvc
-
-    @Autowired
-    lateinit var cache: CacheRepository
+class CacheControllerTest : TestEnv() {
 
     /**
      * TODO Update test. Add all type of fees testing
@@ -58,16 +51,18 @@ class CacheControllerTest {
             )
         )
 
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(MockMvcRequestBuilders.get("/cache/get/billing"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
         val domain = getDomainFromAccountId(bittingGlobbaly)
-        assertEquals(BigDecimal(fee),
-            respBody.transfer[domain]!![someAsset]!!.feeFraction)
+        assertEquals(
+            BigDecimal(fee),
+            respBody.transfer[domain]!![someAsset]!!.feeFraction
+        )
     }
 
     @Test
@@ -81,19 +76,21 @@ class CacheControllerTest {
         cache.addFeeByType(
             Billing(
                 accountId = bittingGlobbaly,
-                asset = someAsset,
+                asset = "$someAsset#$domain",
                 feeFraction = BigDecimal(fee)
             )
         )
 
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$someAsset/TRANSFER"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        assertEquals(BigDecimal(fee),
-            respBody.billing.feeFraction)
+        assertEquals(
+            BigDecimal(fee),
+            respBody.billing.feeFraction
+        )
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.d3.report.model
@@ -35,9 +35,12 @@ data class Transaction(
     val quorum: Int? = null,
     @NotNull
     var rejected: Boolean = false,
+    @OneToMany(mappedBy = "transaction", cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
+    val commands: MutableList<Command> = ArrayList(),
     @JsonIgnore
-    @OneToMany(mappedBy = "transaction", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
-    val commands: List<Command> = ArrayList()
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "batchId")
+    val batch: TransactionBatchEntity? = null
 )
 
 @Entity
@@ -47,9 +50,10 @@ open class Command(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
     @NotNull
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "transactionId")
-    val transaction: Transaction
+    val transaction: Transaction? = null
 )
 
 @Entity
@@ -73,11 +77,10 @@ class CreateAccount(
 ) : Command(transaction = transaction)
 
 @Entity
-@Table(name = "create_asset")
 class CreateAsset(
-    val assetName: String,
-    val domainId: String,
-    val decimalPrecision: Int,
+    val assetName: String = "empty Asset name",
+    val domainId: String = "empty domain Id",
+    val decimalPrecision: Int = 8,
     transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
 
@@ -105,3 +108,21 @@ class AddSignatory(
     val publicKey: String? = null,
     transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
+
+
+@Entity
+@Table(name = "transaction_batch")
+data class TransactionBatchEntity(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
+    @OneToMany(mappedBy = "batch", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    var transactions: List<Transaction> = ArrayList(),
+    @Enumerated(EnumType.STRING)
+    val batchType: BatchType = BatchType.UNDEFINED
+) {
+    enum class BatchType {
+        UNDEFINED,
+        EXCHANGE
+    }
+}
