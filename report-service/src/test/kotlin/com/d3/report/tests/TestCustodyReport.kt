@@ -1,8 +1,7 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package com.d3.report.tests
 
 import com.d3.report.model.AssetCustodyContext
@@ -22,6 +21,7 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.transaction.Transactional
 import kotlin.test.assertEquals
 
@@ -59,6 +59,74 @@ class TestCustodyReport {
     val accountOneId = "$accountOne@$testDomain"
     val otherAccountId = "$accountOne@$otherDomain"
     val assetId = "assetOne@$otherDomain"
+    val oneDay = 86400000
+    val twoDays = 172800002
+    val threeDays = 259200000
+
+    /**
+     * @given accounts in two domains with transfers. And some transfers without account which should be ignored
+     * @when custody report calculated for two days
+     * @then fee should be equal fee of two days and two accouts from different domains should be returned
+     */
+    @Test
+    @Transactional
+    fun testCustodyFeeReportDataForSystem() {
+        prepeareData()
+
+        val result: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.get("/report/billing/custody/system")
+                    .param("to", (threeDays).toString())
+                    .param("from", oneDay.toString())
+                    .param("pageNum", "1")
+                    .param("pageSize", "10")
+            )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        val respBody = mapper.readValue(result.response.contentAsString, CustodyReport::class.java)
+        assertEquals(2, respBody.accounts.size)
+        assertEquals(otherAccountId, respBody.accounts[0].accountId)
+        assertEquals(accountOneId, respBody.accounts[1].accountId)
+        assertEquals(1, respBody.accounts[0].assetCustody.size)
+        assertEquals(1, respBody.accounts[1].assetCustody.size)
+        assertEquals(
+            BigDecimal("1.0").setScale(1),
+            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(1, RoundingMode.HALF_UP)
+        )
+        assertEquals(
+            BigDecimal("1.5").setScale(8),
+            respBody.accounts[1].assetCustody.get(assetId)!!.setScale(8, RoundingMode.HALF_UP)
+        )
+    }
+
+    /**
+     * @given accounts with transfers
+     * @when custody report calculated for two days
+     * @then fee should be equal fee of two days
+     */
+    @Test
+    @Transactional
+    fun testCustodyFeeReportDataCustomer() {
+        prepeareData()
+
+        val result: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.get("/report/billing/custody/customer")
+                    .param("accountId", accountOneId)
+                    .param("to", (threeDays).toString())
+                    .param("from", oneDay.toString())
+            )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        val respBody = mapper.readValue(result.response.contentAsString, CustodyReport::class.java)
+        assertEquals(1, respBody.accounts.size)
+        assertEquals(accountOneId, respBody.accounts[0].accountId)
+        assertEquals(1, respBody.accounts[0].assetCustody.size)
+        assertEquals(
+            BigDecimal("1.5").setScale(8),
+            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8)
+        )
+    }
 
     /**
      * @given no data
@@ -70,7 +138,7 @@ class TestCustodyReport {
     fun testCustodyFeeReportEmpty() {
         val result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/custody/agent")
+                MockMvcRequestBuilders.get("/report/billing/custody/domain")
                     .param("domain", "test_domain")
                     .param("to", "99")
                     .param("from", "0")
@@ -90,15 +158,15 @@ class TestCustodyReport {
      */
     @Test
     @Transactional
-    fun testCustodyFeeReport() {
+    fun testCustodyFeeReportData() {
         prepeareData()
 
         val result: MvcResult = mvc
             .perform(
-                MockMvcRequestBuilders.get("/report/billing/custody/agent")
+                MockMvcRequestBuilders.get("/report/billing/custody/domain")
                     .param("domain", testDomain)
-                    .param("to", "172800002")
-                    .param("from", "2")
+                    .param("to", (threeDays).toString())
+                    .param("from", oneDay.toString())
                     .param("pageNum", "1")
                     .param("pageSize", "10")
             )
@@ -109,15 +177,15 @@ class TestCustodyReport {
         assertEquals(accountOneId, respBody.accounts[0].accountId)
         assertEquals(1, respBody.accounts[0].assetCustody.size)
         assertEquals(
-            BigDecimal("1").setScale(8),
-            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8)
+            BigDecimal("1.5").setScale(8),
+            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8, RoundingMode.HALF_UP)
         )
     }
 
     private fun prepeareData() {
         billingRepo.save(
             Billing(
-                accountId = "$custodyBillingTemplate@$testDomain",
+                accountId = "$custodyBillingTemplate$testDomain",
                 billingType = Billing.BillingTypeEnum.CUSTODY,
                 asset = assetId,
                 feeFraction = BigDecimal("0.1")
@@ -125,14 +193,59 @@ class TestCustodyReport {
         )
 
         prepearBlockOneWithAccounts()
-
-        prepareBlockTwoWithTransfers()
+        prepareBlockTwoWithTransfersBeforePeriod()
+        prepareBlockThreeWithTransfersInPeriod()
+        prepareBlockFourWithTransfersAfterPeriod()
     }
 
-    private fun prepareBlockTwoWithTransfers() {
+    private fun prepareBlockFourWithTransfersAfterPeriod() {
+        val block = blockRepo.save(
+            Block(
+                4,
+                (Integer.valueOf(threeDays) + 10).toLong()
+            )
+        )
+
+        val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
+        // trasfer input to used account
+        transferRepo.save(
+            TransferAsset(
+                "not_analysed_account@domainId",
+                accountOneId,
+                assetId,
+                null,
+                BigDecimal("5"),
+                transaction
+            )
+        )
+    }
+
+    private fun prepareBlockThreeWithTransfersInPeriod() {
+        val block = blockRepo.save(
+            Block(
+                3,
+                (Integer.valueOf(twoDays - 2)).toLong()
+            )
+        )
+
+        val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
+        // trasfer input to used account
+        transferRepo.save(
+            TransferAsset(
+                "not_analysed_account@domainId",
+                accountOneId,
+                assetId,
+                null,
+                BigDecimal("5"),
+                transaction
+            )
+        )
+    }
+
+    private fun prepareBlockTwoWithTransfersBeforePeriod() {
         var block2 = Block(
             2,
-            2
+            2L
         )
         block2 = blockRepo.save(block2)
 
@@ -148,7 +261,7 @@ class TestCustodyReport {
                 transaction1
             )
         )
-        // transfer output to used account
+        // transfer output from used account
         transferRepo.save(
             TransferAsset(
                 accountOneId,
@@ -191,9 +304,20 @@ class TestCustodyReport {
          */
         accountRepo.save(
             CreateAccount(
-                "accountOther",
+                accountOne,
                 otherDomain,
                 "publicKeyNotTest",
+                transaction1
+            )
+        )
+
+        transferRepo.save(
+            TransferAsset(
+                "not_analysed_account@domainId",
+                otherAccountId,
+                assetId,
+                null,
+                BigDecimal("10"),
                 transaction1
             )
         )
@@ -217,8 +341,8 @@ class TestCustodyReport {
             0,
             BigDecimal(10)
         )
-        custodyService.addFeePortion(assetCustodyContext,custodyPeriod*2, BigDecimal("0.1"))
+        custodyService.addFeePortion(assetCustodyContext, custodyPeriod * 2, BigDecimal("0.1"))
 
-        assertEquals(BigDecimal("2"),assetCustodyContext.commulativeFeeAmount.setScale(0))
+        assertEquals(BigDecimal("2"), assetCustodyContext.commulativeFeeAmount.setScale(0))
     }
 }

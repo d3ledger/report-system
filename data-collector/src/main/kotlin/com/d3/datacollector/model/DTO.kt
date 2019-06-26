@@ -1,8 +1,7 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package com.d3.datacollector.model
 
 import java.math.BigDecimal
@@ -40,6 +39,15 @@ class BooleanWrapper(
 
 class IntegerWrapper(
     val itIs: Int? = null,
+    errorCode: String? = null,
+    errorMessage: String? = null
+) : Conflictable(errorCode,errorMessage)
+
+class AssetsResponse(
+    val currencies: Map<String?,String?> = HashMap(),
+    val securities: Map<String?,String?> = HashMap(),
+    val utilityAssets: Map<String?,String?> = HashMap(),
+    val privateAssets: Map<String?,String?> = HashMap(),
     errorCode: String? = null,
     errorMessage: String? = null
 ) : Conflictable(errorCode,errorMessage)

@@ -1,8 +1,7 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package com.d3.datacollector.cache
 
 import com.d3.datacollector.model.Billing
@@ -84,8 +83,8 @@ class CacheRepository {
         title: Billing.BillingTypeEnum
     ): Billing {
         if (billingMap.contains(domain)) {
-            if (billingMap[domain]!!.contains(asset)) {
-                return billingMap[domain]!![asset]!!
+            if (billingMap[domain]!!.contains("$asset#$domain")) {
+                return billingMap[domain]!!["$asset#$domain"]!!
             }
         }
         throw RuntimeException("No ${title.name} billing found for: $domain, $asset")

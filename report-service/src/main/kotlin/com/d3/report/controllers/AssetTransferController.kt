@@ -1,5 +1,5 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -10,7 +10,6 @@ import com.d3.report.model.TransferAsset
 import com.d3.report.model.TransferReport
 import com.d3.report.repository.TransferAssetRepo
 import mu.KLogging
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -26,7 +25,7 @@ import javax.validation.constraints.NotNull
 
 @CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
 @Controller
-@RequestMapping("/report/billing")
+@RequestMapping("/report/billing/transferAsset")
 class AssetTransferController(
     val transferRepo: TransferAssetRepo
 ) {
@@ -36,7 +35,7 @@ class AssetTransferController(
     @Value("\${iroha.templates.transferBilling}")
     private lateinit var transferBillingTemplate: String
 
-    @GetMapping("/account/transferAsset")
+    @GetMapping("/account")
     fun reportCustomerTransferAssetBilling(
         @NotNull @RequestParam accountId: String,
         @NotNull @RequestParam from: Long,
@@ -48,10 +47,10 @@ class AssetTransferController(
         return try {
             val report = TransferReport()
             val domain = accountId.substring(accountId.indexOf('@') + 1)
-            var page: Page<TransferAsset>
+            val page: Page<TransferAsset>
             if(assetId == null) {
               page =
-                transferRepo.getDataBetween(
+                transferRepo.getDataBetweenForBillingAccount(
                     accountId,
                     "$transferBillingTemplate$domain",
                     from,
@@ -59,7 +58,7 @@ class AssetTransferController(
                     PageRequest.of(pageNum - 1, pageSize)
                 )
             } else {
-                page = transferRepo.getDataBetweenForAsset(assetId,  accountId,
+                page = transferRepo.getDataBetweenForAssetOfAccount(assetId,  accountId,
                     "$transferBillingTemplate$domain",
                     from,
                     to,
@@ -84,7 +83,7 @@ class AssetTransferController(
         }
     }
 
-    @GetMapping("/domain/transferAsset")
+    @GetMapping("/domain")
     fun reportAgentBillingTransferAsset(
         @NotNull @RequestParam domain: String,
         @NotNull @RequestParam from: Long,
@@ -95,8 +94,42 @@ class AssetTransferController(
         val report = TransferReport()
         return try {
             val page =
-                transferRepo.getDataBetween(
+                transferRepo.getDataBetweenForBillingAccount(
                     "$transferBillingTemplate$domain",
+                    from,
+                    to,
+                    PageRequest.of(pageNum - 1, pageSize)
+                )
+
+            report.pages = page.totalPages
+            report.total = page.totalElements
+
+            mapTransfersWithItsCommissions(page, report)
+
+            ResponseEntity.ok<TransferReport>(report)
+        } catch (e: Exception) {
+            logger.error("Error creating transfer billing report for agent.", e)
+            ResponseEntity.status(HttpStatus.CONFLICT).body(
+                TransferReport(
+                    code = e.javaClass.simpleName,
+                    message = e.message
+                )
+            )
+        }
+    }
+
+    @GetMapping("/system")
+    fun reportSystemBillingTransferAsset(
+        @NotNull @RequestParam from: Long,
+        @NotNull @RequestParam to: Long,
+        @NotNull @RequestParam pageNum: Int = 1,
+        @NotNull @RequestParam pageSize: Int = 20
+    ): ResponseEntity<TransferReport> {
+        val report = TransferReport()
+        return try {
+            val page =
+                transferRepo.getDataBetweenForBillingAccountTemplate(
+                    transferBillingTemplate,
                     from,
                     to,
                     PageRequest.of(pageNum - 1, pageSize)
@@ -124,9 +157,10 @@ class AssetTransferController(
         report: TransferReport
     ) {
         page.get().collect(Collectors.toList())
-            .groupBy { it.transaction.id }
+            .filter { it.transaction != null }
+            .groupBy { it.transaction?.id }
             .forEach {
-                var transfer = Transfer()
+                val transfer = Transfer()
                 it.value.forEach {
                     if (it.destAccountId?.contains(transferBillingTemplate) == true) {
                         transfer.fee = it

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  ~ Copyright D3 Ledger, Inc. All Rights Reserved.
+  ~ Copyright Soramitsu Co., Inc. All Rights Reserved.
   ~ SPDX-License-Identifier: Apache-2.0
   -->
 
@@ -11,7 +11,7 @@
         <!-- encoders are assigned the type
              ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
         <encoder>
-            <pattern>[%d{dd.MM.yyyy HH:mm:ss,SSS}] registration [%-5p] [%t] %m%n</pattern>
+            <pattern>[%d{dd.MM.yyyy HH:mm:ss,SSS}] data-collector [%-5p] [%t] %m%n</pattern>
         </encoder>
     </appender>
 

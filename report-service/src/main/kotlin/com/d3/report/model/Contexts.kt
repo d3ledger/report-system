@@ -1,5 +1,5 @@
 /*
- * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.d3.report.model
@@ -16,7 +16,7 @@ class AccountCustodyContext(
 
 class AssetCustodyContext(
     var commulativeFeeAmount: BigDecimal = BigDecimal("0"),
-    var lastTransferTimestamp: Long = 0,
+    var lastControlTimestamp: Long = 0,
     var lastAssetSum: BigDecimal = BigDecimal("0")
 )
 
