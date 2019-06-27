@@ -213,7 +213,7 @@ class BlockTaskService {
 
     private fun processBillingAccountDetail(ad: Commands.SetAccountDetail) {
         if (filterBillingAccounts(ad)) {
-            if(ad.value.length > 7) {
+            if(ad.value.length > 7 || !ad.value.contains('.') || ad.value.indexOf('.') > 2) {
                 return
             }
             val billing = Billing(
