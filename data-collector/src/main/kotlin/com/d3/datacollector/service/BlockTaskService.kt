@@ -83,10 +83,10 @@ class BlockTaskService {
                 val dbBlock = blockRepo.save(Block(newBlockNumber, blockV1.payload.createdTime))
                 val transactionBatches = constructBatches(blockV1.payload.transactionsList)
 
-                transactionBatches.filter { it.transactionList.isNotEmpty() }.forEach {
+                transactionBatches.filter { it.transactionList.isNotEmpty() }.forEach { transactionBatch ->
                     var complexBatch: TransactionBatchEntity? = null
-                    if (it.transactionList.size > 1) {
-                        if (isItExchangeBatch(it.transactionList[0].payload.reducedPayload)) {
+                    if (transactionBatch.transactionList.size > 1) {
+                        if (isItExchangeBatch(transactionBatch.transactionList[0].payload.reducedPayload)) {
                             complexBatch = TransactionBatchEntity(
                                 batchType = TransactionBatchEntity.BatchType.EXCHANGE
                             )
@@ -98,7 +98,7 @@ class BlockTaskService {
                         complexBatch = txBatchRepo.save(complexBatch)
                     }
 
-                    val batch = it.transactionList
+                    val batch = transactionBatch.transactionList
                     for (tx in batch) {
 
                         val reducedPayload = tx.payload.reducedPayload
@@ -114,69 +114,76 @@ class BlockTaskService {
                         reducedPayload
                             .commandsList
                             .stream()
-                            .forEach {
-                                log.debug("Command received: $it")
-                                if (it.hasSetAccountDetail()) {
-                                    processBillingAccountDetail(it.setAccountDetail)
-                                    val ad = it.setAccountDetail
-                                    accountDetailRepo.save(
-                                        SetAccountDetail(
-                                            ad.accountId,
-                                            ad.key,
-                                            ad.value,
-                                            commitedTransaction
+                            .forEach { command ->
+                                log.debug("Command received: $command")
+                                when {
+                                    command.hasSetAccountDetail() -> {
+                                        processBillingAccountDetail(command.setAccountDetail)
+                                        val ad = command.setAccountDetail
+                                        accountDetailRepo.save(
+                                            SetAccountDetail(
+                                                ad.accountId,
+                                                ad.key,
+                                                ad.value,
+                                                commitedTransaction
+                                            )
                                         )
-                                    )
-                                } else if (it.hasTransferAsset()) {
-                                    val assetTransfer = it.transferAsset
-                                    transferRepo.save(
-                                        TransferAsset(
-                                            assetTransfer.srcAccountId,
-                                            assetTransfer.destAccountId,
-                                            assetTransfer.assetId,
-                                            assetTransfer.description,
-                                            BigDecimal(assetTransfer.amount),
-                                            commitedTransaction
+                                    }
+                                    command.hasTransferAsset() -> {
+                                        val assetTransfer = command.transferAsset
+                                        transferRepo.save(
+                                            TransferAsset(
+                                                assetTransfer.srcAccountId,
+                                                assetTransfer.destAccountId,
+                                                assetTransfer.assetId,
+                                                assetTransfer.description,
+                                                BigDecimal(assetTransfer.amount),
+                                                commitedTransaction
+                                            )
                                         )
-                                    )
-                                } else if (it.hasCreateAccount()) {
-                                    val ca = it.createAccount
-                                    createAccountRepo.save(
-                                        CreateAccount(
-                                            ca.accountName,
-                                            ca.domainId,
-                                            ca.publicKey,
-                                            commitedTransaction
+                                    }
+                                    command.hasCreateAccount() -> {
+                                        val ca = command.createAccount
+                                        createAccountRepo.save(
+                                            CreateAccount(
+                                                ca.accountName,
+                                                ca.domainId,
+                                                ca.publicKey,
+                                                commitedTransaction
+                                            )
                                         )
-                                    )
-                                } else if (it.hasCreateAsset()) {
-                                    val asset = it.createAsset
-                                    createAssetRepo.save(
-                                        CreateAsset(
-                                            asset.assetName,
-                                            asset.domainId,
-                                            asset.precision,
-                                            commitedTransaction
+                                    }
+                                    command.hasCreateAsset() -> {
+                                        val asset = command.createAsset
+                                        createAssetRepo.save(
+                                            CreateAsset(
+                                                asset.assetName,
+                                                asset.domainId,
+                                                asset.precision,
+                                                commitedTransaction
+                                            )
                                         )
-                                    )
-                                } else if (it.hasSetAccountQuorum()) {
-                                    val quorum = it.setAccountQuorum
-                                    accountQuorumRepo.save(
-                                        SetAccountQuorum(
-                                            quorum.accountId,
-                                            quorum.quorum,
-                                            commitedTransaction
+                                    }
+                                    command.hasSetAccountQuorum() -> {
+                                        val quorum = command.setAccountQuorum
+                                        accountQuorumRepo.save(
+                                            SetAccountQuorum(
+                                                quorum.accountId,
+                                                quorum.quorum,
+                                                commitedTransaction
+                                            )
                                         )
-                                    )
-                                } else if (it.hasAddSignatory()) {
-                                    val signatory = it.addSignatory
-                                    addSignatoryRepo.save(
-                                        AddSignatory(
-                                            signatory.accountId,
-                                            signatory.publicKey,
-                                            commitedTransaction
+                                    }
+                                    command.hasAddSignatory() -> {
+                                        val signatory = command.addSignatory
+                                        addSignatoryRepo.save(
+                                            AddSignatory(
+                                                signatory.accountId,
+                                                signatory.publicKey,
+                                                commitedTransaction
+                                            )
                                         )
-                                    )
+                                    }
                                 }
                             }
                     }
