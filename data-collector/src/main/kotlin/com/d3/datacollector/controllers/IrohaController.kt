@@ -64,7 +64,7 @@ class IrohaController(
         }
     }
 
-    @GetMapping("/asset/{assetId}")
+    @GetMapping("/asset/precision/{assetId}")
     fun getAssetPrecision(
         @PathVariable("assetId") assetId: String
     ): ResponseEntity<IntegerWrapper> {
