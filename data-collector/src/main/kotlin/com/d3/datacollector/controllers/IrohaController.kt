@@ -9,21 +9,14 @@ import com.d3.datacollector.model.BooleanWrapper
 import com.d3.datacollector.model.IntegerWrapper
 import com.d3.datacollector.model.SetAccountDetail
 import com.d3.datacollector.repository.CreateAccountRepo
+import com.d3.datacollector.repository.CreateAssetRepo
 import com.d3.datacollector.repository.SetAccountDetailRepo
 import com.d3.datacollector.repository.SetAccountQuorumRepo
-import com.d3.datacollector.service.IrohaApiService
-import iroha.protocol.QryResponses
 import mu.KLogging
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import java.lang.Exception
-import java.util.HashMap
+import org.springframework.web.bind.annotation.*
 import javax.validation.constraints.NotNull
 
 @CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
@@ -32,14 +25,13 @@ import javax.validation.constraints.NotNull
 class IrohaController(
     val accountRepo: CreateAccountRepo,
     val quorumRepo: SetAccountQuorumRepo,
-    val accountDetailRepo: SetAccountDetailRepo
+    val accountDetailRepo: SetAccountDetailRepo,
+    val assetRepo: CreateAssetRepo
 ) {
 
-    companion object {
-        val log = KLogging().logger
-    }
+    companion object : KLogging()
 
-    val assetList = "assets_list"
+    final val assetList = "assets_list"
     val currencyAccount = "$assetList@currency"
     val securityAccount = "$assetList@security"
     val utilityAccount = "$assetList@utility"
@@ -47,7 +39,7 @@ class IrohaController(
 
 
     @GetMapping("/asset/getAll")
-    fun GetAllAssets(): ResponseEntity<AssetsResponse> {
+    fun getAllAssets(): ResponseEntity<AssetsResponse> {
         return try {
             val currencies = accountDetailRepo.getAllDetailsForAccountId(currencyAccount)
             val securities = accountDetailRepo.getAllDetailsForAccountId(securityAccount)
@@ -62,10 +54,33 @@ class IrohaController(
             )
             ResponseEntity.ok(response)
         } catch (e: Exception) {
-            log.error("Error querying assets", e)
-            ResponseEntity.status(HttpStatus.CONFLICT).body( AssetsResponse(
-                errorCode = e.javaClass.simpleName,
-                errorMessage = e.message))
+            logger.error("Error querying assets", e)
+            ResponseEntity.status(HttpStatus.CONFLICT).body(
+                AssetsResponse(
+                    errorCode = e.javaClass.simpleName,
+                    errorMessage = e.message
+                )
+            )
+        }
+    }
+
+    @GetMapping("/asset/precision/{assetId}")
+    fun getAssetPrecision(
+        @PathVariable("assetId") assetId: String
+    ): ResponseEntity<IntegerWrapper> {
+        return try {
+            val optional = assetRepo.findByAssetId(assetId)
+            if (optional.isPresent) {
+                val precision = optional.get().decimalPrecision
+                ResponseEntity.ok(IntegerWrapper(precision))
+            } else {
+                ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(IntegerWrapper(null, "BAD_REQUEST", "Asset doesn't exist"))
+            }
+        } catch (e: Exception) {
+            logger.error("Error querying asset precision", e)
+            ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(IntegerWrapper(null, e.javaClass.simpleName, e.message))
         }
     }
 
@@ -81,8 +96,9 @@ class IrohaController(
             val optional = accountRepo.findByAccountId(accountId)
             ResponseEntity.ok(BooleanWrapper(optional.isPresent))
         } catch (e: Exception) {
-            log.error("Error querying account", e)
-            ResponseEntity.status(HttpStatus.CONFLICT).body(BooleanWrapper(false, e.javaClass.simpleName, e.message))
+            logger.error("Error querying account", e)
+            ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(BooleanWrapper(false, e.javaClass.simpleName, e.message))
         }
     }
 
@@ -104,8 +120,9 @@ class IrohaController(
                     .body(IntegerWrapper(null, "BAD_REQUEST", "Account doesn't exist"))
             }
         } catch (e: Exception) {
-            log.error("Error querying account quorum", e)
-            ResponseEntity.status(HttpStatus.CONFLICT).body(IntegerWrapper(null, e.javaClass.simpleName, e.message))
+            logger.error("Error querying account quorum", e)
+            ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(IntegerWrapper(null, e.javaClass.simpleName, e.message))
         }
     }
 }

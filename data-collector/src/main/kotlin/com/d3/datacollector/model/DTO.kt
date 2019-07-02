@@ -15,7 +15,7 @@ data class BillingResponse(
     val accountCreation: HashMap<String, HashMap<String, Billing>> = HashMap(),
     val exchange: HashMap<String, HashMap<String, Billing>> = HashMap(),
     val withdrawal: HashMap<String, HashMap<String, Billing>> = HashMap()
-    ) : Conflictable()
+) : Conflictable()
 
 data class SingleBillingResponse(
     val billing: Billing = Billing()
@@ -35,19 +35,19 @@ class BooleanWrapper(
     val itIs: Boolean = false,
     errorCode: String? = null,
     errorMessage: String? = null
-) : Conflictable(errorCode,errorMessage)
+) : Conflictable(errorCode, errorMessage)
 
 class IntegerWrapper(
     val itIs: Int? = null,
     errorCode: String? = null,
     errorMessage: String? = null
-) : Conflictable(errorCode,errorMessage)
+) : Conflictable(errorCode, errorMessage)
 
 class AssetsResponse(
-    val currencies: Map<String?,String?> = HashMap(),
-    val securities: Map<String?,String?> = HashMap(),
-    val utilityAssets: Map<String?,String?> = HashMap(),
-    val privateAssets: Map<String?,String?> = HashMap(),
+    val currencies: Map<String?, String?> = HashMap(),
+    val securities: Map<String?, String?> = HashMap(),
+    val utilityAssets: Map<String?, String?> = HashMap(),
+    val privateAssets: Map<String?, String?> = HashMap(),
     errorCode: String? = null,
     errorMessage: String? = null
-) : Conflictable(errorCode,errorMessage)
+) : Conflictable(errorCode, errorMessage)
