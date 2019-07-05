@@ -97,7 +97,7 @@ class CreateAccount(
 class CreateAsset(
     val assetName: String = "empty Asset name",
     val domainId: String = "empty domain Id",
-    val decimalPrecision: Int = 8,
+    val decimalPrecision: Int = 9,
     transaction: Transaction = Transaction()
 ) : Command(transaction = transaction)
 

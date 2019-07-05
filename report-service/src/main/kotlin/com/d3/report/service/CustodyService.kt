@@ -59,7 +59,7 @@ class CustodyService(
         val new =
             BigDecimal(currentTo.toString())
         val length = new.minus(previous)
-        val custodyMultiplier = length.divide(BigDecimal(custodyPeriod), 8, RoundingMode.HALF_UP)
+        val custodyMultiplier = length.divide(BigDecimal(custodyPeriod), 9, RoundingMode.HALF_UP)
         val periodFeeMultiplier = feeFraction.multiply(custodyMultiplier)
         val fee = periodFeeMultiplier.multiply(assetCustodyContextForAccount.lastAssetSum)
         assetCustodyContextForAccount

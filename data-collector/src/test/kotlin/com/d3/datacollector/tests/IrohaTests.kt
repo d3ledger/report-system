@@ -29,7 +29,6 @@ import kotlin.test.assertTrue
 import jp.co.soramitsu.iroha.java.subscription.WaitForTerminalStatus
 
 
-
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -192,7 +191,7 @@ class IrohaTests : TestEnv() {
             .sign(withdrawalKeyPair)
             .build()
         val tx7 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), "0.5")
+            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), "0.000000005")
             .sign(transaferBillingKeyPair)
             .build()
         val tx8 = Transaction.builder(custodyBillingAccountId)
@@ -237,8 +236,8 @@ class IrohaTests : TestEnv() {
         assertEquals(1, addSignatoryList.size)
 
         try {
-            val transaferBilling = cache.getTransferFee(bankDomain, usdName)
-            assertEquals(BigDecimal("0.5"), transaferBilling.feeFraction)
+            val transferBilling = cache.getTransferFee(bankDomain, usdName)
+            assertEquals(BigDecimal("0.000000005"), transferBilling.feeFraction)
             val custody = cache.getCustodyFee(bankDomain, usdName)
             assertEquals(BigDecimal("0.1"), custody.feeFraction)
             val accountFee = cache.getAccountCreationFee(bankDomain, usdName)
