@@ -6,18 +6,20 @@ services:
     container_name: "data-collector"
     restart: on-failure
     ports:
-      - 8080:8080
+      - 8087:8080
     depends_on:
       - dc-postgres
-      - brvs-rmq
+      - d3-rmq
     environment:
       POSTGRES_HOST: dc-postgres
       POSTGRES_DATABASE: postgres
-      SPRING_RABBITMQ_HOST: brvs-rmq
+      SPRING_RABBITMQ_HOST: d3-rmq
       IROHA_HOST: d3-iroha
       IROHA_PORT: 50051
       SPRING_DATASOURCE_USERNAME: test
       SPRING_DATASOURCE_PASSWORD: test
+    networks:
+      - d3-network
 
   report-service:
     image: nexus.iroha.tech:19002/d3-deploy/report-service:develop
@@ -32,6 +34,8 @@ services:
       POSTGRES_DATABASE: postgres
       SPRING_DATASOURCE_USERNAME: test
       SPRING_DATASOURCE_PASSWORD: test
+    networks:
+      - d3-network
 
   dc-postgres:
     image: postgres
@@ -39,7 +43,14 @@ services:
     environment:
       POSTGRES_PASSWORD: test
       POSTGRES_USER: test
+    networks:
+      - d3-network
 
-  brvs-rmq:
+  d3-rmq:
     image: rabbitmq:3-management
-    container_name: "brvs-rmq"
+    container_name: d3-rmq
+    networks:
+      - d3-network
+
+networks:
+  d3-network:
