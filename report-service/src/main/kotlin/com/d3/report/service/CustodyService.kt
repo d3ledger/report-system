@@ -46,7 +46,7 @@ class CustodyService(
         currentPeriod: Long,
         periodAssetSum: BigDecimal
     ) {
-        val relativePeriod = currentPeriod.toBigDecimal().divide(totalPeriod.toBigDecimal())
+        val relativePeriod = currentPeriod.toBigDecimal().divide(totalPeriod.toBigDecimal(), 5, RoundingMode.HALF_UP)
         val relativeSum = periodAssetSum.multiply(relativePeriod)
         assetCustodyContextForAccount.cumulativeSum += relativeSum
     }
