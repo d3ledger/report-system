@@ -11,19 +11,16 @@ import com.d3.report.repository.BillingRepository
 import com.d3.report.repository.TransferAssetRepo
 import com.d3.report.utils.getAccountId
 import mu.KLogging
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.util.*
-import kotlin.collections.HashMap
 
 @Service
 class CustodyService(
-    val transaferRepo: TransferAssetRepo,
+    val transferRepo: TransferAssetRepo,
     val billingRepo: BillingRepository,
     val custodyContextRepo: AccountAssetCustodyContextRepo
 ) {
@@ -35,6 +32,24 @@ class CustodyService(
 
     @Value("\${iroha.templates.custodyBilling}")
     private lateinit var custodyAccountTemplate: String
+
+    /**
+     * Calculates AUC(Asset Under Custody)
+     * @param assetCustodyContextForAccount - context of fee calculation for asset in account
+     * @param totalPeriod - total report period
+     * @param currentPeriod - current period
+     * @param periodAssetSum - sum assets in current period
+     */
+    fun addAUC(
+        assetCustodyContextForAccount: AssetCustodyContext,
+        totalPeriod: Long,
+        currentPeriod: Long,
+        periodAssetSum: BigDecimal
+    ) {
+        val relativePeriod = currentPeriod.toBigDecimal().divide(totalPeriod.toBigDecimal())
+        val relativeSum = periodAssetSum.multiply(relativePeriod)
+        assetCustodyContextForAccount.cumulativeSum += relativeSum
+    }
 
     /**
      * @param assetCustodyContextForAccount - context of fee calculation for asset in account
@@ -63,8 +78,8 @@ class CustodyService(
         val periodFeeMultiplier = feeFraction.multiply(custodyMultiplier)
         val fee = periodFeeMultiplier.multiply(assetCustodyContextForAccount.lastAssetSum)
         assetCustodyContextForAccount
-            .commulativeFeeAmount =
-            assetCustodyContextForAccount.commulativeFeeAmount.add(fee)
+            .cumulativeFeeAmount =
+            assetCustodyContextForAccount.cumulativeFeeAmount.add(fee)
     }
 
     fun processAccounts(
@@ -104,26 +119,35 @@ class CustodyService(
                 accountCustodyContext,
                 account,
                 billingStore,
-                from
+                from,
+                to
             )
             calculatedTransferPages += 1
         } while (calculatedTransferPages - transfersPage.totalPages < 0)
 
-        val assetCustodies = HashMap<String, BigDecimal>()
+        val assetCustodies = HashMap<String, Fee>()
         accountCustodyContext.assetsContexts.forEach {
             /**
              * Calculation algorithm step 3.
              * Calculate Commissions between last transfer for the selected period and 'to' date
              */
-            if(billingStore[it.key] != null) {
-                addFeePortion(it.value, to, billingStore[it.key]!!.feeFraction)
-                assetCustodies.put(it.key, it.value.commulativeFeeAmount)
+            if (billingStore[it.key] != null) {
+                val assetCustodyContextForAccount = it.value
+                addAUC(
+                    assetCustodyContextForAccount,
+                    to - from,
+                    to - assetCustodyContextForAccount.lastControlTimestamp,
+                    assetCustodyContextForAccount.lastAssetSum
+                )
+                addFeePortion(assetCustodyContextForAccount, to, billingStore[it.key]!!.feeFraction)
+                assetCustodies[it.key] =
+                    Fee(
+                        assetCustodyContextForAccount.cumulativeFeeAmount,
+                        assetCustodyContextForAccount.cumulativeSum
+                    )
             }
         }
-        custodyFees.put(
-            getAccountId(account),
-            AccountCustody(getAccountId(account), assetCustodies)
-        )
+        custodyFees[getAccountId(account)] = AccountCustody(getAccountId(account), assetCustodies)
     }
 
     private fun processTransferPage(
@@ -131,7 +155,8 @@ class CustodyService(
         accountCustodyContext: AccountCustodyContext,
         account: CreateAccount,
         billingStore: HashMap<String, Billing>,
-        from: Long
+        from: Long,
+        to: Long
     ) {
         transfersPage
             .get()
@@ -142,6 +167,7 @@ class CustodyService(
                         transfer,
                         account,
                         from,
+                        to,
                         billingStore,
                         transfer.assetId!!
                     )
@@ -156,6 +182,7 @@ class CustodyService(
         transfer: TransferAsset,
         account: CreateAccount,
         from: Long,
+        to: Long,
         billingStore: HashMap<String, Billing>,
         assetId: String
     ) {
@@ -175,14 +202,28 @@ class CustodyService(
          * Calculate commissions between control points and transfers inside report period
          */
         if (assetCustodyContextForAccount.lastControlTimestamp > from) {
+            val blockCreationTime = transfer.transaction?.block!!.blockCreationTime
+            addAUC(
+                assetCustodyContextForAccount,
+                to - from,
+                blockCreationTime - assetCustodyContextForAccount.lastControlTimestamp,
+                assetCustodyContextForAccount.lastAssetSum + transfer.amount!!
+            )
             addFeePortion(
                 assetCustodyContextForAccount,
-                transfer.transaction?.block!!.blockCreationTime,
+                blockCreationTime,
                 billing.feeFraction
             )
         }
 
-        updateAssetCustodyContextForAccount(assetCustodyContextForAccount, transfer, account, billing.feeFraction)
+        updateAssetCustodyContextForAccount(
+            assetCustodyContextForAccount,
+            transfer,
+            account,
+            billing.feeFraction,
+            from,
+            to
+        )
 
         manageContextSnapshotsInDb(
             account,
@@ -210,7 +251,8 @@ class CustodyService(
             if (billing.isPresent) {
                 billing.get()
             } else {
-                val errorMessage = "Billing ${Billing.BillingTypeEnum.CUSTODY} not found for: domain=${account.domainId}, asset: $assetId"
+                val errorMessage =
+                    "Billing ${Billing.BillingTypeEnum.CUSTODY} not found for: domain=${account.domainId}, asset: $assetId"
                 throw BillingNotFoundException(errorMessage)
             }
         }
@@ -220,22 +262,31 @@ class CustodyService(
         assetCustodyContextForAccount: AssetCustodyContext,
         transfer: TransferAsset,
         account: CreateAccount,
-        feeFraction: BigDecimal
+        feeFraction: BigDecimal,
+        from: Long,
+        to: Long
     ) {
-        if (assetCustodyContextForAccount.lastControlTimestamp <
-            transfer.transaction?.block!!.blockCreationTime
+        val blockCreationTime = transfer.transaction?.block!!.blockCreationTime
+        if (assetCustodyContextForAccount.lastControlTimestamp < blockCreationTime
         ) {
+
             /**
              * Fee calculation Algorithm step 1
-             * Calculate fee from 'from' dae to first transfer
+             * Calculate fee from 'from' date to first transfer
              */
+            addAUC(
+                assetCustodyContextForAccount,
+                to - from,
+                blockCreationTime - from,
+                assetCustodyContextForAccount.lastAssetSum
+            )
             addFeePortion(
                 assetCustodyContextForAccount,
-                transfer.transaction.block.blockCreationTime,
+                blockCreationTime,
                 feeFraction
             )
             assetCustodyContextForAccount.lastControlTimestamp =
-                transfer.transaction.block.blockCreationTime
+                blockCreationTime
         }
 
         if (transfer.destAccountId!!.contentEquals(getAccountId(account))) {
@@ -281,7 +332,7 @@ class CustodyService(
             AccountAssetCustodyContext(
                 accountId = getAccountId(account),
                 assetId = assetId,
-                commulativeFeeAmount = assetCustodyContextForAccount.commulativeFeeAmount,
+                commulativeFeeAmount = assetCustodyContextForAccount.cumulativeFeeAmount,
                 lastTransferTimestamp = assetCustodyContextForAccount.lastControlTimestamp,
                 lastAssetSum = assetCustodyContextForAccount.lastAssetSum
             )
@@ -301,7 +352,7 @@ class CustodyService(
                  val assetContext = option.get()
                  accountCustodyContext.assetsContexts.put(
                      transfer.assetId, AssetCustodyContext(
-                         commulativeFeeAmount = assetContext.commulativeFeeAmount,
+                         cumulativeFeeAmount = assetContext.cumulativeFeeAmount,
                          lastControlTimestamp = assetContext.lastControlTimestamp,
                          lastAssetSum = assetContext.lastAssetSum
                      )
@@ -329,7 +380,7 @@ class CustodyService(
         to: Long,
         pageNum: Int
     ): Page<TransferAsset> {
-        return transaferRepo.getAllTransfersForAccountInAndOutTillTo(
+        return transferRepo.getAllTransfersForAccountInAndOutTillTo(
             getAccountId(account),
             to,
             PageRequest.of(pageNum, 200)

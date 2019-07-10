@@ -61,7 +61,7 @@ class TestTransferReport {
     @Test
     @Transactional
     fun testTransferReportForAllTheSystem() {
-        prepeareData()
+        prepareData()
 
         val result: MvcResult = mvc
             .perform(
@@ -76,16 +76,16 @@ class TestTransferReport {
         val respBody = mapper.readValue(result.response.contentAsString, TransferReport::class.java)
         assertEquals(
             2, respBody.transfers.size)
-            val transafer1 = respBody . transfers [0]
+            val transfer1 = respBody . transfers [0]
 
-        assertEquals(BigDecimal("10"), transafer1.transfer?.amount)
-        assertEquals(BigDecimal("0.2"), transafer1.fee?.amount)
-        assertEquals("srcAcc@author", transafer1.transfer?.srcAccountId)
-        assertEquals("transfer_billing@author", transafer1.fee?.destAccountId)
+        assertEquals(BigDecimal("10"), transfer1.transfer?.amount)
+        assertEquals(BigDecimal("0.2"), transfer1.fee?.amount)
+        assertEquals("srcAcc@author", transfer1.transfer?.srcAccountId)
+        assertEquals("transfer_billing@author", transfer1.fee?.destAccountId)
 
     }
 
-    private fun prepeareData() {
+    private fun prepareData() {
         val block0 = blockRepo.save(Block(0, 0))
         val transaction0 = transactionRepo.save(Transaction(null, block0, "mySelf@$domain", 1, false))
         transferRepo.save(

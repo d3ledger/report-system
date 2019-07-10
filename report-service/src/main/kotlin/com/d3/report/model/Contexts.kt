@@ -15,9 +15,10 @@ class AccountCustodyContext(
 )
 
 class AssetCustodyContext(
-    var commulativeFeeAmount: BigDecimal = BigDecimal("0"),
+    var cumulativeFeeAmount: BigDecimal = BigDecimal("0"),
     var lastControlTimestamp: Long = 0,
-    var lastAssetSum: BigDecimal = BigDecimal("0")
+    var lastAssetSum: BigDecimal = BigDecimal("0"),
+    var cumulativeSum: BigDecimal = BigDecimal("0")
 )
 
 @Entity
