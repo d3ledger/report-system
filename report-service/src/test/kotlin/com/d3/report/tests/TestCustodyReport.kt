@@ -66,12 +66,12 @@ class TestCustodyReport {
     /**
      * @given accounts in two domains with transfers. And some transfers without account which should be ignored
      * @when custody report calculated for two days
-     * @then fee should be equal fee of two days and two accouts from different domains should be returned
+     * @then fee should be equal fee of two days and two accounts from different domains should be returned
      */
     @Test
     @Transactional
     fun testCustodyFeeReportDataForSystem() {
-        prepeareData()
+        prepareData()
 
         val result: MvcResult = mvc
             .perform(
@@ -91,11 +91,19 @@ class TestCustodyReport {
         assertEquals(1, respBody.accounts[1].assetCustody.size)
         assertEquals(
             BigDecimal("1.0").setScale(1),
-            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(1, RoundingMode.HALF_UP)
+            respBody.accounts[0].assetCustody[assetId]!!.fee!!.setScale(1, RoundingMode.HALF_UP)
+        )
+        assertEquals(
+            BigDecimal("5.0").setScale(1),
+            respBody.accounts[0].assetCustody[assetId]!!.assetsUnderCustody!!.setScale(1, RoundingMode.HALF_UP)
         )
         assertEquals(
             BigDecimal("1.5").setScale(8),
-            respBody.accounts[1].assetCustody.get(assetId)!!.setScale(8, RoundingMode.HALF_UP)
+            respBody.accounts[1].assetCustody[assetId]!!.fee!!.setScale(8, RoundingMode.HALF_UP)
+        )
+        assertEquals(
+            BigDecimal("7.5").setScale(8),
+            respBody.accounts[1].assetCustody[assetId]!!.assetsUnderCustody!!.setScale(8, RoundingMode.HALF_UP)
         )
     }
 
@@ -107,7 +115,7 @@ class TestCustodyReport {
     @Test
     @Transactional
     fun testCustodyFeeReportDataCustomer() {
-        prepeareData()
+        prepareData()
 
         val result: MvcResult = mvc
             .perform(
@@ -124,7 +132,11 @@ class TestCustodyReport {
         assertEquals(1, respBody.accounts[0].assetCustody.size)
         assertEquals(
             BigDecimal("1.5").setScale(8),
-            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8)
+            respBody.accounts[0].assetCustody[assetId]!!.fee!!.setScale(8)
+        )
+        assertEquals(
+            BigDecimal("7.5").setScale(8),
+            respBody.accounts[0].assetCustody[assetId]!!.assetsUnderCustody!!.setScale(8)
         )
     }
 
@@ -159,7 +171,7 @@ class TestCustodyReport {
     @Test
     @Transactional
     fun testCustodyFeeReportData() {
-        prepeareData()
+        prepareData()
 
         val result: MvcResult = mvc
             .perform(
@@ -178,11 +190,15 @@ class TestCustodyReport {
         assertEquals(1, respBody.accounts[0].assetCustody.size)
         assertEquals(
             BigDecimal("1.5").setScale(8),
-            respBody.accounts[0].assetCustody.get(assetId)!!.setScale(8, RoundingMode.HALF_UP)
+            respBody.accounts[0].assetCustody[assetId]!!.fee!!.setScale(8, RoundingMode.HALF_UP)
+        )
+        assertEquals(
+            BigDecimal("7.5").setScale(8),
+            respBody.accounts[0].assetCustody[assetId]!!.assetsUnderCustody!!.setScale(8, RoundingMode.HALF_UP)
         )
     }
 
-    private fun prepeareData() {
+    private fun prepareData() {
         billingRepo.save(
             Billing(
                 accountId = "$custodyBillingTemplate$testDomain",
@@ -192,7 +208,7 @@ class TestCustodyReport {
             )
         )
 
-        prepearBlockOneWithAccounts()
+        prepareBlockOneWithAccounts()
         prepareBlockTwoWithTransfersBeforePeriod()
         prepareBlockThreeWithTransfersInPeriod()
         prepareBlockFourWithTransfersAfterPeriod()
@@ -207,7 +223,7 @@ class TestCustodyReport {
         )
 
         val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
-        // trasfer input to used account
+        // transfer input to used account
         transferRepo.save(
             TransferAsset(
                 "not_analysed_account@domainId",
@@ -224,12 +240,12 @@ class TestCustodyReport {
         val block = blockRepo.save(
             Block(
                 3,
-                (Integer.valueOf(twoDays - 2)).toLong()
+                (twoDays - 2).toLong()
             )
         )
 
         val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
-        // trasfer input to used account
+        // transfer input to used account
         transferRepo.save(
             TransferAsset(
                 "not_analysed_account@domainId",
@@ -250,7 +266,7 @@ class TestCustodyReport {
         block2 = blockRepo.save(block2)
 
         val transaction1 = transactionRepo.save(Transaction(null, block2, accountOneId, 1, false))
-        // trasfer input to used account
+        // transfer input to used account
         transferRepo.save(
             TransferAsset(
                 otherAccountId,
@@ -274,7 +290,7 @@ class TestCustodyReport {
         )
     }
 
-    private fun prepearBlockOneWithAccounts() {
+    private fun prepareBlockOneWithAccounts() {
         var block1 = Block(
             1,
             1
@@ -343,6 +359,32 @@ class TestCustodyReport {
         )
         custodyService.addFeePortion(assetCustodyContext, custodyPeriod * 2, BigDecimal("0.1"))
 
-        assertEquals(BigDecimal("2"), assetCustodyContext.commulativeFeeAmount.setScale(0))
+        assertEquals(BigDecimal("2"), assetCustodyContext.cumulativeFeeAmount.setScale(0))
+    }
+
+    @Test
+    fun testAddAUCZeroSum() {
+        val assetCustodyContext = AssetCustodyContext(
+            cumulativeSum = BigDecimal(0),
+            lastAssetSum = BigDecimal(10)
+        )
+        val totalPeriod = 10L
+        val currentPeriod = 5L
+        val periodAssetSum = BigDecimal.valueOf(10)
+        custodyService.addAUC(assetCustodyContext, totalPeriod, currentPeriod, periodAssetSum)
+        assertEquals(BigDecimal("5"), assetCustodyContext.cumulativeSum.setScale(0))
+    }
+
+    @Test
+    fun testAddAUCDefinedSum() {
+        val assetCustodyContext = AssetCustodyContext(
+            cumulativeSum = BigDecimal(5),
+            lastAssetSum = BigDecimal(10)
+        )
+        val totalPeriod = 10L
+        val currentPeriod = 5L
+        val periodAssetSum = BigDecimal.valueOf(10)
+        custodyService.addAUC(assetCustodyContext, totalPeriod, currentPeriod, periodAssetSum)
+        assertEquals(BigDecimal("10"), assetCustodyContext.cumulativeSum.setScale(0))
     }
 }

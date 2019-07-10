@@ -22,7 +22,12 @@ class AccountRegistration(
 
 class AccountCustody(
     val accountId: String? = null,
-    val assetCustody: HashMap<String, BigDecimal> = HashMap()
+    val assetCustody: HashMap<String, Fee> = HashMap()
+)
+
+class Fee(
+    val fee: BigDecimal? = null,
+    val assetsUnderCustody: BigDecimal? = null
 )
 
 open class BaseReport(

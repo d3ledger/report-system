@@ -58,7 +58,7 @@ class ExchangeReportController(
                     PageRequest.of(pageNum - 1, pageSize)
                 )
             fillNotFetchedBatchData(page)
-            prepeareResponse(page)
+            prepareResponse(page)
         } catch (e: Exception) {
             logger.error("Error making report: ", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
@@ -91,7 +91,7 @@ class ExchangeReportController(
                 )
 
             fillNotFetchedBatchData(page)
-            prepeareResponse(page)
+            prepareResponse(page)
         } catch (e: Exception) {
             logger.error("Error making report: ", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
@@ -121,7 +121,7 @@ class ExchangeReportController(
                 )
 
             fillNotFetchedBatchData(page)
-            prepeareResponse(page)
+            prepareResponse(page)
         } catch (e: Exception) {
             logger.error("Error making report: ", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
@@ -133,7 +133,7 @@ class ExchangeReportController(
         }
     }
 
-    private fun prepeareResponse(page: Page<TransactionBatchEntity>): ResponseEntity<ExchangeReport> {
+    private fun prepareResponse(page: Page<TransactionBatchEntity>): ResponseEntity<ExchangeReport> {
         val batchList = page.get().collect(Collectors.toList())
         return ResponseEntity.ok(
             ExchangeReport(
