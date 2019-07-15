@@ -4,7 +4,6 @@
  */
 package com.d3.report.tests
 
-import com.d3.report.model.AssetCustodyContext
 import com.d3.report.model.*
 import com.d3.report.repository.*
 import com.d3.report.service.CustodyService
@@ -198,6 +197,42 @@ class TestCustodyReport {
         )
     }
 
+    @Test
+    @Transactional
+    fun testCustodyAUC() {
+        billingRepo.save(
+            Billing(
+                accountId = "$custodyBillingTemplate$testDomain",
+                billingType = Billing.BillingTypeEnum.CUSTODY,
+                asset = assetId,
+                feeFraction = BigDecimal("0.1")
+            )
+        )
+        prepareBlock(0, 10, 0)
+        prepareBlock(1, -10, 2)
+        prepareBlock(2, 5, 3)
+        prepareBlock(3, 1, 7)
+        prepareBlock(4, 3, 8)
+        prepareBlock(5, 10, 9)
+        val result: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.get("/report/billing/custody/customer")
+                    .param("accountId", accountOneId)
+                    .param("to", 15.toString())
+                    .param("from", 0.toString())
+            )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        val respBody = mapper.readValue(result.response.contentAsString, CustodyReport::class.java)
+        assertEquals(1, respBody.accounts.size)
+        assertEquals(accountOneId, respBody.accounts[0].accountId)
+        assertEquals(1, respBody.accounts[0].assetCustody.size)
+        assertEquals(
+            BigDecimal("11.27").setScale(2),
+            respBody.accounts[0].assetCustody[assetId]!!.assetsUnderCustody!!.setScale(2, RoundingMode.HALF_UP)
+        )
+    }
+
     private fun prepareData() {
         billingRepo.save(
             Billing(
@@ -256,6 +291,39 @@ class TestCustodyReport {
                 transaction
             )
         )
+    }
+
+    private fun prepareBlock(blockNum: Long, transferAmount: Long, blockTime: Long) {
+        val block = blockRepo.save(
+            Block(
+                blockNum,
+                blockTime
+            )
+        )
+
+        val transaction = transactionRepo.save(Transaction(null, block, accountOneId, 1, false))
+
+        // transfer input to used account
+        val transferAsset = if (transferAmount > 0) {
+            TransferAsset(
+                "not_analysed_account@domainId",
+                accountOneId,
+                assetId,
+                null,
+                BigDecimal.valueOf(transferAmount),
+                transaction
+            )
+        } else {
+            TransferAsset(
+                accountOneId,
+                "not_analysed_account@domainId",
+                assetId,
+                null,
+                BigDecimal.valueOf(-transferAmount),
+                transaction
+            )
+        }
+        transferRepo.save(transferAsset)
     }
 
     private fun prepareBlockTwoWithTransfersBeforePeriod() {
