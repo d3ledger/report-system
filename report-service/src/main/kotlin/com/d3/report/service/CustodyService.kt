@@ -207,7 +207,7 @@ class CustodyService(
                 assetCustodyContextForAccount,
                 to - from,
                 blockCreationTime - assetCustodyContextForAccount.lastControlTimestamp,
-                assetCustodyContextForAccount.lastAssetSum + transfer.amount!!
+                assetCustodyContextForAccount.lastAssetSum
             )
             addFeePortion(
                 assetCustodyContextForAccount,
@@ -267,9 +267,8 @@ class CustodyService(
         to: Long
     ) {
         val blockCreationTime = transfer.transaction?.block!!.blockCreationTime
-        if (assetCustodyContextForAccount.lastControlTimestamp < blockCreationTime
+        if (!assetCustodyContextForAccount.firstStepExecuted && assetCustodyContextForAccount.lastControlTimestamp < blockCreationTime
         ) {
-
             /**
              * Fee calculation Algorithm step 1
              * Calculate fee from 'from' date to first transfer
@@ -287,8 +286,11 @@ class CustodyService(
             )
             assetCustodyContextForAccount.lastControlTimestamp =
                 blockCreationTime
+            assetCustodyContextForAccount.firstStepExecuted = true
+        } else if (assetCustodyContextForAccount.firstStepExecuted) {
+            assetCustodyContextForAccount.lastControlTimestamp =
+                blockCreationTime
         }
-
         if (transfer.destAccountId!!.contentEquals(getAccountId(account))) {
             assetCustodyContextForAccount.lastAssetSum =
                 assetCustodyContextForAccount.lastAssetSum.add(transfer.amount)
