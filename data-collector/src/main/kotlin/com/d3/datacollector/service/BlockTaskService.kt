@@ -10,6 +10,7 @@ import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
 import com.google.protobuf.ProtocolStringList
 import iroha.protocol.Commands
+import iroha.protocol.QryResponses
 import iroha.protocol.TransactionOuterClass
 import jp.co.soramitsu.iroha.java.Utils
 import mu.KLogging
@@ -17,12 +18,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.util.ArrayList
+import java.util.*
 import javax.transaction.Transactional
 
 @Service
 class BlockTaskService {
-    private val log = KLogging().logger
     @Autowired
     lateinit var dbService: DbService
     @Autowired
@@ -39,11 +39,8 @@ class BlockTaskService {
     private lateinit var withdrawalBillingTemplate: String
     @Value("\${iroha.latticePlaceholder}")
     private lateinit var latticePlaceholder: String
-    val LAST_PROCESSED_BLOCK_ROW_ID = 0L
-    val LAST_REQUEST_ROW_ID = 1L
     @Autowired
     lateinit var rabbitService: RabbitMqService
-
     @Autowired
     lateinit var blockRepo: BlockRepository
     @Autowired
@@ -66,161 +63,151 @@ class BlockTaskService {
     lateinit var txBatchRepo: TransactionBatchRepo
 
     @Transactional
-    fun processBlockTask(): Boolean {
+    fun processBlockTask() {
         val lastBlockState = dbService.stateRepo.findById(LAST_PROCESSED_BLOCK_ROW_ID).get()
         val lastRequest = dbService.stateRepo.findById(LAST_REQUEST_ROW_ID).get()
         val newBlockNumber = lastBlockState.value.toLong() + 1
         val newRequestNumber = lastRequest.value.toLong() + 1
         val response = irohaService.irohaBlockQuery(newBlockNumber, newRequestNumber)
 
-        log.info("Block response : " + response.toString())
-        log.debug("Block all fields: " + response.allFields)
+        logger.info("Block response : " + response.toString())
+        logger.debug("Block all fields: " + response.allFields)
 
-        if (response.hasBlockResponse()) {
-            if (response.blockResponse.block.hasBlockV1()) {
-                val blockV1 = response.blockResponse.block.blockV1
-                val rejectedTrxs = blockV1.payload.rejectedTransactionsHashesList
-                val dbBlock = blockRepo.save(Block(newBlockNumber, blockV1.payload.createdTime))
-                val transactionBatches = constructBatches(blockV1.payload.transactionsList)
-
-                transactionBatches.filter { it.transactionList.isNotEmpty() }.forEach { transactionBatch ->
-                    var complexBatch: TransactionBatchEntity? = null
-                    if (transactionBatch.transactionList.size > 1) {
-                        if (isItExchangeBatch(transactionBatch.transactionList[0].payload.reducedPayload)) {
-                            complexBatch = TransactionBatchEntity(
-                                batchType = TransactionBatchEntity.BatchType.EXCHANGE
-                            )
-                        } else {
-                            complexBatch = TransactionBatchEntity(
-                                batchType = TransactionBatchEntity.BatchType.UNDEFINED
-                            )
-                        }
-                        complexBatch = txBatchRepo.save(complexBatch)
-                    }
-
-                    val batch = transactionBatch.transactionList
-                    for (tx in batch) {
-
-                        val reducedPayload = tx.payload.reducedPayload
-                        val commitedTransaction = transactionRepo.save(
-                            Transaction(
-                                block = dbBlock,
-                                creatorId = reducedPayload.creatorAccountId,
-                                quorum = reducedPayload.quorum,
-                                rejected = !checkTrxAccepted(tx, rejectedTrxs),
-                                batch = complexBatch
-                            )
-                        )
-                        reducedPayload
-                            .commandsList
-                            .stream()
-                            .forEach { command ->
-                                log.debug("Command received: $command")
-                                when {
-                                    command.hasSetAccountDetail() -> {
-                                        processBillingAccountDetail(command.setAccountDetail)
-                                        val ad = command.setAccountDetail
-                                        accountDetailRepo.save(
-                                            SetAccountDetail(
-                                                ad.accountId,
-                                                ad.key,
-                                                ad.value,
-                                                commitedTransaction
-                                            )
-                                        )
-                                    }
-                                    command.hasTransferAsset() -> {
-                                        val assetTransfer = command.transferAsset
-                                        transferRepo.save(
-                                            TransferAsset(
-                                                assetTransfer.srcAccountId,
-                                                assetTransfer.destAccountId,
-                                                assetTransfer.assetId,
-                                                assetTransfer.description,
-                                                BigDecimal(assetTransfer.amount),
-                                                commitedTransaction
-                                            )
-                                        )
-                                    }
-                                    command.hasCreateAccount() -> {
-                                        val ca = command.createAccount
-                                        createAccountRepo.save(
-                                            CreateAccount(
-                                                ca.accountName,
-                                                ca.domainId,
-                                                ca.publicKey,
-                                                commitedTransaction
-                                            )
-                                        )
-                                    }
-                                    command.hasCreateAsset() -> {
-                                        val asset = command.createAsset
-                                        createAssetRepo.save(
-                                            CreateAsset(
-                                                asset.assetName,
-                                                asset.domainId,
-                                                asset.precision,
-                                                commitedTransaction
-                                            )
-                                        )
-                                    }
-                                    command.hasSetAccountQuorum() -> {
-                                        val quorum = command.setAccountQuorum
-                                        accountQuorumRepo.save(
-                                            SetAccountQuorum(
-                                                quorum.accountId,
-                                                quorum.quorum,
-                                                commitedTransaction
-                                            )
-                                        )
-                                    }
-                                    command.hasAddSignatory() -> {
-                                        val signatory = command.addSignatory
-                                        addSignatoryRepo.save(
-                                            AddSignatory(
-                                                signatory.accountId,
-                                                signatory.publicKey,
-                                                commitedTransaction
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                    }
+        when {
+            response.hasBlockResponse() -> {
+                parseBlock(response)
+                dbService.updateStateInDb(lastBlockState, lastRequest)
+            }
+            response.hasErrorResponse() -> {
+                if (response.errorResponse.errorCode == 3) {
+                    logger.debug("Highest block reached. Finishing blocks downloading job execution")
+                } else {
+                    val error = response.errorResponse
+                    logger.error("Blocks querying job error: errorCode: ${error.errorCode}, message: ${error.message}")
                 }
-            } else {
-                log.error("Block response of unsupported version: $response")
             }
-            dbService.updateStateInDb(lastBlockState, lastRequest)
-            return true
-        } else if (response.hasErrorResponse()) {
-            if (response.errorResponse.errorCode == 3) {
-                log.debug("Highest block riched. Finishing blocks downloading job execution")
-            } else {
-                val error = response.errorResponse
-                log.error("Blocks querying job error: errorCode: ${error.errorCode}, message: ${error.message}")
+            else -> {
+                logger.error("No block or error response caught from Iroha: $response")
             }
-            return true
-        } else {
-            log.error("No block or error response caught from Iroha: $response")
-            return false
         }
     }
 
-    private fun isItExchangeBatch(reducedPayload: TransactionOuterClass.Transaction.Payload.ReducedPayload): Boolean {
-        return reducedPayload
-            .commandsList
-            .filter {
-                it.hasTransferAsset() &&
-                        it.transferAsset
-                            .destAccountId
-                            .contains(exchangeBillingTemplate)
-            }.isNotEmpty()
+    private fun parseBlock(response: QryResponses.QueryResponse) {
+        val block = response.blockResponse.block
+        if (block.hasBlockV1()) {
+            val blockV1 = block.blockV1
+            val rejectedTrxs = blockV1.payload.rejectedTransactionsHashesList
+            val dbBlock = blockRepo.save(Block(blockV1.payload.height, blockV1.payload.createdTime))
+            val transactionBatches = constructBatches(blockV1.payload.transactionsList)
+
+            transactionBatches.forEach { transactionBatch ->
+                var complexBatch: TransactionBatchEntity? = null
+                if (transactionBatch.isBatch()) {
+                    complexBatch = TransactionBatchEntity(
+                        batchType = if (transactionBatch.hasTransferTo(exchangeBillingTemplate))
+                            TransactionBatchEntity.BatchType.EXCHANGE
+                        else
+                            TransactionBatchEntity.BatchType.UNDEFINED
+                    )
+                    complexBatch = txBatchRepo.save(complexBatch)
+                }
+
+                for (tx in transactionBatch) {
+                    val reducedPayload = tx.payload.reducedPayload
+                    val commitedTransaction = transactionRepo.save(
+                        Transaction(
+                            block = dbBlock,
+                            creatorId = reducedPayload.creatorAccountId,
+                            quorum = reducedPayload.quorum,
+                            rejected = !isTransactionRejected(tx, rejectedTrxs),
+                            batch = complexBatch
+                        )
+                    )
+                    reducedPayload
+                        .commandsList
+                        .stream()
+                        .forEach { command ->
+                            logger.debug("Command received: $command")
+                            when {
+                                command.hasSetAccountDetail() -> {
+                                    processBillingAccountDetail(command.setAccountDetail)
+                                    val setAccountDetail = command.setAccountDetail
+                                    accountDetailRepo.save(
+                                        SetAccountDetail(
+                                            setAccountDetail.accountId,
+                                            setAccountDetail.key,
+                                            setAccountDetail.value,
+                                            commitedTransaction
+                                        )
+                                    )
+                                }
+                                command.hasTransferAsset() -> {
+                                    val transferAsset = command.transferAsset
+                                    transferRepo.save(
+                                        TransferAsset(
+                                            transferAsset.srcAccountId,
+                                            transferAsset.destAccountId,
+                                            transferAsset.assetId,
+                                            transferAsset.description,
+                                            BigDecimal(transferAsset.amount),
+                                            commitedTransaction
+                                        )
+                                    )
+                                }
+                                command.hasCreateAccount() -> {
+                                    val createAccount = command.createAccount
+                                    createAccountRepo.save(
+                                        CreateAccount(
+                                            createAccount.accountName,
+                                            createAccount.domainId,
+                                            createAccount.publicKey,
+                                            commitedTransaction
+                                        )
+                                    )
+                                }
+                                command.hasCreateAsset() -> {
+                                    val createAsset = command.createAsset
+                                    createAssetRepo.save(
+                                        CreateAsset(
+                                            createAsset.assetName,
+                                            createAsset.domainId,
+                                            createAsset.precision,
+                                            commitedTransaction
+                                        )
+                                    )
+                                }
+                                command.hasSetAccountQuorum() -> {
+                                    val setAccountQuorum = command.setAccountQuorum
+                                    accountQuorumRepo.save(
+                                        SetAccountQuorum(
+                                            setAccountQuorum.accountId,
+                                            setAccountQuorum.quorum,
+                                            commitedTransaction
+                                        )
+                                    )
+                                }
+                                command.hasAddSignatory() -> {
+                                    val addSignatory = command.addSignatory
+                                    addSignatoryRepo.save(
+                                        AddSignatory(
+                                            addSignatory.accountId,
+                                            addSignatory.publicKey,
+                                            commitedTransaction
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                }
+            }
+        } else {
+            logger.error("Block response of unsupported version: $response")
+        }
     }
 
     private fun processBillingAccountDetail(ad: Commands.SetAccountDetail) {
         if (filterBillingAccounts(ad)) {
-            if(ad.value.length > 7 || !ad.value.contains('.') || ad.value.indexOf('.') > 2) {
+            if (ad.value.length > 7 || !ad.value.contains('.') || ad.value.indexOf('.') > 2) {
                 return
             }
             val billing = Billing(
@@ -234,18 +221,14 @@ class BlockTaskService {
         }
     }
 
-    private fun checkTrxAccepted(
-        tx: TransactionOuterClass.Transaction?,
+    private fun isTransactionRejected(
+        tx: TransactionOuterClass.Transaction,
         rejectedTrxs: ProtocolStringList
     ): Boolean {
-        val trxHash = Utils.toHex(Utils.hash(tx))
-        var accepted = true
-        rejectedTrxs.forEach {
-            if (it.contentEquals(trxHash)) {
-                accepted = false
-            }
+        val hash = Utils.toHex(Utils.hash(tx))
+        return rejectedTrxs.stream().anyMatch { rejected ->
+            rejected!!.equals(hash, true)
         }
-        return accepted
     }
 
     private fun performUpdates(billing: Billing) {
@@ -265,25 +248,25 @@ class BlockTaskService {
 
     private fun filterBillingAccounts(it: Commands.SetAccountDetail): Boolean {
         val accountId = it.accountId
-        return accountId.contains(
+        return accountId.startsWith(
             transferBillingTemplate
-        ) || accountId.contains(
+        ) || accountId.startsWith(
             custodyBillingTemplate
-        ) || accountId.contains(
+        ) || accountId.startsWith(
             accountCreationBillingTemplate
-        ) || accountId.contains(
+        ) || accountId.startsWith(
             exchangeBillingTemplate
-        ) || accountId.contains(
+        ) || accountId.startsWith(
             withdrawalBillingTemplate
         )
     }
 
     private fun defineBillingType(accountId: String): Billing.BillingTypeEnum = when {
-        accountId.contains(transferBillingTemplate) -> Billing.BillingTypeEnum.TRANSFER
-        accountId.contains(custodyBillingTemplate) -> Billing.BillingTypeEnum.CUSTODY
-        accountId.contains(accountCreationBillingTemplate) -> Billing.BillingTypeEnum.ACCOUNT_CREATION
-        accountId.contains(exchangeBillingTemplate) -> Billing.BillingTypeEnum.EXCHANGE
-        accountId.contains(withdrawalBillingTemplate) -> Billing.BillingTypeEnum.WITHDRAWAL
+        accountId.startsWith(transferBillingTemplate) -> Billing.BillingTypeEnum.TRANSFER
+        accountId.startsWith(custodyBillingTemplate) -> Billing.BillingTypeEnum.CUSTODY
+        accountId.startsWith(accountCreationBillingTemplate) -> Billing.BillingTypeEnum.ACCOUNT_CREATION
+        accountId.startsWith(exchangeBillingTemplate) -> Billing.BillingTypeEnum.EXCHANGE
+        accountId.startsWith(withdrawalBillingTemplate) -> Billing.BillingTypeEnum.WITHDRAWAL
         else -> Billing.BillingTypeEnum.NOT_FOUND
     }
 
@@ -311,5 +294,10 @@ class BlockTaskService {
             transactionBatches.add(TransactionBatch(transactionListForBatch))
         }
         return transactionBatches
+    }
+
+    companion object : KLogging() {
+        const val LAST_PROCESSED_BLOCK_ROW_ID = 0L
+        const val LAST_REQUEST_ROW_ID = 1L
     }
 }
