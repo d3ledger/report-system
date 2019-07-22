@@ -2,7 +2,6 @@ package com.d3.datacollector.tests.reports
 
 import com.d3.datacollector.engine.TestEnv
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
-import mu.KLogging
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,11 +21,9 @@ import org.springframework.test.context.junit4.SpringRunner
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class PrepeareCustodyReportTest : TestEnv() {
 
-    private val log = KLogging().logger
-
     @Test
     @Ignore
-    fun prepeareDataForCustodyReport() {
+    fun prepareDataForCustodyReport() {
         val iroha = IrohaContainer()
             .withPeerConfig(peerConfig)
 
