@@ -119,7 +119,7 @@ class BlockTaskService {
                             block = dbBlock,
                             creatorId = reducedPayload.creatorAccountId,
                             quorum = reducedPayload.quorum,
-                            rejected = !isTransactionRejected(tx, rejectedTrxs),
+                            rejected = isTransactionRejected(tx, rejectedTrxs),
                             batch = complexBatch
                         )
                     )

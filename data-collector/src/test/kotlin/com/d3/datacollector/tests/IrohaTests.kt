@@ -135,11 +135,11 @@ class IrohaTests : TestEnv() {
 
         assertEquals(1, accountDetailRepo.getAllDetailsForAccountId(irohaController.securityAccount).size)
 
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(MockMvcRequestBuilders.get("/iroha/asset/getAll"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, AssetsResponse::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, AssetsResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
         assertEquals(
@@ -210,7 +210,7 @@ class IrohaTests : TestEnv() {
         val dbTrAss = ArrayList<TransferAsset>()
         dbTrAss.addAll(transferAssetRepo.findAll())
         assertEquals(1, dbTrAss.size)
-        val trnsfr = dbTrAss.get(0)
+        val trnsfr = dbTrAss[0]
         assertEquals(usd, trnsfr.assetId)
         assertEquals(userBId, trnsfr.destAccountId)
         assertEquals(userAId, trnsfr.srcAccountId)
@@ -303,11 +303,11 @@ class IrohaTests : TestEnv() {
             getBlockAndCheck(i)
         }
 
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(MockMvcRequestBuilders.get("/cache/get/billing"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
         assertEquals(
@@ -343,11 +343,11 @@ class IrohaTests : TestEnv() {
         val domain = bankDomain
         val asset = usdName
 
-        var result: MvcResult = mvc
+        val result: MvcResult = mvc
             .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$asset/TRANSFER"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
-        var respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
+        val respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
         assertEquals(
