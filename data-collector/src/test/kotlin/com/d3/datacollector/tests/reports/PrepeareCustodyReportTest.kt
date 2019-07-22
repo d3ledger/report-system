@@ -1,7 +1,6 @@
 package com.d3.datacollector.tests.reports
 
 import com.d3.datacollector.engine.TestEnv
-import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import mu.KLogging
 import org.junit.Ignore
@@ -12,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
-import java.net.URI
 
 /**
  * This class contains snippets for generating DB data from Iroha for Reports testing.
@@ -24,21 +22,16 @@ import java.net.URI
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class PrepeareCustodyReportTest : TestEnv() {
 
-
-private val log = KLogging().logger
+    private val log = KLogging().logger
 
     @Test
     @Ignore
-    fun PrepeareDataForCustodyReport() {
+    fun prepeareDataForCustodyReport() {
         val iroha = IrohaContainer()
             .withPeerConfig(peerConfig)
 
-
-
         iroha.start()
         blockTaskService.irohaService.toriiAddress = iroha.toriiAddress.toString()
-        val api = IrohaAPI(URI(iroha.toriiAddress.toString()))
-
         iroha.stop()
     }
 }

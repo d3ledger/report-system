@@ -11,6 +11,7 @@ import iroha.protocol.TransactionOuterClass
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import jp.co.soramitsu.iroha.java.*
 import jp.co.soramitsu.iroha.java.detail.InlineTransactionStatusObserver
+import jp.co.soramitsu.iroha.java.subscription.WaitForTerminalStatus
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
 import junit.framework.TestCase
@@ -20,7 +21,6 @@ import org.springframework.test.web.servlet.MockMvc
 import java.math.BigDecimal
 import java.security.KeyPair
 import java.util.*
-import jp.co.soramitsu.iroha.java.subscription.WaitForTerminalStatus
 
 open class TestEnv {
 
@@ -28,8 +28,6 @@ open class TestEnv {
 
     @Autowired
     lateinit var mvc: MockMvc
-
-    val irohaTxWaiter = WaitForTerminalStatus()
 
     @Value("\${iroha.latticePlaceholder}")
     lateinit var latticePlaceholder: String
@@ -58,8 +56,8 @@ open class TestEnv {
     @Autowired
     lateinit var irohaController: IrohaController
 
-    val userAName = "user_a"
-    val userBName = "user_b"
+    private val userAName = "user_a"
+    private val userBName = "user_b"
     val userAId = "$userAName@bank"
     val userBId = "$userBName@bank"
     val securitiesUser = "assets_list@security"
@@ -107,7 +105,7 @@ open class TestEnv {
         bankDomain
     )
 
-    val genesisBlock: BlockOuterClass.Block
+    private val genesisBlock: BlockOuterClass.Block
         get() = GenesisBlockBuilder()
             .addTransaction(
                 Transaction.builder(null)
@@ -137,11 +135,19 @@ open class TestEnv {
                     .createAccount(custodyAccountName, bankDomain, custodyKeyPair.public)
                     .createAccount(exchangeBillingAccountName, bankDomain, exchangeKeyPair.public)
                     .createAccount(withdrawalBillingAccountName, bankDomain, withdrawalKeyPair.public)
-                    .createAccount(accountCreationBillingAccountName, bankDomain, accountCreationKeyPair.public)
-                    .createAccount("data_collector", notaryDomain, Utils.parseHexPublicKey(dataCollectorPublicKey))
+                    .createAccount(
+                        accountCreationBillingAccountName,
+                        bankDomain,
+                        accountCreationKeyPair.public
+                    )
+                    .createAccount(
+                        "data_collector",
+                        notaryDomain,
+                        Utils.parseHexPublicKey(dataCollectorPublicKey)
+                    )
                     .createAccount(userAName, bankDomain, userAKeypair.public)
                     .createAccount(userBName, bankDomain, userBKeypair.public)
-                    .createAccount(irohaController.assetList,securityDomain, securitiesUserKeyPair.public)
+                    .createAccount(irohaController.assetList, securityDomain, securitiesUserKeyPair.public)
                     .createAsset(usdName, bankDomain, 2)
                     .setAccountDetail("$userAName@$bankDomain", detailKey, detailValue)
                     .setAccountQuorum(custodyBillingAccountId, 1)
@@ -234,9 +240,8 @@ open class TestEnv {
 
     fun getBlockAndCheck(number: Long): String {
         blockTaskService.processBlockTask()
-        var lastProcessedBlock = stateRepo.findById(blockTaskService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
+        val lastProcessedBlock = stateRepo.findById(BlockTaskService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
         TestCase.assertTrue(lastProcessedBlock.toLong() == number)
         return lastProcessedBlock
     }
-
 }
