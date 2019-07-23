@@ -6,6 +6,7 @@ import iroha.protocol.TransactionOuterClass
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.Transaction
 import jp.co.soramitsu.iroha.java.Utils
+import jp.co.soramitsu.iroha.java.subscription.WaitForTerminalStatus
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import junit.framework.TestCase
 import mu.KLogging
@@ -26,14 +27,12 @@ import javax.transaction.Transactional
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import jp.co.soramitsu.iroha.java.subscription.WaitForTerminalStatus
-
 
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@TestPropertySource(properties = arrayOf("app.scheduling.enable=false", "app.rabbitmq.enable=false"))
+@TestPropertySource(properties = ["app.rabbitmq.enable=false"])
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class IrohaTests : TestEnv() {
 

@@ -30,7 +30,7 @@ import kotlin.test.assertTrue
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@TestPropertySource(properties = arrayOf("app.scheduling.enable=false", "app.rabbitmq.enable=false"))
+@TestPropertySource(properties = ["app.rabbitmq.enable=false"])
 class IrohaControllerTest {
 
     private val mapper = ObjectMapper()
@@ -45,7 +45,7 @@ class IrohaControllerTest {
     lateinit var quorumRepo: SetAccountQuorumRepo
 
     @Autowired
-    lateinit var blockRepo:BlockRepository
+    lateinit var blockRepo: BlockRepository
 
     @Autowired
     lateinit var mvc: MockMvc

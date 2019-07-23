@@ -38,11 +38,7 @@ soramitsu {
 
 dependencies {
 
-    // Iroha Pure Java library
-    implementation 'com.github.hyperledger.iroha-java:client:5.2.0'
-    testImplementation('com.github.hyperledger.iroha-java:testcontainers:5.2.0') {
-        exclude group: 'org.slf4j', module: 'slf4j-simple'
-    }
+    implementation 'com.github.d3ledger.notary:notary-commons:b44ce46930'
 
     //Spring-boot
     implementation("org.springframework.boot:spring-boot-starter-web:$spring_boot_version") {
@@ -60,6 +56,9 @@ dependencies {
 
     testImplementation "org.springframework.boot:spring-boot-starter-test:$spring_boot_version"
     testImplementation 'com.h2database:h2:1.4.199'
+    testImplementation('com.github.hyperledger.iroha-java:testcontainers:5.1.1') {
+        exclude group: 'org.slf4j', module: 'slf4j-simple'
+    }
 }
 
 sourceCompatibility = 1.8

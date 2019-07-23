@@ -5,7 +5,6 @@
 package com.d3.datacollector.service
 
 import com.d3.datacollector.model.Billing
-import com.d3.datacollector.model.State
 import com.d3.datacollector.repository.BillingRepository
 import com.d3.datacollector.repository.StateRepository
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,7 +24,11 @@ class DbService {
         billing: Billing
     ): Billing {
         val found =
-            billingRepo.selectByAccountIdBillingTypeAndAsset(billing.accountId, billing.asset, billing.billingType)
+            billingRepo.selectByAccountIdBillingTypeAndAsset(
+                billing.accountId,
+                billing.asset,
+                billing.billingType
+            )
         return if (found.isPresent) {
             val toUpdate = found.get()
             val updated = Billing(
@@ -44,17 +47,25 @@ class DbService {
     }
 
     @Transactional
-    fun updateStateInDb(
-        lastBlockState: State,
-        lastRequest: State
+    fun markBlockProcessed(
+        lastBlockProcessed: Long
     ) {
-        var newLastBlock = lastBlockState.value.toLong()
-        newLastBlock++
-        lastBlockState.value = newLastBlock.toString()
-        stateRepo.save(lastBlockState)
-        var newQueryNumber = lastRequest.value.toLong()
-        newQueryNumber++
-        lastRequest.value = newQueryNumber.toString()
-        stateRepo.save(lastRequest)
+        val currentBlock = stateRepo.findById(LAST_PROCESSED_BLOCK_ROW_ID)
+        if (currentBlock.isPresent && lastBlockProcessed - currentBlock.get().value.toLong() != 1L) {
+            throw IllegalArgumentException("Blocks must be processed sequentially")
+        }
+        val block = currentBlock.get()
+        block.value = lastBlockProcessed.toString()
+        stateRepo.save(block)
+    }
+
+    @Transactional
+    fun getLastBlockProcessed(): Long {
+        val currentBlock = stateRepo.findById(LAST_PROCESSED_BLOCK_ROW_ID)
+        return if (currentBlock.isPresent) currentBlock.get().value.toLong() else 0
+    }
+
+    companion object {
+        const val LAST_PROCESSED_BLOCK_ROW_ID = 0L
     }
 }

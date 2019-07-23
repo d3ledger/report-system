@@ -238,7 +238,6 @@ open class TestEnv {
     }
 
     fun getBlockAndCheck(number: Long): String {
-        blockTaskService.processBlockTask()
         val lastProcessedBlock = stateRepo.findById(BlockTaskService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
         TestCase.assertTrue(lastProcessedBlock.toLong() == number)
         return lastProcessedBlock

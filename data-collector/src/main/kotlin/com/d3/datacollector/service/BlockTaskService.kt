@@ -5,12 +5,16 @@
 
 package com.d3.datacollector.service
 
+import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
+import com.d3.commons.util.createPrettySingleThreadPool
 import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
+import com.github.kittinunf.result.map
 import com.google.protobuf.ProtocolStringList
+import io.reactivex.schedulers.Schedulers
+import iroha.protocol.BlockOuterClass
 import iroha.protocol.Commands
-import iroha.protocol.QryResponses
 import iroha.protocol.TransactionOuterClass
 import jp.co.soramitsu.iroha.java.Utils
 import mu.KLogging
@@ -19,7 +23,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.*
-import javax.transaction.Transactional
 
 @Service
 class BlockTaskService {
@@ -54,7 +57,7 @@ class BlockTaskService {
     @Autowired
     lateinit var accountDetailRepo: SetAccountDetailRepo
     @Autowired
-    lateinit var irohaService: IrohaApiService
+    lateinit var irohaChainListener: ReliableIrohaChainListener
     @Autowired
     lateinit var accountQuorumRepo: SetAccountQuorumRepo
     @Autowired
@@ -62,42 +65,40 @@ class BlockTaskService {
     @Autowired
     lateinit var txBatchRepo: TransactionBatchRepo
 
-    @Transactional
-    fun processBlockTask() {
-        val lastBlockState = dbService.stateRepo.findById(LAST_PROCESSED_BLOCK_ROW_ID).get()
-        val lastRequest = dbService.stateRepo.findById(LAST_REQUEST_ROW_ID).get()
-        val newBlockNumber = lastBlockState.value.toLong() + 1
-        val newRequestNumber = lastRequest.value.toLong() + 1
-        val response = irohaService.irohaBlockQuery(newBlockNumber, newRequestNumber)
+    private var isStarted: Boolean = false
+    private val scheduler = Schedulers.from(
+        createPrettySingleThreadPool(
+            "data-collector",
+            "block-task-service"
+        )
+    )
 
-        logger.info("Block response : " + response.toString())
-        logger.debug("Block all fields: " + response.allFields)
-
-        when {
-            response.hasBlockResponse() -> {
-                parseBlock(response)
-                dbService.updateStateInDb(lastBlockState, lastRequest)
+    @Synchronized
+    fun runService() {
+        if (!isStarted) {
+            irohaChainListener.getBlockObservable().map { observable ->
+                observable.observeOn(scheduler)
+                    .subscribe { (block, _) ->
+                        parseBlock(block)
+                    }
             }
-            response.hasErrorResponse() -> {
-                if (response.errorResponse.errorCode == 3) {
-                    logger.debug("Highest block reached. Finishing blocks downloading job execution")
-                } else {
-                    val error = response.errorResponse
-                    logger.error("Blocks querying job error: errorCode: ${error.errorCode}, message: ${error.message}")
-                }
-            }
-            else -> {
-                logger.error("No block or error response caught from Iroha: $response")
-            }
+            irohaChainListener.listen()
+            isStarted = true
         }
     }
 
-    private fun parseBlock(response: QryResponses.QueryResponse) {
-        val block = response.blockResponse.block
+    private fun parseBlock(block: BlockOuterClass.Block) {
+        logger.debug { "Got new block: ${block.allFields}" }
         if (block.hasBlockV1()) {
             val blockV1 = block.blockV1
+            val height = blockV1.payload.height
+            val lastBlockProcessed = dbService.getLastBlockProcessed()
+            if (lastBlockProcessed > height) {
+                logger.error { "Block $height has already been processed" }
+                return
+            }
+            val dbBlock = blockRepo.save(Block(height, blockV1.payload.createdTime))
             val rejectedTrxs = blockV1.payload.rejectedTransactionsHashesList
-            val dbBlock = blockRepo.save(Block(blockV1.payload.height, blockV1.payload.createdTime))
             val transactionBatches = constructBatches(blockV1.payload.transactionsList)
 
             transactionBatches.forEach { transactionBatch ->
@@ -112,14 +113,14 @@ class BlockTaskService {
                     complexBatch = txBatchRepo.save(complexBatch)
                 }
 
-                for (tx in transactionBatch) {
-                    val reducedPayload = tx.payload.reducedPayload
+                transactionBatch.forEach { transaction ->
+                    val reducedPayload = transaction.payload.reducedPayload
                     val commitedTransaction = transactionRepo.save(
                         Transaction(
                             block = dbBlock,
                             creatorId = reducedPayload.creatorAccountId,
                             quorum = reducedPayload.quorum,
-                            rejected = isTransactionRejected(tx, rejectedTrxs),
+                            rejected = isTransactionRejected(transaction, rejectedTrxs),
                             batch = complexBatch
                         )
                     )
@@ -200,8 +201,9 @@ class BlockTaskService {
                         }
                 }
             }
+            dbService.markBlockProcessed(height)
         } else {
-            logger.error("Block response of unsupported version: $response")
+            logger.error("Block response of unsupported version: ${block.blockVersionCase}")
         }
     }
 
@@ -296,8 +298,5 @@ class BlockTaskService {
         return transactionBatches
     }
 
-    companion object : KLogging() {
-        const val LAST_PROCESSED_BLOCK_ROW_ID = 0L
-        const val LAST_REQUEST_ROW_ID = 1L
-    }
+    companion object : KLogging()
 }
