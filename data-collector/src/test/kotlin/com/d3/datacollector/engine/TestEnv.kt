@@ -11,7 +11,6 @@ import iroha.protocol.TransactionOuterClass
 import jp.co.soramitsu.crypto.ed25519.Ed25519Sha3
 import jp.co.soramitsu.iroha.java.*
 import jp.co.soramitsu.iroha.java.detail.InlineTransactionStatusObserver
-import jp.co.soramitsu.iroha.java.subscription.WaitForTerminalStatus
 import jp.co.soramitsu.iroha.testcontainers.PeerConfig
 import jp.co.soramitsu.iroha.testcontainers.detail.GenesisBlockBuilder
 import junit.framework.TestCase
