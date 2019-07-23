@@ -8,19 +8,15 @@ import com.d3.datacollector.service.RabbitMqService
 import com.d3.datacollector.service.RabbitMqServiceImpl
 import org.springframework.amqp.core.TopicExchange
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
+import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
-import org.springframework.amqp.rabbit.core.RabbitTemplate
 
 @ConditionalOnProperty(value = ["app.rabbitmq.enable"], havingValue = "true", matchIfMissing = true)
 @Configuration
 class RabbitConfig {
-
-    val outRoutingKeyPrefix = "d3.data-collector"
-    val transaferBillingUdateRoutingKey = "$outRoutingKeyPrefix.transfer-billing.update"
-    val dataCollectorExchange = "data-collector"
 
     @Bean
     fun exchange(): TopicExchange {
@@ -42,5 +38,11 @@ class RabbitConfig {
     @Bean
     fun rabbitService(): RabbitMqService {
         return RabbitMqServiceImpl()
+    }
+
+    companion object {
+        private const val outRoutingKeyPrefix = "d3.data-collector"
+        const val transferBillingUdateRoutingKey = "$outRoutingKeyPrefix.transfer-billing.update"
+        const val dataCollectorExchange = "data-collector"
     }
 }

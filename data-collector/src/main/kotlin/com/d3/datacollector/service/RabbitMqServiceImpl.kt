@@ -12,13 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired
 class RabbitMqServiceImpl : RabbitMqService {
     @Autowired
     private lateinit var rabbitTemplate: RabbitTemplate
-    @Autowired
-    private lateinit var rabbitConfig: RabbitConfig
 
     override fun sendBillingUpdate(update: BillingMqDto) {
         rabbitTemplate.convertAndSend(
-            rabbitConfig.dataCollectorExchange,
-            rabbitConfig.transaferBillingUdateRoutingKey,
+            RabbitConfig.dataCollectorExchange,
+            RabbitConfig.transferBillingUdateRoutingKey,
             update
         )
     }
