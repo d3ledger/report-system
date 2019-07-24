@@ -5,9 +5,11 @@
 
 package com.d3.datacollector.service
 
+import com.d3.commons.config.RMQConfig
 import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.d3.datacollector.cache.CacheRepository
+import com.d3.datacollector.config.BlockTaskConfiguration.Companion.queueName
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
 import com.github.kittinunf.result.map
@@ -21,11 +23,14 @@ import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.io.Closeable
 import java.math.BigDecimal
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
-class BlockTaskService {
+class BlockTaskService : Closeable {
+
     @Autowired
     lateinit var dbService: DbService
     @Autowired
@@ -57,15 +62,22 @@ class BlockTaskService {
     @Autowired
     lateinit var accountDetailRepo: SetAccountDetailRepo
     @Autowired
-    lateinit var irohaChainListener: ReliableIrohaChainListener
-    @Autowired
     lateinit var accountQuorumRepo: SetAccountQuorumRepo
     @Autowired
     lateinit var addSignatoryRepo: AddSignatoryRepository
     @Autowired
     lateinit var txBatchRepo: TransactionBatchRepo
+    @Autowired
+    lateinit var rmqConfig: RMQConfig
 
-    private var isStarted: Boolean = false
+    private val irohaChainListener by lazy {
+        ReliableIrohaChainListener(
+            rmqConfig,
+            queueName
+        )
+    }
+
+    private val isStarted = AtomicBoolean()
     private val scheduler = Schedulers.from(
         createPrettySingleThreadPool(
             "data-collector",
@@ -73,18 +85,17 @@ class BlockTaskService {
         )
     )
 
-    @Synchronized
     fun runService() {
-        if (!isStarted) {
-            irohaChainListener.getBlockObservable().map { observable ->
-                observable.observeOn(scheduler)
-                    .subscribe { (block, _) ->
-                        parseBlock(block)
-                    }
-            }
-            irohaChainListener.listen()
-            isStarted = true
+        if (!isStarted.compareAndSet(false, true)) {
+            return
         }
+        logger.info { "Starting dc block processor" }
+        irohaChainListener.getBlockObservable().map { observable ->
+            observable.observeOn(scheduler).subscribe { (block, _) ->
+                parseBlock(block)
+            }
+        }
+        irohaChainListener.listen()
     }
 
     private fun parseBlock(block: BlockOuterClass.Block) {
@@ -296,6 +307,10 @@ class BlockTaskService {
             transactionBatches.add(TransactionBatch(transactionListForBatch))
         }
         return transactionBatches
+    }
+
+    override fun close() {
+        irohaChainListener.close()
     }
 
     companion object : KLogging()

@@ -38,7 +38,7 @@ soramitsu {
 
 dependencies {
 
-    implementation 'com.github.d3ledger.notary:notary-commons:b44ce46930'
+    implementation "com.github.d3ledger.notary:notary-commons:$notary_version"
 
     //Spring-boot
     implementation("org.springframework.boot:spring-boot-starter-web:$spring_boot_version") {
@@ -59,13 +59,15 @@ dependencies {
     testImplementation('com.github.hyperledger.iroha-java:testcontainers:5.1.1') {
         exclude group: 'org.slf4j', module: 'slf4j-simple'
     }
+    testCompile 'com.google.protobuf:protobuf-java-util:3.5.1'
+    testCompile "com.github.d3ledger.notary:notary-iroha-integration-test:$notary_version"
 }
 
 sourceCompatibility = 1.8
 
 mainClassName = "com.d3.datacollector.CollectorMain"
 
-task runCollector(type: JavaExec ) {
+task runCollector(type: JavaExec) {
     main = mainClassName
     classpath = sourceSets.main.runtimeClasspath
     setWorkingDir("$rootDir/")
@@ -80,7 +82,7 @@ jar {
     }
 }
 
-tasks.withType(Test)  {
+tasks.withType(Test) {
     maxParallelForks = 1
 }
 

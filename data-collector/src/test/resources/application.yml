@@ -13,7 +13,7 @@ iroha:
   latticePlaceholder: __
 
 rmq:
-  host: localhost
+  host: d3-rmq
   port: 5672
   irohaExchange: iroha
 

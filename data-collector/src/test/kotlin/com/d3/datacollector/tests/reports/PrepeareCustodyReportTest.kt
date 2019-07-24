@@ -28,7 +28,6 @@ class PrepeareCustodyReportTest : TestEnv() {
             .withPeerConfig(peerConfig)
 
         iroha.start()
-        blockTaskService.irohaService.toriiAddress = iroha.toriiAddress.toString()
         iroha.stop()
     }
 }

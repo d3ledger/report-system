@@ -1,6 +1,6 @@
 iroha:
   host: localhost
-  port: 32835
+  port: 50051
   toriiAddress: grpc://${iroha.host}:${iroha.port}
   user:
     privateKeyHex: 37C2070BD7C628B2ABA61F6C353DF06504A92F6997D8658F3EE69DC598B57CA2
@@ -15,7 +15,7 @@ iroha:
   latticePlaceholder: __
 
 rmq:
-  host: localhost
+  host: d3-rmq
   port: 5672
   irohaExchange: iroha
 

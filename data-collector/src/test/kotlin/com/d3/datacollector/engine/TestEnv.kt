@@ -3,7 +3,7 @@ package com.d3.datacollector.engine
 import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.controllers.IrohaController
 import com.d3.datacollector.repository.*
-import com.d3.datacollector.service.BlockTaskService
+import com.d3.datacollector.service.DbService
 import com.fasterxml.jackson.databind.ObjectMapper
 import iroha.protocol.BlockOuterClass
 import iroha.protocol.Primitive
@@ -30,10 +30,6 @@ open class TestEnv {
 
     @Value("\${iroha.latticePlaceholder}")
     lateinit var latticePlaceholder: String
-    @Value("\${iroha.user.publicKeyHex}")
-    lateinit var dataCollectorPublicKey: String
-    @Autowired
-    lateinit var blockTaskService: BlockTaskService
     @Autowired
     lateinit var stateRepo: StateRepository
     @Autowired
@@ -140,13 +136,13 @@ open class TestEnv {
                         accountCreationKeyPair.public
                     )
                     .createAccount(
-                        "data_collector",
+                        "rmq",
                         notaryDomain,
-                        Utils.parseHexPublicKey(dataCollectorPublicKey)
+                        Utils.parseHexPublicKey("7a4af859a775dd7c7b4024c97c8118f0280455b8135f6f41422101f0397e0fa5")
                     )
                     .createAccount(userAName, bankDomain, userAKeypair.public)
                     .createAccount(userBName, bankDomain, userBKeypair.public)
-                    .createAccount(irohaController.assetList, securityDomain, securitiesUserKeyPair.public)
+                    .createAccount("assets_list", securityDomain, securitiesUserKeyPair.public)
                     .createAsset(usdName, bankDomain, 2)
                     .setAccountDetail("$userAName@$bankDomain", detailKey, detailValue)
                     .setAccountQuorum(custodyBillingAccountId, 1)
@@ -171,7 +167,7 @@ open class TestEnv {
             return config
         }
 
-    fun prepareState(
+    fun sendTransactionsAndEnsureBlocks(
         api: IrohaAPI,
         txs: List<TransactionOuterClass.Transaction?>
     ) {
@@ -179,8 +175,9 @@ open class TestEnv {
         // blocking send.
         // use .subscribe() for async sending
         txs.forEach {
-            api.transaction(it)
-                .blockingSubscribe(observer)
+            val lastBlock = stateRepo.findById(DbService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
+            api.transaction(it).blockingSubscribe(observer)
+            getBlockAndCheck(lastBlock.toLong() + 1)
         }
     }
 
@@ -237,8 +234,8 @@ open class TestEnv {
             .orElse(0)
     }
 
-    fun getBlockAndCheck(number: Long): String {
-        val lastProcessedBlock = stateRepo.findById(BlockTaskService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
+    private fun getBlockAndCheck(number: Long): String {
+        val lastProcessedBlock = stateRepo.findById(DbService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
         TestCase.assertTrue(lastProcessedBlock.toLong() == number)
         return lastProcessedBlock
     }
