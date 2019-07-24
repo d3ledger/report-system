@@ -35,8 +35,8 @@ class TransactionBatch(transactionList: List<Transaction>) : Iterable<Transactio
     fun isBatch() = transactionList.size > 1
 
     fun hasTransferTo(accountId: String): Boolean {
-        return transactionList.stream().anyMatch { transaction ->
-            transaction.payload.reducedPayload.commandsList.stream().anyMatch { command ->
+        return transactionList.any { transaction ->
+            transaction.payload.reducedPayload.commandsList.any { command ->
                 command.hasTransferAsset() && command.transferAsset.destAccountId.startsWith(accountId)
             }
         }

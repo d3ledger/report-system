@@ -226,15 +226,10 @@ open class TestEnv {
         val assets = res.accountAssetsResponse.accountAssetsList
 
         // find usd asset
-        val assetUsdOptional = assets
-            .stream()
-            .filter { a -> a.assetId == usd }
-            .findFirst()
+        val assetUsdOptional = assets.firstOrNull { a -> a.assetId == usd }
 
         // numbers are small, so we use int here for simplicity
-        return assetUsdOptional
-            .map { a -> Integer.parseInt(a.balance) }
-            .orElse(0)
+        return if (assetUsdOptional == null) 0 else Integer.parseInt(assetUsdOptional.balance)
     }
 
     private fun getBlockAndCheck(number: Long): Long {

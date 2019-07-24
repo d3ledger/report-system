@@ -66,7 +66,7 @@ class CustodyController(
 
             ResponseEntity.ok(
                 CustodyReport(
-                    accounts = custodyFees.values.stream().collect(Collectors.toList()),
+                    accounts = custodyFees.values.toList(),
                     total = accountsPage.totalElements,
                     pages = accountsPage.totalPages
                 )
@@ -110,7 +110,7 @@ class CustodyController(
 
             ResponseEntity.ok(
                 CustodyReport(
-                    accounts = custodyFees.values.stream().collect(Collectors.toList()),
+                    accounts = custodyFees.values.toList(),
                     total = custodyFees.size.toLong()
                 )
             )
@@ -157,7 +157,7 @@ class CustodyController(
 
             ResponseEntity.ok(
                 CustodyReport(
-                    accounts = custodyFees.values.stream().collect(Collectors.toList()),
+                    accounts = custodyFees.values.toList(),
                     total = accountsPage.totalElements,
                     pages = accountsPage.totalPages
                 )

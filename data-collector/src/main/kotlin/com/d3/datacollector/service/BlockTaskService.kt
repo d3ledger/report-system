@@ -139,7 +139,6 @@ class BlockTaskService : Closeable {
                     )
                     reducedPayload
                         .commandsList
-                        .stream()
                         .forEach { command ->
                             logger.debug("Command received: $command")
                             when {
@@ -241,7 +240,7 @@ class BlockTaskService : Closeable {
         rejectedTrxs: ProtocolStringList
     ): Boolean {
         val hash = Utils.toHex(Utils.hash(tx))
-        return rejectedTrxs.stream().anyMatch { rejected ->
+        return rejectedTrxs.any { rejected ->
             rejected!!.equals(hash, true)
         }
     }
