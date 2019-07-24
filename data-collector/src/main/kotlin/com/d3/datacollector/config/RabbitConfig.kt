@@ -4,12 +4,14 @@
  */
 package com.d3.datacollector.config
 
+import com.d3.commons.config.RMQConfig
 import com.d3.datacollector.service.RabbitMqService
 import com.d3.datacollector.service.RabbitMqServiceImpl
 import org.springframework.amqp.core.TopicExchange
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -17,6 +19,20 @@ import org.springframework.context.annotation.Configuration
 @ConditionalOnProperty(value = ["app.rabbitmq.enable"], havingValue = "true", matchIfMissing = true)
 @Configuration
 class RabbitConfig {
+
+    @Value("\${rmq.host}")
+    private lateinit var rmqHost: String
+    @Value("\${rmq.port}")
+    private lateinit var rmqPort: String
+    @Value("\${rmq.irohaExchange}")
+    private lateinit var rmqExchange: String
+
+    @Bean
+    fun rmqConfig() = object : RMQConfig {
+        override val host = rmqHost
+        override val port = rmqPort.toInt()
+        override val irohaExchange = rmqExchange
+    }
 
     @Bean
     fun exchange(): TopicExchange {
@@ -44,5 +60,6 @@ class RabbitConfig {
         private const val outRoutingKeyPrefix = "d3.data-collector"
         const val transferBillingUdateRoutingKey = "$outRoutingKeyPrefix.transfer-billing.update"
         const val dataCollectorExchange = "data-collector"
+        const val queueName = "DC_QUEUE"
     }
 }

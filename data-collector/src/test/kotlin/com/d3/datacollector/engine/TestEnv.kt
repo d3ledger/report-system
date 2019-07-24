@@ -23,6 +23,124 @@ import java.util.*
 
 open class TestEnv {
 
+    companion object {
+        private const val userAName = "user_a"
+        private const val userBName = "user_b"
+        const val userAId = "$userAName@bank"
+        const val userBId = "$userBName@bank"
+        const val securitiesUser = "assets_list@security"
+
+        const val bankDomain = "bank"
+        const val securityDomain = "security"
+        const val notaryDomain = "notary"
+        const val userRole = "user"
+        const val usdName = "usd"
+        const val dataCollectorRole = "dataCollector"
+        const val transferBillingAccountName = "transfer_billing"
+        const val transferBillingAccountId = "$transferBillingAccountName@$bankDomain"
+        const val custodyAccountName = "custody_billing"
+        const val custodyBillingAccountId = "$custodyAccountName@$bankDomain"
+        const val accountCreationBillingAccountName = "account_creation_billing"
+        const val accountCreationBillingAccountId = "$accountCreationBillingAccountName@$bankDomain"
+        const val exchangeBillingAccountName = "exchange_billing"
+        const val exchangeBillingAccountId = "$exchangeBillingAccountName@$bankDomain"
+        const val withdrawalBillingAccountName = "withdrawal_billing"
+        const val withdrawalBillingAccountId = "$withdrawalBillingAccountName@$bankDomain"
+
+        private val crypto = Ed25519Sha3()
+
+        private val peerKeypair = crypto.generateKeypair()!!
+
+        val userAKeypair = crypto.generateKeypair()!!
+        val userBKeypair = crypto.generateKeypair()!!
+        val securitiesUserKeyPair = crypto.generateKeypair()!!
+        val transaferBillingKeyPair = crypto.generateKeypair()!!
+        val custodyKeyPair = crypto.generateKeypair()!!
+        val accountCreationKeyPair = crypto.generateKeypair()!!
+        val exchangeKeyPair = crypto.generateKeypair()!!
+        val withdrawalKeyPair = crypto.generateKeypair()!!
+
+        const val detailKey = "bing"
+        const val detailValue = "bong"
+
+        fun user(name: String): String {
+            return String.format("%s@%s", name, bankDomain)
+        }
+
+        val usd = String.format(
+            "%s#%s",
+            usdName,
+            bankDomain
+        )
+
+        private val genesisBlock: BlockOuterClass.Block
+            get() = GenesisBlockBuilder()
+                .addTransaction(
+                    Transaction.builder(null)
+                        .addPeer("0.0.0.0:10001", peerKeypair.public)
+                        .createRole(
+                            userRole,
+                            Arrays.asList<Primitive.RolePermission>(
+                                Primitive.RolePermission.can_transfer,
+                                Primitive.RolePermission.can_get_my_acc_ast,
+                                Primitive.RolePermission.can_get_my_txs,
+                                Primitive.RolePermission.can_receive,
+                                Primitive.RolePermission.can_set_quorum,
+                                Primitive.RolePermission.can_add_signatory,
+                                Primitive.RolePermission.can_get_my_acc_detail
+                            )
+                        )
+                        .createRole(
+                            dataCollectorRole,
+                            Arrays.asList<Primitive.RolePermission>(
+                                Primitive.RolePermission.can_get_blocks
+                            )
+                        )
+                        .createDomain(bankDomain, userRole)
+                        .createDomain(notaryDomain, dataCollectorRole)
+                        .createDomain(securityDomain, userRole)
+                        .createAccount(transferBillingAccountName, bankDomain, transaferBillingKeyPair.public)
+                        .createAccount(custodyAccountName, bankDomain, custodyKeyPair.public)
+                        .createAccount(exchangeBillingAccountName, bankDomain, exchangeKeyPair.public)
+                        .createAccount(withdrawalBillingAccountName, bankDomain, withdrawalKeyPair.public)
+                        .createAccount(
+                            accountCreationBillingAccountName,
+                            bankDomain,
+                            accountCreationKeyPair.public
+                        )
+                        .createAccount(
+                            "rmq",
+                            notaryDomain,
+                            Utils.parseHexPublicKey("7a4af859a775dd7c7b4024c97c8118f0280455b8135f6f41422101f0397e0fa5")
+                        )
+                        .createAccount(userAName, bankDomain, userAKeypair.public)
+                        .createAccount(userBName, bankDomain, userBKeypair.public)
+                        .createAccount("assets_list", securityDomain, securitiesUserKeyPair.public)
+                        .createAsset(usdName, bankDomain, 2)
+                        .setAccountDetail("$userAName@$bankDomain", detailKey, detailValue)
+                        .setAccountQuorum(custodyBillingAccountId, 1)
+                        .build()
+                        .build()
+                )
+                .addTransaction(
+                    Transaction.builder(user(userAName))
+                        .addAssetQuantity(usd, BigDecimal("100"))
+                        .build()
+                        .build()
+                )
+                .build()
+
+        // don't forget to add peer keypair to config
+        val peerConfig: PeerConfig
+            get() {
+                val config = PeerConfig.builder()
+                    .genesisBlock(genesisBlock)
+                    .build()
+                config.withPeerKeyPair(peerKeypair)
+                return config
+            }
+    }
+
     val mapper = ObjectMapper()
 
     @Autowired
@@ -51,122 +169,6 @@ open class TestEnv {
     @Autowired
     lateinit var irohaController: IrohaController
 
-    private val userAName = "user_a"
-    private val userBName = "user_b"
-    val userAId = "$userAName@bank"
-    val userBId = "$userBName@bank"
-    val securitiesUser = "assets_list@security"
-
-    val bankDomain = "bank"
-    val securityDomain = "security"
-    val notaryDomain = "notary"
-    val userRole = "user"
-    val usdName = "usd"
-    val dataCollectorRole = "dataCollector"
-    val transferBillingAccountName = "transfer_billing"
-    val transferBillingAccountId = "$transferBillingAccountName@$bankDomain"
-    val custodyAccountName = "custody_billing"
-    val custodyBillingAccountId = "$custodyAccountName@$bankDomain"
-    val accountCreationBillingAccountName = "account_creation_billing"
-    val accountCreationBillingAccountId = "$accountCreationBillingAccountName@$bankDomain"
-    val exchangeBillingAccountName = "exchange_billing"
-    val exchangeBillingAccountId = "$exchangeBillingAccountName@$bankDomain"
-    val withdrawalBillingAccountName = "withdrawal_billing"
-    val withdrawalBillingAccountId = "$withdrawalBillingAccountName@$bankDomain"
-
-    val crypto = Ed25519Sha3()
-
-    val peerKeypair = crypto.generateKeypair()
-
-    val userAKeypair = crypto.generateKeypair()
-    val userBKeypair = crypto.generateKeypair()
-    val securitiesUserKeyPair = crypto.generateKeypair()
-    val transaferBillingKeyPair = crypto.generateKeypair()
-    val custodyKeyPair = crypto.generateKeypair()
-    val accountCreationKeyPair = crypto.generateKeypair()
-    val exchangeKeyPair = crypto.generateKeypair()
-    val withdrawalKeyPair = crypto.generateKeypair()
-
-    val detailKey = "bing"
-    val detailValue = "bong"
-
-    fun user(name: String): String {
-        return String.format("%s@%s", name, bankDomain)
-    }
-
-    val usd = String.format(
-        "%s#%s",
-        usdName,
-        bankDomain
-    )
-
-    private val genesisBlock: BlockOuterClass.Block
-        get() = GenesisBlockBuilder()
-            .addTransaction(
-                Transaction.builder(null)
-                    .addPeer("0.0.0.0:10001", peerKeypair.public)
-                    .createRole(
-                        userRole,
-                        Arrays.asList<Primitive.RolePermission>(
-                            Primitive.RolePermission.can_transfer,
-                            Primitive.RolePermission.can_get_my_acc_ast,
-                            Primitive.RolePermission.can_get_my_txs,
-                            Primitive.RolePermission.can_receive,
-                            Primitive.RolePermission.can_set_quorum,
-                            Primitive.RolePermission.can_add_signatory,
-                            Primitive.RolePermission.can_get_my_acc_detail
-                        )
-                    )
-                    .createRole(
-                        dataCollectorRole,
-                        Arrays.asList<Primitive.RolePermission>(
-                            Primitive.RolePermission.can_get_blocks
-                        )
-                    )
-                    .createDomain(bankDomain, userRole)
-                    .createDomain(notaryDomain, dataCollectorRole)
-                    .createDomain(securityDomain, userRole)
-                    .createAccount(transferBillingAccountName, bankDomain, transaferBillingKeyPair.public)
-                    .createAccount(custodyAccountName, bankDomain, custodyKeyPair.public)
-                    .createAccount(exchangeBillingAccountName, bankDomain, exchangeKeyPair.public)
-                    .createAccount(withdrawalBillingAccountName, bankDomain, withdrawalKeyPair.public)
-                    .createAccount(
-                        accountCreationBillingAccountName,
-                        bankDomain,
-                        accountCreationKeyPair.public
-                    )
-                    .createAccount(
-                        "rmq",
-                        notaryDomain,
-                        Utils.parseHexPublicKey("7a4af859a775dd7c7b4024c97c8118f0280455b8135f6f41422101f0397e0fa5")
-                    )
-                    .createAccount(userAName, bankDomain, userAKeypair.public)
-                    .createAccount(userBName, bankDomain, userBKeypair.public)
-                    .createAccount("assets_list", securityDomain, securitiesUserKeyPair.public)
-                    .createAsset(usdName, bankDomain, 2)
-                    .setAccountDetail("$userAName@$bankDomain", detailKey, detailValue)
-                    .setAccountQuorum(custodyBillingAccountId, 1)
-                    .build()
-                    .build()
-            )
-            .addTransaction(
-                Transaction.builder(user(userAName))
-                    .addAssetQuantity(usd, BigDecimal("100"))
-                    .build()
-                    .build()
-            )
-            .build()
-
-    // don't forget to add peer keypair to config
-    val peerConfig: PeerConfig
-        get() {
-            val config = PeerConfig.builder()
-                .genesisBlock(genesisBlock)
-                .build()
-            config.withPeerKeyPair(peerKeypair)
-            return config
-        }
-
     fun sendTransactionsAndEnsureBlocks(
         api: IrohaAPI,
         txs: List<TransactionOuterClass.Transaction?>
@@ -177,6 +179,7 @@ open class TestEnv {
         txs.forEach {
             val lastBlock = dbService.getLastBlockSeen()
             api.transaction(it).blockingSubscribe(observer)
+            Thread.sleep(5000)
             getBlockAndCheck(lastBlock + 1)
         }
     }
@@ -235,8 +238,8 @@ open class TestEnv {
     }
 
     private fun getBlockAndCheck(number: Long): Long {
-        val lastProcessedBlock = dbService.getLastBlockSeen()
-        TestCase.assertEquals(number, lastProcessedBlock)
+        val lastProcessedBlock = dbService.getLastBlockProcessed()
+        TestCase.assertTrue(number <= lastProcessedBlock)
         return lastProcessedBlock
     }
 }

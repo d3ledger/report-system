@@ -19,8 +19,6 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -28,7 +26,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
 import java.net.URI
 import java.util.*
-import javax.transaction.Transactional
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -37,8 +35,6 @@ import kotlin.test.assertTrue
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@TestPropertySource(properties = ["app.rabbitmq.enable=false"])
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class IrohaTests : TestEnv() {
 
     @Autowired
@@ -46,39 +42,38 @@ class IrohaTests : TestEnv() {
 
     private val waiter = WaitForTerminalStatus()
 
-    private val iroha = IrohaContainer().withPeerConfig(peerConfig).withLogger(null)
-    private val chainAdapter = KGenericContainer("nexus.iroha.tech:19002/d3-deploy/chain-adapter:latest")
-    private val containerHelper = ContainerHelper()
-
-
     @Before
     fun setUp() {
-        iroha.withIrohaAlias("d3-iroha").start()
+        if (passed.compareAndSet(-1, 0)) {
+            iroha.withPeerConfig(peerConfig).withIrohaAlias("d3-iroha").start()
 
-        containerHelper.rmqFixedPortContainer.withNetwork(iroha.network)
-            .withNetworkAliases("d3-rmq")
-            .start()
-        Thread.sleep(10000)
-        blockTaskService.runService()
-        chainAdapter
-            .withEnv("CHAIN-ADAPTER_DROPLASTREADBLOCK", "true")
-            .withNetwork(iroha.network)
-            .start()
+            containerHelper.rmqFixedPortContainer.withNetwork(iroha.network)
+                .withNetworkAliases("d3-rmq")
+                .start()
+            Thread.sleep(15000)
+            blockTaskService.runService()
+            chainAdapter
+                .withEnv("CHAIN-ADAPTER_DROPLASTREADBLOCK", "true")
+                .withNetwork(iroha.network)
+                .start()
+            irohaAPI = IrohaAPI(URI(iroha.toriiAddress.toString()))
+        }
     }
 
     @After
     fun tearDown() {
-        chainAdapter.stop()
-        blockTaskService.close()
-        containerHelper.close()
-        iroha.stop()
+        passed.incrementAndGet()
+        if (passed.compareAndSet(numberOfTests, -1)) {
+            chainAdapter.stop()
+            blockTaskService.close()
+            containerHelper.close()
+            irohaAPI.close()
+            iroha.stop()
+        }
     }
 
     @Test
-    @Transactional
     fun testBatchExchange() {
-        val api = IrohaAPI(URI(iroha.toriiAddress.toString()))
-
         // transfer 100 usd from user_a to user_b
         val transferDescription = "For pizza"
         val transferAmount = "10"
@@ -114,7 +109,7 @@ class IrohaTests : TestEnv() {
 
         val batch = listOf(tx1, tx2)
         val atomicBatch = Utils.createTxAtomicBatch(batch, userAKeypair)
-        api.transactionListSync(atomicBatch)
+        irohaAPI.transactionListSync(atomicBatch)
 
         val txList = listOf(tx)
 
@@ -122,14 +117,14 @@ class IrohaTests : TestEnv() {
 
         for (btx in atomicBatch) {
             val hash = Utils.hash(btx)
-            waiter.subscribe(api, hash)
+            waiter.subscribe(irohaAPI, hash)
                 .blockingSubscribe(observer)
         }
 
-        sendTransactionsAndEnsureBlocks(api, txList)
+        sendTransactionsAndEnsureBlocks(irohaAPI, txList)
 
-        val balanceUserA = getBalance(api, userAId, userAKeypair)
-        val balanceUserB = getBalance(api, userBId, userBKeypair)
+        val balanceUserA = getBalance(irohaAPI, userAId, userAKeypair)
+        val balanceUserB = getBalance(irohaAPI, userBId, userBKeypair)
 
         // ensure we got correct balances
         assertEquals(78, balanceUserA)
@@ -140,8 +135,6 @@ class IrohaTests : TestEnv() {
 
     @Test
     fun testGetAllAssets() {
-        val api = IrohaAPI(URI(iroha.toriiAddress.toString()))
-
         val securityKey = "secureAsset"
         val securityValue = "secureValue"
 
@@ -151,7 +144,7 @@ class IrohaTests : TestEnv() {
             .build()
 
         val stateTxs = listOf(tx1)
-        sendTransactionsAndEnsureBlocks(api, stateTxs)
+        sendTransactionsAndEnsureBlocks(irohaAPI, stateTxs)
 
         assertEquals(1, accountDetailRepo.getAllDetailsForAccountId(irohaController.securityAccount).size)
 
@@ -169,11 +162,7 @@ class IrohaTests : TestEnv() {
     }
 
     @Test
-    @Transactional
     fun testGetBlockWithIroha() {
-        // create API wrapper
-        val api = IrohaAPI(URI(iroha.toriiAddress.toString()))
-
         // transfer 100 usd from user_a to user_b
         val transferDescription = "For pizza"
         val transferAmount = "10"
@@ -217,7 +206,7 @@ class IrohaTests : TestEnv() {
             .build()
 
         val stateTxs = listOf(tx, tx2, tx3, tx4, tx5, tx6, tx7, tx8, tx9)
-        sendTransactionsAndEnsureBlocks(api, stateTxs)
+        sendTransactionsAndEnsureBlocks(irohaAPI, stateTxs)
 
         val dbTrAss = ArrayList<TransferAsset>()
         dbTrAss.addAll(transferAssetRepo.findAll())
@@ -280,19 +269,15 @@ class IrohaTests : TestEnv() {
     }
 
     @Test
-    @Transactional
     fun testGetBilllingWithIroha() {
         val fee = "0.6"
-
-        // create API wrapper
-        val api = IrohaAPI(iroha.toriiAddress)
 
         val tx1 = Transaction.builder(transferBillingAccountId)
             .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
             .sign(transaferBillingKeyPair)
             .build()
         val txList = listOf(tx1)
-        sendTransactionsAndEnsureBlocks(api, txList)
+        sendTransactionsAndEnsureBlocks(irohaAPI, txList)
 
         val result: MvcResult = mvc
             .perform(MockMvcRequestBuilders.get("/cache/get/billing"))
@@ -308,18 +293,15 @@ class IrohaTests : TestEnv() {
     }
 
     @Test
-    @Transactional
     fun testGetSingleBilllingWithIroha() {
         val fee = "0.6"
-        // create API wrapper
-        val api = IrohaAPI(iroha.toriiAddress)
 
         val tx1 = Transaction.builder(transferBillingAccountId)
             .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
             .sign(transaferBillingKeyPair)
             .build()
         val txList = listOf(tx1)
-        sendTransactionsAndEnsureBlocks(api, txList)
+        sendTransactionsAndEnsureBlocks(irohaAPI, txList)
 
         val domain = bankDomain
         val asset = usdName
@@ -337,5 +319,12 @@ class IrohaTests : TestEnv() {
         )
     }
 
-    companion object : KLogging()
+    companion object : KLogging() {
+        private const val numberOfTests = 5
+        private val passed = AtomicInteger(-1)
+        private val iroha = IrohaContainer().withLogger(null)
+        private val chainAdapter = KGenericContainer("nexus.iroha.tech:19002/d3-deploy/chain-adapter:latest")
+        private val containerHelper = ContainerHelper()
+        private lateinit var irohaAPI: IrohaAPI
+    }
 }

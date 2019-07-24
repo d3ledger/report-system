@@ -47,33 +47,39 @@ class DbService {
     }
 
     @Transactional
-    fun markBlockProcessed(lastBlockProcessed: Long) {
+    fun markBlockProcessed(lastBlockProcessed: Long) =
         saveNewBlockInfo(lastBlockProcessed, LAST_PROCESSED_BLOCK_ROW_ID)
-    }
 
     @Transactional
-    fun markBlockSeen(blockNumber: Long) {
-        saveNewBlockInfo(blockNumber, LAST_SEEN_BLOCK_ROW_ID)
-    }
+    fun markBlockSeen(blockNumber: Long) = saveNewBlockInfo(blockNumber, LAST_SEEN_BLOCK_ROW_ID)
 
     private fun saveNewBlockInfo(blockNumber: Long, rowId: Long) {
         val currentBlock = stateRepo.findById(rowId)
-        if (currentBlock.isPresent && blockNumber - currentBlock.get().value.toLong() != 1L) {
-            throw IllegalArgumentException("Blocks must be processed sequentially")
+        if (currentBlock.isPresent) {
+            if (blockNumber - currentBlock.get().value.toLong() != 1L) {
+                throw IllegalArgumentException("Blocks must be processed sequentially")
+            }
+            val state = currentBlock.get()
+            state.value = blockNumber.toString()
+            stateRepo.save(state)
+        } else {
+            throw IllegalStateException("DB does not contain $rowId record for state")
         }
-        val block = currentBlock.get()
-        block.value = blockNumber.toString()
-        stateRepo.save(block)
     }
 
     @Transactional
-    fun getLastBlockSeen(): Long {
-        val currentBlock = stateRepo.findById(LAST_SEEN_BLOCK_ROW_ID)
+    fun getLastBlockSeen() = getBlock(LAST_SEEN_BLOCK_ROW_ID)
+
+    @Transactional
+    fun getLastBlockProcessed() = getBlock(LAST_PROCESSED_BLOCK_ROW_ID)
+
+    private fun getBlock(rowId: Long): Long {
+        val currentBlock = stateRepo.findById(rowId)
         return if (currentBlock.isPresent) currentBlock.get().value.toLong() else 0
     }
 
     companion object {
-        const val LAST_PROCESSED_BLOCK_ROW_ID = 0L
-        const val LAST_SEEN_BLOCK_ROW_ID = 1L
+        const val LAST_PROCESSED_BLOCK_ROW_ID = 1L
+        const val LAST_SEEN_BLOCK_ROW_ID = 0L
     }
 }

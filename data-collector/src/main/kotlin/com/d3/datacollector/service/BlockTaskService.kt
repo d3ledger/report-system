@@ -9,7 +9,7 @@ import com.d3.commons.config.RMQConfig
 import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.d3.datacollector.cache.CacheRepository
-import com.d3.datacollector.config.BlockTaskConfiguration.Companion.queueName
+import com.d3.datacollector.config.RabbitConfig.Companion.queueName
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
 import com.github.kittinunf.result.map
