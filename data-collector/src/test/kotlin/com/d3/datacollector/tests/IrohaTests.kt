@@ -74,7 +74,7 @@ class IrohaTests : TestEnv() {
 
     @Test
     fun testBatchExchange() {
-        // transfer 100 usd from user_a to user_b
+        // transfer 10 usd from user_a to user_b
         val transferDescription = "For pizza"
         val transferAmount = "10"
         val tx = Transaction.builder(userAId)
@@ -127,8 +127,8 @@ class IrohaTests : TestEnv() {
         val balanceUserB = getBalance(irohaAPI, userBId, userBKeypair)
 
         // ensure we got correct balances
-        assertEquals(78, balanceUserA)
-        assertEquals(20, balanceUserB)
+        assertEquals(68, balanceUserA)
+        assertEquals(30, balanceUserB)
 
         assertTrue(txBatchRepo.findAll().toCollection(ArrayList()).isNotEmpty())
     }
@@ -163,7 +163,7 @@ class IrohaTests : TestEnv() {
 
     @Test
     fun testGetBlockWithIroha() {
-        // transfer 100 usd from user_a to user_b
+        // transfer 10 usd from user_a to user_b
         val transferDescription = "For pizza"
         val transferAmount = "10"
         val tx = Transaction.builder(userAId)
