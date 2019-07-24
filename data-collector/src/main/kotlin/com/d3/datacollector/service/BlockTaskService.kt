@@ -103,11 +103,13 @@ class BlockTaskService : Closeable {
         if (block.hasBlockV1()) {
             val blockV1 = block.blockV1
             val height = blockV1.payload.height
-            val lastBlockProcessed = dbService.getLastBlockProcessed()
-            if (lastBlockProcessed > height) {
-                logger.error { "Block $height has already been processed" }
+            logger.info { "Incoming block height is $height" }
+            val lastBlockSeen = dbService.getLastBlockSeen()
+            if (lastBlockSeen >= height) {
+                logger.error { "Block $height has already been seen" }
                 return
             }
+            dbService.markBlockSeen(height)
             val dbBlock = blockRepo.save(Block(height, blockV1.payload.createdTime))
             val rejectedTrxs = blockV1.payload.rejectedTransactionsHashesList
             val transactionBatches = constructBatches(blockV1.payload.transactionsList)

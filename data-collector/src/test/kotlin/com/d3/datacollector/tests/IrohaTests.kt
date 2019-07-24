@@ -5,7 +5,6 @@ import com.d3.datacollector.model.*
 import com.d3.datacollector.service.BlockTaskService
 import integration.helper.ContainerHelper
 import integration.helper.KGenericContainer
-import iroha.protocol.TransactionOuterClass
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.Transaction
 import jp.co.soramitsu.iroha.java.Utils
@@ -20,6 +19,7 @@ import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 import org.springframework.test.web.servlet.MvcResult
@@ -37,8 +37,8 @@ import kotlin.test.assertTrue
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@TestPropertySource(properties = ["app.rabbitmq.enable=true"])
-//@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@TestPropertySource(properties = ["app.rabbitmq.enable=false"])
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class IrohaTests : TestEnv() {
 
     @Autowired
@@ -69,6 +69,7 @@ class IrohaTests : TestEnv() {
     @After
     fun tearDown() {
         chainAdapter.stop()
+        blockTaskService.close()
         containerHelper.close()
         iroha.stop()
     }

@@ -31,7 +31,7 @@ open class TestEnv {
     @Value("\${iroha.latticePlaceholder}")
     lateinit var latticePlaceholder: String
     @Autowired
-    lateinit var stateRepo: StateRepository
+    lateinit var dbService: DbService
     @Autowired
     lateinit var cache: CacheRepository
     @Autowired
@@ -175,9 +175,9 @@ open class TestEnv {
         // blocking send.
         // use .subscribe() for async sending
         txs.forEach {
-            val lastBlock = stateRepo.findById(DbService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
+            val lastBlock = dbService.getLastBlockSeen()
             api.transaction(it).blockingSubscribe(observer)
-            getBlockAndCheck(lastBlock.toLong() + 1)
+            getBlockAndCheck(lastBlock + 1)
         }
     }
 
@@ -234,9 +234,9 @@ open class TestEnv {
             .orElse(0)
     }
 
-    private fun getBlockAndCheck(number: Long): String {
-        val lastProcessedBlock = stateRepo.findById(DbService.LAST_PROCESSED_BLOCK_ROW_ID).get().value
-        TestCase.assertTrue(lastProcessedBlock.toLong() == number)
+    private fun getBlockAndCheck(number: Long): Long {
+        val lastProcessedBlock = dbService.getLastBlockSeen()
+        TestCase.assertEquals(number, lastProcessedBlock)
         return lastProcessedBlock
     }
 }
