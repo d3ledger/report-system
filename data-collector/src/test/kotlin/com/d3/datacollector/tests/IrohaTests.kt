@@ -12,8 +12,8 @@ import jp.co.soramitsu.iroha.java.subscription.WaitForTerminalStatus
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import junit.framework.TestCase
 import mu.KLogging
-import org.junit.After
-import org.junit.Before
+import org.junit.AfterClass
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,7 +26,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigDecimal
 import java.net.URI
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -42,38 +41,9 @@ class IrohaTests : TestEnv() {
 
     private val waiter = WaitForTerminalStatus()
 
-    @Before
-    fun setUp() {
-        if (passed.compareAndSet(-1, 0)) {
-            iroha.withPeerConfig(peerConfig).withIrohaAlias("d3-iroha").start()
-
-            containerHelper.rmqFixedPortContainer.withNetwork(iroha.network)
-                .withNetworkAliases("d3-rmq")
-                .start()
-            Thread.sleep(20000)
-            blockTaskService.runService()
-            chainAdapter
-                .withEnv("CHAIN-ADAPTER_DROPLASTREADBLOCK", "true")
-                .withNetwork(iroha.network)
-                .start()
-            irohaAPI = IrohaAPI(URI(iroha.toriiAddress.toString()))
-        }
-    }
-
-    @After
-    fun tearDown() {
-        passed.incrementAndGet()
-        if (passed.compareAndSet(numberOfTests, -1)) {
-            chainAdapter.stop()
-            blockTaskService.close()
-            containerHelper.close()
-            irohaAPI.close()
-            iroha.stop()
-        }
-    }
-
     @Test
     fun testBatchExchange() {
+        blockTaskService.runService()
         // transfer 10 usd from user_a to user_b
         val transferDescription = "For pizza"
         val transferAmount = "10"
@@ -135,6 +105,7 @@ class IrohaTests : TestEnv() {
 
     @Test
     fun testGetAllAssets() {
+        blockTaskService.runService()
         val securityKey = "secureAsset"
         val securityValue = "secureValue"
 
@@ -163,6 +134,7 @@ class IrohaTests : TestEnv() {
 
     @Test
     fun testGetBlockWithIroha() {
+        blockTaskService.runService()
         // transfer 10 usd from user_a to user_b
         val transferDescription = "For pizza"
         val transferAmount = "10"
@@ -270,6 +242,7 @@ class IrohaTests : TestEnv() {
 
     @Test
     fun testGetBilllingWithIroha() {
+        blockTaskService.runService()
         val fee = "0.6"
 
         val tx1 = Transaction.builder(transferBillingAccountId)
@@ -294,6 +267,7 @@ class IrohaTests : TestEnv() {
 
     @Test
     fun testGetSingleBilllingWithIroha() {
+        blockTaskService.runService()
         val fee = "0.6"
 
         val tx1 = Transaction.builder(transferBillingAccountId)
@@ -320,11 +294,34 @@ class IrohaTests : TestEnv() {
     }
 
     companion object : KLogging() {
-        private const val numberOfTests = 5
-        private val passed = AtomicInteger(-1)
         private val iroha = IrohaContainer().withLogger(null)
         private val chainAdapter = KGenericContainer("nexus.iroha.tech:19002/d3-deploy/chain-adapter:latest")
         private val containerHelper = ContainerHelper()
         private lateinit var irohaAPI: IrohaAPI
+
+        @BeforeClass
+        @JvmStatic
+        fun setUp() {
+            iroha.withPeerConfig(peerConfig).withIrohaAlias("d3-iroha").start()
+
+            containerHelper.rmqFixedPortContainer.withNetwork(iroha.network)
+                .withNetworkAliases("d3-rmq")
+                .start()
+            Thread.sleep(20000)
+            chainAdapter
+                .withEnv("CHAIN-ADAPTER_DROPLASTREADBLOCK", "true")
+                .withNetwork(iroha.network)
+                .start()
+            irohaAPI = IrohaAPI(URI(iroha.toriiAddress.toString()))
+        }
+
+        @AfterClass
+        @JvmStatic
+        fun tearDown() {
+            chainAdapter.stop()
+            containerHelper.close()
+            irohaAPI.close()
+            iroha.stop()
+        }
     }
 }

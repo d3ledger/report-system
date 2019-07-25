@@ -56,8 +56,8 @@ class DbService {
     private fun saveNewBlockInfo(blockNumber: Long, rowId: Long) {
         val currentBlock = stateRepo.findById(rowId)
         if (currentBlock.isPresent) {
-            if (blockNumber - currentBlock.get().value.toLong() != 1L) {
-                throw IllegalArgumentException("Blocks must be processed sequentially")
+            if (blockNumber <= currentBlock.get().value.toLong()) {
+                throw IllegalArgumentException("Blocks must be processed in ascending height manner")
             }
             val state = currentBlock.get()
             state.value = blockNumber.toString()
