@@ -4,7 +4,6 @@
  */
 package com.d3.datacollector.engine
 
-import com.d3.commons.config.RMQConfig
 import com.d3.datacollector.service.RabbitMqService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -17,13 +16,5 @@ class TestConfig {
     @Primary
     fun rabbitServiceMock(): RabbitMqService {
         return RabbitServiceMock()
-    }
-
-    @Bean
-    @Primary
-    fun rmqConfigLocal() = object : RMQConfig {
-        override val host = "127.0.0.1"
-        override val port = 5672
-        override val irohaExchange = "iroha"
     }
 }

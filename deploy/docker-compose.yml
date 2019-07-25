@@ -13,7 +13,7 @@ services:
     environment:
       POSTGRES_HOST: dc-postgres
       POSTGRES_DATABASE: postgres
-      SPRING_RABBITMQ_HOST: d3-rmq
+      RMQ_HOST: d3-rmq
       IROHA_HOST: d3-iroha
       IROHA_PORT: 50051
       SPRING_DATASOURCE_USERNAME: test

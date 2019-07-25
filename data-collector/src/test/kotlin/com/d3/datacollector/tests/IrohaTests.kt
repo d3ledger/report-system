@@ -13,9 +13,8 @@ import jp.co.soramitsu.iroha.java.subscription.WaitForTerminalStatus
 import jp.co.soramitsu.iroha.testcontainers.IrohaContainer
 import junit.framework.TestCase
 import mu.KLogging
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.*
+import org.junit.contrib.java.lang.system.EnvironmentVariables
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -39,6 +38,14 @@ class IrohaTests : TestEnv() {
 
     @Autowired
     private lateinit var blockTaskService: BlockTaskService
+
+    @get:Rule
+    val environmentVariables = EnvironmentVariables()
+
+    @Before
+    fun setEnv() {
+        environmentVariables.set("RMQ_HOST", rmq.containerIpAddress)
+    }
 
     private val waiter = WaitForTerminalStatus()
 
@@ -295,25 +302,31 @@ class IrohaTests : TestEnv() {
     }
 
     companion object : KLogging() {
+        private lateinit var irohaAPI: IrohaAPI
+
         private val iroha = IrohaContainer().withLogger(null)
         private val chainAdapter = KGenericContainer("nexus.iroha.tech:19002/d3-deploy/chain-adapter:master")
-        private val containerHelper = ContainerHelper()
-        private lateinit var irohaAPI: IrohaAPI
+        private val rmq = ContainerHelper().rmqFixedPortContainer
 
         @BeforeClass
         @JvmStatic
         fun setUp() {
-            iroha.withPeerConfig(peerConfig).withIrohaAlias("d3-iroha").start()
-
-            containerHelper.rmqFixedPortContainer.withNetwork(iroha.network)
-                .withNetworkAliases("d3-rmq")
+            iroha.withPeerConfig(peerConfig)
+                .withIrohaAlias("d3-iroha")
                 .start()
+
+            rmq.withCreateContainerCmdModifier { it.withName("d3-rmq") }
+                .withNetwork(iroha.network)
+                .start()
+
             Thread.sleep(20000)
+
             chainAdapter
                 .withEnv("CHAIN-ADAPTER_DROPLASTREADBLOCK", "true")
                 .withEnv("CHAIN-ADAPTER_QUEUESTOCREATE", queueName)
                 .withNetwork(iroha.network)
                 .start()
+
             irohaAPI = IrohaAPI(URI(iroha.toriiAddress.toString()))
         }
 
@@ -321,7 +334,7 @@ class IrohaTests : TestEnv() {
         @JvmStatic
         fun tearDown() {
             chainAdapter.stop()
-            containerHelper.close()
+            rmq.stop()
             irohaAPI.close()
             iroha.stop()
         }

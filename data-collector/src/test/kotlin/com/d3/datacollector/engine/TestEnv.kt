@@ -63,7 +63,7 @@ open class TestEnv {
         const val detailKey = "bing"
         const val detailValue = "bong"
 
-        fun user(name: String): String {
+        private fun user(name: String): String {
             return String.format("%s@%s", name, bankDomain)
         }
 

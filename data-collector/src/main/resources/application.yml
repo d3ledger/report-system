@@ -39,12 +39,6 @@ spring:
     show-sql: false
   liquibase:
     change-log: classpath:liquibase-master.xml
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-    virtual-host: /
   output:
     ansi:
       enabled: NEVER

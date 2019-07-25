@@ -14,19 +14,18 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Lazy
 
 @Configuration
 class RabbitConfig {
 
-    @Value("\${rmq.host}")
-    private lateinit var rmqHost: String
-    @Value("\${rmq.port}")
-    private lateinit var rmqPort: String
-    @Value("\${rmq.irohaExchange}")
-    private lateinit var rmqExchange: String
-
     @Bean
-    fun rmqConfig() = object : RMQConfig {
+    @Lazy
+    fun rmqConfig(
+        @Value("\${rmq.host}") rmqHost: String,
+        @Value("\${rmq.port}") rmqPort: String,
+        @Value("\${rmq.irohaExchange}") rmqExchange: String
+    ) = object : RMQConfig {
         override val host = rmqHost
         override val port = rmqPort.toInt()
         override val irohaExchange = rmqExchange
