@@ -1,5 +1,6 @@
 package com.d3.datacollector.tests
 
+import com.d3.datacollector.config.RabbitConfig.Companion.queueName
 import com.d3.datacollector.engine.TestEnv
 import com.d3.datacollector.model.*
 import com.d3.datacollector.service.BlockTaskService
@@ -223,7 +224,7 @@ class IrohaTests : TestEnv() {
             billingRepo.findAll().forEach {
                 logger.info("Received asset: ${it.asset}")
                 TestCase.assertTrue(it.asset.contains('#'))
-                TestCase.assertFalse(it.accountId.isNullOrEmpty())
+                TestCase.assertFalse(it.accountId.isEmpty())
                 TestCase.assertNotNull(it.billingType)
             }
 
@@ -295,7 +296,7 @@ class IrohaTests : TestEnv() {
 
     companion object : KLogging() {
         private val iroha = IrohaContainer().withLogger(null)
-        private val chainAdapter = KGenericContainer("nexus.iroha.tech:19002/d3-deploy/chain-adapter:latest")
+        private val chainAdapter = KGenericContainer("nexus.iroha.tech:19002/d3-deploy/chain-adapter:master")
         private val containerHelper = ContainerHelper()
         private lateinit var irohaAPI: IrohaAPI
 
@@ -310,6 +311,7 @@ class IrohaTests : TestEnv() {
             Thread.sleep(20000)
             chainAdapter
                 .withEnv("CHAIN-ADAPTER_DROPLASTREADBLOCK", "true")
+                .withEnv("CHAIN-ADAPTER_QUEUESTOCREATE", queueName)
                 .withNetwork(iroha.network)
                 .start()
             irohaAPI = IrohaAPI(URI(iroha.toriiAddress.toString()))
