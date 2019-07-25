@@ -50,7 +50,7 @@ class IrohaTests : TestEnv() {
             containerHelper.rmqFixedPortContainer.withNetwork(iroha.network)
                 .withNetworkAliases("d3-rmq")
                 .start()
-            Thread.sleep(15000)
+            Thread.sleep(20000)
             blockTaskService.runService()
             chainAdapter
                 .withEnv("CHAIN-ADAPTER_DROPLASTREADBLOCK", "true")
