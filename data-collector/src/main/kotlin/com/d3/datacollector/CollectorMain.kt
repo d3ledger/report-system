@@ -10,6 +10,6 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2
 class CollectorMain
 
 fun main(args: Array<String>) {
-    val applicationContext = SpringApplication.run(CollectorMain::class.java, *args)
+    val applicationContext = SpringApplication.run(CollectorMain::class.java)
     applicationContext.getBean(BlockTaskService::class.java).runService()
 }
