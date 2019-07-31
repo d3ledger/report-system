@@ -23,6 +23,7 @@ import org.springframework.test.context.junit4.SpringRunner
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.net.URI
 import java.util.*
@@ -50,6 +51,7 @@ class IrohaTests : TestEnv() {
     private val waiter = WaitForTerminalStatus()
 
     @Test
+    @Transactional
     fun testBatchExchange() {
         blockTaskService.runService()
         // transfer 10 usd from user_a to user_b
@@ -112,6 +114,7 @@ class IrohaTests : TestEnv() {
     }
 
     @Test
+    @Transactional
     fun testGetAllAssets() {
         blockTaskService.runService()
         val securityKey = "secureAsset"
@@ -141,6 +144,7 @@ class IrohaTests : TestEnv() {
     }
 
     @Test
+    @Transactional
     fun testGetBlockWithIroha() {
         blockTaskService.runService()
         // transfer 10 usd from user_a to user_b
@@ -249,6 +253,7 @@ class IrohaTests : TestEnv() {
     }
 
     @Test
+    @Transactional
     fun testGetBilllingWithIroha() {
         blockTaskService.runService()
         val fee = "0.6"
@@ -274,6 +279,7 @@ class IrohaTests : TestEnv() {
     }
 
     @Test
+    @Transactional
     fun testGetSingleBilllingWithIroha() {
         blockTaskService.runService()
         val fee = "0.6"

@@ -11,6 +11,7 @@ import org.springframework.amqp.core.TopicExchange
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
+import org.springframework.amqp.support.converter.MessageConverter
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -44,7 +45,7 @@ class RabbitConfig {
     }
 
     @Bean
-    fun producerJackson2MessageConverter(): Jackson2JsonMessageConverter {
+    fun producerJackson2MessageConverter(): MessageConverter {
         return Jackson2JsonMessageConverter()
     }
 

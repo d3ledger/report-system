@@ -67,10 +67,8 @@ class DbService {
         }
     }
 
-    @Transactional
     fun getLastBlockSeen() = getBlock(LAST_SEEN_BLOCK_ROW_ID)
 
-    @Transactional
     fun getLastBlockProcessed() = getBlock(LAST_PROCESSED_BLOCK_ROW_ID)
 
     private fun getBlock(rowId: Long): Long {
