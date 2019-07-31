@@ -1,3 +1,4 @@
+@file:JvmName("CollectorMain")
 package com.d3.datacollector
 
 import com.d3.datacollector.service.BlockTaskService
@@ -7,9 +8,9 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2
 
 @SpringBootApplication
 @EnableSwagger2
-class CollectorMain
+class Collector
 
 fun main(args: Array<String>) {
-    val applicationContext = SpringApplication.run(CollectorMain::class.java)
+    val applicationContext = SpringApplication.run(Collector::class.java)
     applicationContext.getBean(BlockTaskService::class.java).runService()
 }
