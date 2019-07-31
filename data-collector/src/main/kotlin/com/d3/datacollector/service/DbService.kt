@@ -5,7 +5,6 @@
 package com.d3.datacollector.service
 
 import com.d3.datacollector.model.Billing
-import com.d3.datacollector.model.State
 import com.d3.datacollector.repository.BillingRepository
 import com.d3.datacollector.repository.StateRepository
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,7 +24,11 @@ class DbService {
         billing: Billing
     ): Billing {
         val found =
-            billingRepo.selectByAccountIdBillingTypeAndAsset(billing.accountId, billing.asset, billing.billingType)
+            billingRepo.selectByAccountIdBillingTypeAndAsset(
+                billing.accountId,
+                billing.asset,
+                billing.billingType
+            )
         return if (found.isPresent) {
             val toUpdate = found.get()
             val updated = Billing(
@@ -44,17 +47,37 @@ class DbService {
     }
 
     @Transactional
-    fun updateStateInDb(
-        lastBlockState: State,
-        lastRequest: State
-    ) {
-        var newLastBlock = lastBlockState.value.toLong()
-        newLastBlock++
-        lastBlockState.value = newLastBlock.toString()
-        stateRepo.save(lastBlockState)
-        var newQueryNumber = lastRequest.value.toLong()
-        newQueryNumber++
-        lastRequest.value = newQueryNumber.toString()
-        stateRepo.save(lastRequest)
+    fun markBlockProcessed(lastBlockProcessed: Long) =
+        saveNewBlockInfo(lastBlockProcessed, LAST_PROCESSED_BLOCK_ROW_ID)
+
+    @Transactional
+    fun markBlockSeen(blockNumber: Long) = saveNewBlockInfo(blockNumber, LAST_SEEN_BLOCK_ROW_ID)
+
+    private fun saveNewBlockInfo(blockNumber: Long, rowId: Long) {
+        val currentBlock = stateRepo.findById(rowId)
+        if (currentBlock.isPresent) {
+            if (blockNumber - currentBlock.get().value.toLong() != 1L) {
+                throw IllegalArgumentException("Blocks must be processed sequentially")
+            }
+            val state = currentBlock.get()
+            state.value = blockNumber.toString()
+            stateRepo.save(state)
+        } else {
+            throw IllegalStateException("DB does not contain $rowId record for state")
+        }
+    }
+
+    fun getLastBlockSeen() = getBlock(LAST_SEEN_BLOCK_ROW_ID)
+
+    fun getLastBlockProcessed() = getBlock(LAST_PROCESSED_BLOCK_ROW_ID)
+
+    private fun getBlock(rowId: Long): Long {
+        val currentBlock = stateRepo.findById(rowId)
+        return if (currentBlock.isPresent) currentBlock.get().value.toLong() else 0
+    }
+
+    companion object {
+        const val LAST_PROCESSED_BLOCK_ROW_ID = 1L
+        const val LAST_SEEN_BLOCK_ROW_ID = 0L
     }
 }

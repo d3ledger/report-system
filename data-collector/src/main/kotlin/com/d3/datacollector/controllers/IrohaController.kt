@@ -31,7 +31,7 @@ class IrohaController(
 
     companion object : KLogging()
 
-    final val assetList = "assets_list"
+    private final val assetList = "assets_list"
     val currencyAccount = "$assetList@currency"
     val securityAccount = "$assetList@security"
     val utilityAccount = "$assetList@utility"

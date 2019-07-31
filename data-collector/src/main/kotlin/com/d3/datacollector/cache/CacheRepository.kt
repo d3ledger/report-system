@@ -14,7 +14,6 @@ import javax.annotation.PostConstruct
 
 @Component
 class CacheRepository {
-    private val log = KLogging().logger
     private val transferFee = HashMap<String, HashMap<String, Billing>>()
     private val custodyFee = HashMap<String, HashMap<String, Billing>>()
     private val accountCreationFee = HashMap<String, HashMap<String, Billing>>()
@@ -30,7 +29,7 @@ class CacheRepository {
             Billing.BillingTypeEnum.ACCOUNT_CREATION -> addAccountCreationFee(billing)
             Billing.BillingTypeEnum.EXCHANGE -> addExchangeFee(billing)
             Billing.BillingTypeEnum.WITHDRAWAL -> addWithdrawalFee(billing)
-            else -> log.error { "Can't match billing type ${billing.billingType} from database." }
+            else -> logger.error { "Can't match billing type ${billing.billingType} from database." }
         }
     }
 
@@ -96,4 +95,6 @@ class CacheRepository {
             addFeeByType(it)
         }
     }
+
+    companion object : KLogging()
 }

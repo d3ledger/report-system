@@ -12,11 +12,10 @@ iroha:
     withdrawalBilling: withdrawal_billing@
   latticePlaceholder: __
 
-scheduling:
-  iroha:
-    block:
-      request: 10000
-
+rmq:
+  host: d3-rmq
+  port: 5672
+  irohaExchange: iroha
 
 postgres:
   host:     localhost
@@ -32,8 +31,8 @@ spring:
     password: sa
   h2:
     console:
-       enabled: true
-       path: /h2-console
+      enabled: true
+      path: /h2-console
 
   # Spring Data JPA configuration
   jpa:

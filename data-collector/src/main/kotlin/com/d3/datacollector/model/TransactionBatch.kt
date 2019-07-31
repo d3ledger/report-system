@@ -3,7 +3,7 @@ package com.d3.datacollector.model
 import com.google.common.collect.ImmutableList
 import iroha.protocol.TransactionOuterClass.Transaction
 import org.springframework.util.CollectionUtils
-import java.util.Spliterator
+import java.util.*
 import java.util.function.Consumer
 
 /**
@@ -11,10 +11,7 @@ import java.util.function.Consumer
  */
 class TransactionBatch(transactionList: List<Transaction>) : Iterable<Transaction> {
 
-    val transactionList: List<Transaction>
-
-    val batchInitiator: String
-        get() = getTxAccountId(transactionList[0])
+    private val transactionList: List<Transaction>
 
     init {
         if (CollectionUtils.isEmpty(transactionList)) {
@@ -35,7 +32,13 @@ class TransactionBatch(transactionList: List<Transaction>) : Iterable<Transactio
         return transactionList.spliterator()
     }
 
-    private fun getTxAccountId(transaction: Transaction): String {
-        return transaction.payload.reducedPayload.creatorAccountId
+    fun isBatch() = transactionList.size > 1
+
+    fun hasTransferTo(accountId: String): Boolean {
+        return transactionList.any { transaction ->
+            transaction.payload.reducedPayload.commandsList.any { command ->
+                command.hasTransferAsset() && command.transferAsset.destAccountId.startsWith(accountId)
+            }
+        }
     }
 }

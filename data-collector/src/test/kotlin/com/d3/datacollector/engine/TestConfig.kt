@@ -14,7 +14,7 @@ class TestConfig {
 
     @Bean
     @Primary
-    fun rabbitService(): RabbitMqService {
+    fun rabbitServiceMock(): RabbitMqService {
         return RabbitServiceMock()
     }
 }
