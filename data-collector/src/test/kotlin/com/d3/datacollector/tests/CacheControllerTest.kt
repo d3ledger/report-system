@@ -61,20 +61,19 @@ class CacheControllerTest : TestEnv() {
     @Transactional
     fun testGetSingleBillling() {
         val domain = "globbaly"
-        val bittingGlobbaly = "bitting@$domain"
         val someAsset = "someAsset"
         val fee = "0.5"
 
         cache.addFeeByType(
             Billing(
-                domainName = bittingGlobbaly,
+                domainName = domain,
                 asset = "$someAsset#$domain",
                 feeFraction = BigDecimal(fee)
             )
         )
 
         val result: MvcResult = mvc
-            .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$someAsset/TRANSFER"))
+            .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$someAsset/$domain/TRANSFER"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
         val respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)

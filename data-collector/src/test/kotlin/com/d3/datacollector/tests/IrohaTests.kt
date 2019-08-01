@@ -221,16 +221,18 @@ class IrohaTests : TestEnv() {
         addSignatoryList.addAll(addSignatoryRepo.findAll())
         assertEquals(1, addSignatoryList.size)
 
+        val usdAssetId = "$usdName#$bankDomain"
+
         try {
-            val transaferBilling = cache.getTransferFee(bankDomain, usdName)
+            val transaferBilling = cache.getTransferFee(bankDomain, usdAssetId)
             assertEquals(BigDecimal("0.5"), transaferBilling.feeFraction)
-            val custody = cache.getCustodyFee(bankDomain, usdName)
+            val custody = cache.getCustodyFee(bankDomain, usdAssetId)
             assertEquals(BigDecimal("0.1"), custody.feeFraction)
-            val accountFee = cache.getAccountCreationFee(bankDomain, usdName)
+            val accountFee = cache.getAccountCreationFee(bankDomain, usdAssetId)
             assertEquals(BigDecimal("0.2"), accountFee.feeFraction)
-            val exchangeFee = cache.getExchangeFee(bankDomain, usdName)
+            val exchangeFee = cache.getExchangeFee(bankDomain, usdAssetId)
             assertEquals(BigDecimal("0.3"), exchangeFee.feeFraction)
-            val withdrawalFee = cache.getWithdrawalFee(bankDomain, usdName)
+            val withdrawalFee = cache.getWithdrawalFee(bankDomain, usdAssetId)
             assertEquals(BigDecimal("0.4"), withdrawalFee.feeFraction)
             billingRepo.findAll().forEach {
                 logger.info("Received asset: ${it.asset}")
@@ -295,7 +297,7 @@ class IrohaTests : TestEnv() {
         val asset = usdName
 
         val result: MvcResult = mvc
-            .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$asset/TRANSFER"))
+            .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$asset/$bankDomain/TRANSFER"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
         val respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
