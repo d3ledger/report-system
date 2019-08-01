@@ -57,7 +57,7 @@ class DbService {
         val currentBlock = stateRepo.findById(rowId)
         if (currentBlock.isPresent) {
             if (blockNumber - currentBlock.get().value.toLong() != 1L) {
-                throw IllegalArgumentException("Blocks must be processed sequentially")
+                throw IllegalArgumentException("Blocks must be processed sequentially(current $blockNumber, last seen ${currentBlock.get()})")
             }
             val state = currentBlock.get()
             state.value = blockNumber.toString()
