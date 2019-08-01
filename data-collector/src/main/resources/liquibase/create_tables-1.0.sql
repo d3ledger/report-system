@@ -19,7 +19,7 @@ INSERT INTO state VALUES
 CREATE TABLE billing (
 	id bigserial NOT NULL,
 	billing_type varchar(64) NULL,
-	domain_name varchar(128) NULL,
+	account_id varchar(128) NULL,
 	asset varchar(128) NULL,
 	fee_fraction numeric(8,6) NULL,
 	created bigint NOT NULL,

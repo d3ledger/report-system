@@ -14,5 +14,6 @@
     <include file="liquibase/create_tables-1.0.sql"/>
     <include file="liquibase/iroha-model-1.0.sql"/>
     <include file="liquibase/indexes.sql"/>
-
+    <include file="liquibase/changelog_billing_domain.sql"/>
+  
 </databaseChangeLog>
