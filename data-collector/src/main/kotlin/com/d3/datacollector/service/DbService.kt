@@ -24,8 +24,8 @@ class DbService {
         billing: Billing
     ): Billing {
         val found =
-            billingRepo.selectByAccountIdBillingTypeAndAsset(
-                billing.accountId,
+            billingRepo.selectByDomainBillingTypeAndAsset(
+                billing.domainName,
                 billing.asset,
                 billing.billingType
             )
@@ -33,7 +33,7 @@ class DbService {
             val toUpdate = found.get()
             val updated = Billing(
                 id = toUpdate.id,
-                accountId = toUpdate.accountId,
+                domainName = toUpdate.domainName,
                 billingType = toUpdate.billingType,
                 asset = toUpdate.asset,
                 feeFraction = billing.feeFraction,

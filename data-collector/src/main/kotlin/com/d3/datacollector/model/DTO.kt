@@ -23,7 +23,7 @@ data class SingleBillingResponse(
 
 
 data class BillingMqDto(
-    val accountId: String = "",
+    val domain: String = "",
     val billingType: Billing.BillingTypeEnum = Billing.BillingTypeEnum.TRANSFER,
     val asset: String = "",
     var feeFraction: BigDecimal = BigDecimal("0.015"),

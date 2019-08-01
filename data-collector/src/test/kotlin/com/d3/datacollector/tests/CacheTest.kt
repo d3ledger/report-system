@@ -32,20 +32,20 @@ class CacheTest {
 
         billingRepo.save(
             Billing(
-                accountId = "demper@itisdomain",
+                domainName = "itisdomain",
                 asset = "anyTestAsset#itisdomain"
             )
         )
         billingRepo.save(
             Billing(
-                accountId = "other@otherdomain",
+                domainName = "otherdomain",
                 asset = "otherAsset#otherdomain"
             )
         )
 
         billingRepo.save(
             Billing(
-                accountId = "other@otherdomain",
+                domainName = "otherdomain",
                 asset = "otherAsset#otherdomain",
                 billingType = Billing.BillingTypeEnum.WITHDRAWAL
             )

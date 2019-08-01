@@ -29,7 +29,7 @@ data class Billing(
     @JsonIgnore
     val id: Long? = null,
     @JsonIgnore
-    val accountId: String = "",
+    val domainName: String = "",
     @JsonIgnore
     @Enumerated(EnumType.STRING)
     val billingType: BillingTypeEnum = BillingTypeEnum.TRANSFER,

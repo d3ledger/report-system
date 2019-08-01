@@ -107,7 +107,7 @@ class DataJpaTest {
 
         assertTrue(found.isPresent)
 
-        found = billingRepo.selectByAccountIdBillingTypeAndAsset(billing.accountId, billing.asset, billing.billingType)
+        found = billingRepo.selectByDomainBillingTypeAndAsset(billing.domainName, billing.asset, billing.billingType)
         assertTrue(found.isPresent)
         assertEquals(billing.id, found.get().id)
 
