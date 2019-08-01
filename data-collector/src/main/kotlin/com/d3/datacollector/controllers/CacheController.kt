@@ -10,7 +10,6 @@ import com.d3.datacollector.model.Billing
 import com.d3.datacollector.model.BillingResponse
 import com.d3.datacollector.model.SingleBillingResponse
 import mu.KLogging
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
@@ -49,22 +48,28 @@ class CacheController(
         }
     }
 
-    @GetMapping("/get/billing/{domain}/{asset}/{billingType}")
+    @GetMapping("/get/billing/{domain}/{assetName}/{assetDomain}/{billingType}")
     fun getBillingForTransfer(
         @PathVariable("domain") domain: String,
-        @PathVariable("asset") asset: String,
+        @PathVariable("assetName") assetName: String,
+        @PathVariable("assetDomain") assetDomain: String,
         @PathVariable("billingType") billingType: Billing.BillingTypeEnum
     ): ResponseEntity<SingleBillingResponse> {
         return try {
+            val assetId = String.format(
+                "%s#%s",
+                assetName,
+                assetDomain
+            )
             val billing = when (billingType) {
-                Billing.BillingTypeEnum.TRANSFER -> cache.getTransferFee(domain, asset)
-                Billing.BillingTypeEnum.CUSTODY -> cache.getCustodyFee(domain, asset)
-                Billing.BillingTypeEnum.ACCOUNT_CREATION -> cache.getAccountCreationFee(domain, asset)
-                Billing.BillingTypeEnum.EXCHANGE -> cache.getExchangeFee(domain, asset)
-                Billing.BillingTypeEnum.WITHDRAWAL -> cache.getWithdrawalFee(domain, asset)
+                Billing.BillingTypeEnum.TRANSFER -> cache.getTransferFee(domain, assetId)
+                Billing.BillingTypeEnum.CUSTODY -> cache.getCustodyFee(domain, assetId)
+                Billing.BillingTypeEnum.ACCOUNT_CREATION -> cache.getAccountCreationFee(domain, assetId)
+                Billing.BillingTypeEnum.EXCHANGE -> cache.getExchangeFee(domain, assetId)
+                Billing.BillingTypeEnum.WITHDRAWAL -> cache.getWithdrawalFee(domain, assetId)
                 else -> throw RuntimeException("Unsupported Billing type")
             }
-             ResponseEntity.ok<SingleBillingResponse>(
+            ResponseEntity.ok<SingleBillingResponse>(
                 SingleBillingResponse(
                     billing
                 )

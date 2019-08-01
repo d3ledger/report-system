@@ -11,9 +11,9 @@ import java.util.*
 
 interface BillingRepository : CrudRepository<Billing, Long> {
 
-    @Query("SELECT b FROM Billing b WHERE b.accountId = ?1 and b.asset = ?2 and b.billingType = ?3")
-    fun selectByAccountIdBillingTypeAndAsset(
-        accountId: String,
+    @Query("SELECT b FROM Billing b WHERE b.domainName = ?1 and b.asset = ?2 and b.billingType = ?3")
+    fun selectByDomainBillingTypeAndAsset(
+        domainName: String,
         asset: String,
         billingType: Billing.BillingTypeEnum
     ): Optional<Billing>

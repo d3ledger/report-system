@@ -12,6 +12,7 @@ import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.config.RabbitConfig.Companion.queueName
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
+import com.d3.datacollector.utils.getDomainFromAccountId
 import com.github.kittinunf.result.map
 import com.google.protobuf.ProtocolStringList
 import io.reactivex.schedulers.Schedulers
@@ -228,7 +229,7 @@ class BlockTaskService : Closeable {
             }
             val billing = Billing(
                 null,
-                ad.accountId,
+                getDomainFromAccountId(ad.accountId),
                 defineBillingType(ad.accountId),
                 ad.key.replace(latticePlaceholder, "#"),
                 BigDecimal(ad.value)
@@ -252,7 +253,7 @@ class BlockTaskService : Closeable {
         cache.addFeeByType(updated)
         rabbitService.sendBillingUpdate(
             BillingMqDto(
-                updated.accountId,
+                updated.domainName,
                 updated.billingType,
                 updated.asset,
                 updated.feeFraction,

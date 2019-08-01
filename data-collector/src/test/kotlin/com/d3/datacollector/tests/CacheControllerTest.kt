@@ -8,7 +8,6 @@ import com.d3.datacollector.engine.TestEnv
 import com.d3.datacollector.model.Billing
 import com.d3.datacollector.model.BillingResponse
 import com.d3.datacollector.model.SingleBillingResponse
-import com.d3.datacollector.utils.getDomainFromAccountId
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -33,13 +32,13 @@ class CacheControllerTest : TestEnv() {
     @Test
     @Transactional
     fun testGetBillling() {
-        val bittingGlobbaly = "bitting@globbaly"
+        val globbaly = "globbaly"
         val someAsset = "someAsset"
         val fee = "0.5"
 
         cache.addFeeByType(
             Billing(
-                accountId = bittingGlobbaly,
+                domainName = globbaly,
                 asset = someAsset,
                 feeFraction = BigDecimal(fee)
             )
@@ -52,10 +51,9 @@ class CacheControllerTest : TestEnv() {
         val respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        val domain = getDomainFromAccountId(bittingGlobbaly)
         assertEquals(
             BigDecimal(fee),
-            respBody.transfer[domain]!![someAsset]!!.feeFraction
+            respBody.transfer[globbaly]!![someAsset]!!.feeFraction
         )
     }
 
@@ -69,7 +67,7 @@ class CacheControllerTest : TestEnv() {
 
         cache.addFeeByType(
             Billing(
-                accountId = bittingGlobbaly,
+                domainName = bittingGlobbaly,
                 asset = "$someAsset#$domain",
                 feeFraction = BigDecimal(fee)
             )

@@ -6,7 +6,6 @@ package com.d3.datacollector.cache
 
 import com.d3.datacollector.model.Billing
 import com.d3.datacollector.service.DbService
-import com.d3.datacollector.utils.getDomainFromAccountId
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -60,7 +59,7 @@ class CacheRepository {
 
     @Synchronized
     private fun addBilling(billingMap: HashMap<String, HashMap<String, Billing>>, billing: Billing) {
-        val domain = getDomainFromAccountId(billing.accountId)
+        val domain = billing.domainName
         if (!billingMap.contains(domain)) {
             billingMap[domain] = HashMap()
         }
@@ -78,15 +77,15 @@ class CacheRepository {
     private fun getBilling(
         billingMap: HashMap<String, HashMap<String, Billing>>,
         domain: String,
-        asset: String,
+        assetId: String,
         title: Billing.BillingTypeEnum
     ): Billing {
         if (billingMap.contains(domain)) {
-            if (billingMap[domain]!!.contains("$asset#$domain")) {
-                return billingMap[domain]!!["$asset#$domain"]!!
+            if (billingMap[domain]!!.contains(assetId)) {
+                return billingMap[domain]!![assetId]!!
             }
         }
-        throw RuntimeException("No ${title.name} billing found for: $domain, $asset")
+        throw RuntimeException("No ${title.name} billing found for: $domain, $assetId")
     }
 
     @PostConstruct

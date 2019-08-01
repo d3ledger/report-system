@@ -235,7 +235,7 @@ class IrohaTests : TestEnv() {
             billingRepo.findAll().forEach {
                 logger.info("Received asset: ${it.asset}")
                 TestCase.assertTrue(it.asset.contains('#'))
-                TestCase.assertFalse(it.accountId.isEmpty())
+                TestCase.assertFalse(it.domainName.isEmpty())
                 TestCase.assertNotNull(it.billingType)
             }
 
