@@ -9,7 +9,7 @@ import com.d3.commons.config.RMQConfig
 import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.d3.datacollector.cache.CacheRepository
-import com.d3.datacollector.config.RabbitConfig.Companion.queueName
+import com.d3.datacollector.config.AppConfig.Companion.queueName
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
 import com.d3.datacollector.utils.getDomainFromAccountId
@@ -19,6 +19,7 @@ import io.reactivex.schedulers.Schedulers
 import iroha.protocol.BlockOuterClass
 import iroha.protocol.Commands
 import iroha.protocol.TransactionOuterClass
+import jp.co.soramitsu.iroha.java.ErrorResponseException
 import jp.co.soramitsu.iroha.java.Utils
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
@@ -72,6 +73,8 @@ class BlockTaskService : Closeable {
     @Lazy
     @Autowired
     lateinit var rmqConfig: RMQConfig
+    @Autowired
+    lateinit var irohaBlockService: IrohaBlockService
 
     private val irohaChainListener by lazy {
         ReliableIrohaChainListener(
@@ -93,12 +96,26 @@ class BlockTaskService : Closeable {
             return
         }
         logger.info { "Starting dc block processor" }
+        processMissedBlocks()
         irohaChainListener.getBlockObservable().map { observable ->
             observable.observeOn(scheduler).subscribe { (block, _) ->
                 parseBlock(block)
             }
         }
         irohaChainListener.listen()
+    }
+
+    private fun processMissedBlocks() {
+        var lastBlockProcessed = dbService.getLastBlockProcessed() + 1
+        do {
+            try {
+                logger.info { "Requesting $lastBlockProcessed block from Iroha" }
+                parseBlock(irohaBlockService.irohaBlockQuery(lastBlockProcessed++).block)
+            } catch (e: ErrorResponseException) {
+                logger.warn("Got exception, finishing Iroha blocks querying. ${e.message}", e)
+                return
+            }
+        } while (true)
     }
 
     private fun parseBlock(block: BlockOuterClass.Block) {

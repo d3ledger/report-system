@@ -1,6 +1,6 @@
 package com.d3.datacollector.tests
 
-import com.d3.datacollector.config.RabbitConfig.Companion.queueName
+import com.d3.datacollector.config.AppConfig.Companion.queueName
 import com.d3.datacollector.engine.TestEnv
 import com.d3.datacollector.model.*
 import com.d3.datacollector.service.BlockTaskService
