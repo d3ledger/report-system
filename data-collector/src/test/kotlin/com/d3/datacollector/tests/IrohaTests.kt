@@ -46,6 +46,7 @@ class IrohaTests : TestEnv() {
     @Before
     fun setEnv() {
         environmentVariables.set("RMQ_HOST", rmq.containerIpAddress)
+        environmentVariables.set("IROHA_TORIIADDRESS", iroha.toriiAddress.toString())
     }
 
     private val waiter = WaitForTerminalStatus()

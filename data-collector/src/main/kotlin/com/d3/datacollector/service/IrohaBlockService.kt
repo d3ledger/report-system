@@ -7,11 +7,13 @@ package com.d3.datacollector.service
 
 import jp.co.soramitsu.iroha.java.QueryAPI
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 
 @Service
 class IrohaBlockService {
 
+    @Lazy
     @Autowired
     private lateinit var queryAPI: QueryAPI
 

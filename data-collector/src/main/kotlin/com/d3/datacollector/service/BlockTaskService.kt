@@ -73,6 +73,7 @@ class BlockTaskService : Closeable {
     @Lazy
     @Autowired
     lateinit var rmqConfig: RMQConfig
+    @Lazy
     @Autowired
     lateinit var irohaBlockService: IrohaBlockService
 

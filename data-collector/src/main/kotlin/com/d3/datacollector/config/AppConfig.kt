@@ -25,6 +25,7 @@ import java.net.URI
 class AppConfig {
 
     @Bean
+    @Lazy
     fun queryAPI(
         @Value("\${iroha.user.id}") accountId: String,
         @Value("\${iroha.user.publicKeyHex}") pubKey: String,
