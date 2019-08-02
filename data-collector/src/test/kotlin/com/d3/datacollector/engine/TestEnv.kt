@@ -113,6 +113,11 @@ open class TestEnv {
                             notaryDomain,
                             Utils.parseHexPublicKey("7a4af859a775dd7c7b4024c97c8118f0280455b8135f6f41422101f0397e0fa5")
                         )
+                        .createAccount(
+                            "data_collector",
+                            notaryDomain,
+                            Utils.parseHexPublicKey("97B888554684FB30F29FAB92991AB7ECEFFFE433AB3AF501E5DEAEE69392518C")
+                        )
                         .createAccount(userAName, bankDomain, userAKeypair.public)
                         .createAccount(userBName, bankDomain, userBKeypair.public)
                         .createAccount("assets_list", securityDomain, securitiesUserKeyPair.public)
@@ -177,7 +182,7 @@ open class TestEnv {
         // blocking send.
         // use .subscribe() for async sending
         txs.forEach {
-            val lastBlock = dbService.getLastBlockSeen()
+            val lastBlock = dbService.getLastBlockProcessedHeight()
             api.transaction(it).blockingSubscribe(observer)
             Thread.sleep(5000)
             getBlockAndCheck(lastBlock + 1)
@@ -233,7 +238,7 @@ open class TestEnv {
     }
 
     private fun getBlockAndCheck(number: Long): Long {
-        val lastProcessedBlock = dbService.getLastBlockProcessed()
+        val lastProcessedBlock = dbService.getLastBlockProcessedHeight()
         TestCase.assertTrue(number <= lastProcessedBlock)
         return lastProcessedBlock
     }

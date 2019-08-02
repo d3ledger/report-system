@@ -4,7 +4,7 @@
  */
 package com.d3.datacollector.service
 
-import com.d3.datacollector.config.RabbitConfig
+import com.d3.datacollector.config.AppConfig
 import com.d3.datacollector.model.BillingMqDto
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,8 +15,8 @@ class RabbitMqServiceImpl : RabbitMqService {
 
     override fun sendBillingUpdate(update: BillingMqDto) {
         rabbitTemplate.convertAndSend(
-            RabbitConfig.dataCollectorExchange,
-            RabbitConfig.transferBillingUdateRoutingKey,
+            AppConfig.dataCollectorExchange,
+            AppConfig.transferBillingUdateRoutingKey,
             update
         )
     }

@@ -5,8 +5,9 @@
 package com.d3.datacollector.service
 
 import com.d3.datacollector.model.Billing
+import com.d3.datacollector.model.Block
 import com.d3.datacollector.repository.BillingRepository
-import com.d3.datacollector.repository.StateRepository
+import com.d3.datacollector.repository.BlockRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
@@ -15,7 +16,7 @@ import javax.transaction.Transactional
 @Service
 class DbService {
     @Autowired
-    lateinit var stateRepo: StateRepository
+    lateinit var blockRepo: BlockRepository
     @Autowired
     lateinit var billingRepo: BillingRepository
 
@@ -47,37 +48,13 @@ class DbService {
     }
 
     @Transactional
-    fun markBlockProcessed(lastBlockProcessed: Long) =
-        saveNewBlockInfo(lastBlockProcessed, LAST_PROCESSED_BLOCK_ROW_ID)
-
-    @Transactional
-    fun markBlockSeen(blockNumber: Long) = saveNewBlockInfo(blockNumber, LAST_SEEN_BLOCK_ROW_ID)
-
-    private fun saveNewBlockInfo(blockNumber: Long, rowId: Long) {
-        val currentBlock = stateRepo.findById(rowId)
-        if (currentBlock.isPresent) {
-            if (blockNumber - currentBlock.get().value.toLong() != 1L) {
-                throw IllegalArgumentException("Blocks must be processed sequentially(current $blockNumber, last seen ${currentBlock.get()})")
-            }
-            val state = currentBlock.get()
-            state.value = blockNumber.toString()
-            stateRepo.save(state)
-        } else {
-            throw IllegalStateException("DB does not contain $rowId record for state")
+    fun saveNewBlock(block: Block): Block {
+        val currentBlockHeight = getLastBlockProcessedHeight()
+        if (block.blockNumber!! - currentBlockHeight != 1L) {
+            throw IllegalArgumentException("Blocks must be processed sequentially (current ${block.blockNumber}, last processed $currentBlockHeight})")
         }
+        return blockRepo.save(block)
     }
 
-    fun getLastBlockSeen() = getBlock(LAST_SEEN_BLOCK_ROW_ID)
-
-    fun getLastBlockProcessed() = getBlock(LAST_PROCESSED_BLOCK_ROW_ID)
-
-    private fun getBlock(rowId: Long): Long {
-        val currentBlock = stateRepo.findById(rowId)
-        return if (currentBlock.isPresent) currentBlock.get().value.toLong() else 0
-    }
-
-    companion object {
-        const val LAST_PROCESSED_BLOCK_ROW_ID = 1L
-        const val LAST_SEEN_BLOCK_ROW_ID = 0L
-    }
+    fun getLastBlockProcessedHeight() = blockRepo.count()
 }

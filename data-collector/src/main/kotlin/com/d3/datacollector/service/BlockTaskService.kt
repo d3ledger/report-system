@@ -9,7 +9,7 @@ import com.d3.commons.config.RMQConfig
 import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.d3.datacollector.cache.CacheRepository
-import com.d3.datacollector.config.RabbitConfig.Companion.queueName
+import com.d3.datacollector.config.AppConfig.Companion.queueName
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
 import com.d3.datacollector.utils.getDomainFromAccountId
@@ -29,6 +29,7 @@ import java.io.Closeable
 import java.math.BigDecimal
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.transaction.Transactional
 
 @Service
 class BlockTaskService : Closeable {
@@ -52,8 +53,6 @@ class BlockTaskService : Closeable {
     @Autowired
     lateinit var rabbitService: RabbitMqService
     @Autowired
-    lateinit var blockRepo: BlockRepository
-    @Autowired
     lateinit var transactionRepo: TransactionRepo
     @Autowired
     lateinit var transferRepo: TransferAssetRepo
@@ -72,6 +71,9 @@ class BlockTaskService : Closeable {
     @Lazy
     @Autowired
     lateinit var rmqConfig: RMQConfig
+    @Lazy
+    @Autowired
+    lateinit var irohaBlockService: IrohaBlockService
 
     private val irohaChainListener by lazy {
         ReliableIrohaChainListener(
@@ -95,25 +97,41 @@ class BlockTaskService : Closeable {
         logger.info { "Starting dc block processor" }
         irohaChainListener.getBlockObservable().map { observable ->
             observable.observeOn(scheduler).subscribe { (block, _) ->
-                parseBlock(block)
+                consumeNewBlock(block)
             }
         }
         irohaChainListener.listen()
     }
 
-    private fun parseBlock(block: BlockOuterClass.Block) {
+    private fun processMissedBlocks(processBefore: Long) {
+        var notProcessedBlock = dbService.getLastBlockProcessedHeight() + 1
+        do {
+            try {
+                logger.info { "Requesting $notProcessedBlock block from Iroha" }
+                consumeNewBlock(irohaBlockService.irohaBlockQuery(notProcessedBlock++).block)
+            } catch (e: Exception) {
+                logger.warn("Got exception ${e.message}", e)
+                return
+            }
+        } while (notProcessedBlock < processBefore)
+    }
+
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    fun consumeNewBlock(block: BlockOuterClass.Block) {
         logger.debug { "Got new block: ${block.allFields}" }
         if (block.hasBlockV1()) {
             val blockV1 = block.blockV1
             val height = blockV1.payload.height
             logger.info { "Incoming block height is $height" }
-            val lastBlockSeen = dbService.getLastBlockSeen()
-            if (lastBlockSeen >= height) {
-                logger.error { "Block $height has already been seen" }
+            val lastBlockProcessed = dbService.getLastBlockProcessedHeight()
+            if (lastBlockProcessed >= height) {
+                logger.error { "Block $height has already been processed" }
                 return
             }
-            dbService.markBlockSeen(height)
-            val dbBlock = blockRepo.save(Block(height, blockV1.payload.createdTime))
+            if (height - lastBlockProcessed > 1) {
+                processMissedBlocks(height)
+            }
+            val dbBlock = dbService.saveNewBlock(Block(height, blockV1.payload.createdTime))
             val rejectedTrxs = blockV1.payload.rejectedTransactionsHashesList
             val transactionBatches = constructBatches(blockV1.payload.transactionsList)
 
@@ -216,7 +234,6 @@ class BlockTaskService : Closeable {
                         }
                 }
             }
-            dbService.markBlockProcessed(height)
         } else {
             logger.error("Block response of unsupported version: ${block.blockVersionCase}")
         }

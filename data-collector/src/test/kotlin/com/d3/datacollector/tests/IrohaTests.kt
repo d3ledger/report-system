@@ -1,6 +1,6 @@
 package com.d3.datacollector.tests
 
-import com.d3.datacollector.config.RabbitConfig.Companion.queueName
+import com.d3.datacollector.config.AppConfig.Companion.queueName
 import com.d3.datacollector.engine.TestEnv
 import com.d3.datacollector.model.*
 import com.d3.datacollector.service.BlockTaskService
@@ -23,10 +23,10 @@ import org.springframework.test.context.junit4.SpringRunner
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
-import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.net.URI
 import java.util.*
+import javax.transaction.Transactional
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -46,6 +46,7 @@ class IrohaTests : TestEnv() {
     @Before
     fun setEnv() {
         environmentVariables.set("RMQ_HOST", rmq.containerIpAddress)
+        environmentVariables.set("IROHA_TORIIADDRESS", iroha.toriiAddress.toString())
     }
 
     private val waiter = WaitForTerminalStatus()
@@ -207,7 +208,7 @@ class IrohaTests : TestEnv() {
 
         val dbCrtAccout = ArrayList<CreateAccount>()
         dbCrtAccout.addAll(createAccountRepo.findAll())
-        assertEquals(9, dbCrtAccout.size)
+        assertEquals(10, dbCrtAccout.size)
         dbCrtAccout.forEach {
             TestCase.assertNotNull(it.accountName)
             TestCase.assertNotNull(it.domainId)

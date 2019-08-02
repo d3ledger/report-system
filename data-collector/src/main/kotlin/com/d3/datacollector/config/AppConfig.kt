@@ -7,6 +7,9 @@ package com.d3.datacollector.config
 import com.d3.commons.config.RMQConfig
 import com.d3.datacollector.service.RabbitMqService
 import com.d3.datacollector.service.RabbitMqServiceImpl
+import jp.co.soramitsu.iroha.java.IrohaAPI
+import jp.co.soramitsu.iroha.java.QueryAPI
+import jp.co.soramitsu.iroha.java.Utils
 import org.springframework.amqp.core.TopicExchange
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -16,9 +19,23 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
+import java.net.URI
 
 @Configuration
-class RabbitConfig {
+class AppConfig {
+
+    @Bean
+    @Lazy
+    fun queryAPI(
+        @Value("\${iroha.user.id}") accountId: String,
+        @Value("\${iroha.user.publicKeyHex}") pubKey: String,
+        @Value("\${iroha.user.privateKeyHex}") privKey: String,
+        @Value("\${iroha.toriiAddress}") toriiAddress: String
+    ) = QueryAPI(
+        IrohaAPI(URI(toriiAddress)), accountId, Utils.parseHexKeypair(
+            pubKey, privKey
+        )
+    )
 
     @Bean
     @Lazy
