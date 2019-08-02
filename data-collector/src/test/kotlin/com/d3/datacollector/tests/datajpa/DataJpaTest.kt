@@ -28,9 +28,6 @@ class DataJpaTest {
     lateinit var em: TestEntityManager
 
     @Autowired
-    lateinit var stateRepo: StateRepository
-
-    @Autowired
     lateinit var billingRepo: BillingRepository
 
     @Autowired
@@ -125,28 +122,6 @@ class DataJpaTest {
         assertEquals(billing.id, found.get().id)
         assertNotNull(billing.created)
         assertNotNull(found.get().updated)
-    }
-
-    /**
-     * Test Find Account by accountId
-     * @given State saved in DB
-     * @when and found
-     * @then value of saved is the same as of original
-     */
-    @Test
-    @Transactional
-    fun testStateRepository() {
-        // given
-        val state1 = State(null, "sdfs", "sdfsf")
-        em.persist(state1)
-        em.flush()
-
-        // when
-        val found = stateRepo.findById(state1.id!!)
-
-        // then
-        assertThat(found.get().value)
-            .isEqualTo(state1.value)
     }
 
     /**

@@ -13,15 +13,6 @@ import javax.persistence.PreUpdate
 import javax.persistence.PrePersist
 
 @Entity
-@Table(name = "state")
-data class State(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
-    var title: String = "",
-    var value: String = ""
-)
-
-@Entity
 @Table(name = "billing")
 data class Billing(
     @Id

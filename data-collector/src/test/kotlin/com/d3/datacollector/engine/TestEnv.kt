@@ -182,7 +182,7 @@ open class TestEnv {
         // blocking send.
         // use .subscribe() for async sending
         txs.forEach {
-            val lastBlock = dbService.getLastBlockSeen()
+            val lastBlock = dbService.getLastBlockProcessedHeight()
             api.transaction(it).blockingSubscribe(observer)
             Thread.sleep(5000)
             getBlockAndCheck(lastBlock + 1)
@@ -238,7 +238,7 @@ open class TestEnv {
     }
 
     private fun getBlockAndCheck(number: Long): Long {
-        val lastProcessedBlock = dbService.getLastBlockProcessed()
+        val lastProcessedBlock = dbService.getLastBlockProcessedHeight()
         TestCase.assertTrue(number <= lastProcessedBlock)
         return lastProcessedBlock
     }
