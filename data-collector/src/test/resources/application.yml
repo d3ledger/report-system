@@ -11,6 +11,8 @@ iroha:
     exchangeBilling: exchange_billing@
     withdrawalBilling: withdrawal_billing@
   latticePlaceholder: __
+  rateSetter: notary@notary
+  rateAttributeKey: rate_attribute
 
 rmq:
   host: d3-rmq
@@ -42,6 +44,9 @@ spring:
     show-sql: false
   liquibase:
     change-log: classpath:liquibase-master.xml
+
+scheduling:
+  ratesUpdate: 5000
 
 logging:
   level:

@@ -50,6 +50,12 @@ class BlockTaskService : Closeable {
     private lateinit var withdrawalBillingTemplate: String
     @Value("\${iroha.latticePlaceholder}")
     private lateinit var latticePlaceholder: String
+    @Value("\${iroha.user.id}")
+    private lateinit var accountId: String
+    @Value("\${iroha.rateSetter}")
+    private lateinit var rateSetterAccoundId: String
+    @Value("\${iroha.rateAttributeKey}")
+    private lateinit var rateAttributeKey: String
     @Autowired
     lateinit var rabbitService: RabbitMqService
     @Autowired
@@ -68,6 +74,8 @@ class BlockTaskService : Closeable {
     lateinit var addSignatoryRepo: AddSignatoryRepository
     @Autowired
     lateinit var txBatchRepo: TransactionBatchRepo
+    @Autowired
+    lateinit var ratesRepository: RatesRepository
     @Lazy
     @Autowired
     lateinit var rmqConfig: RMQConfig
@@ -166,14 +174,27 @@ class BlockTaskService : Closeable {
                                 command.hasSetAccountDetail() -> {
                                     processBillingAccountDetail(command.setAccountDetail)
                                     val setAccountDetail = command.setAccountDetail
+                                    val key = setAccountDetail.key
+                                    val value = setAccountDetail.value
                                     accountDetailRepo.save(
                                         SetAccountDetail(
                                             setAccountDetail.accountId,
-                                            setAccountDetail.key,
-                                            setAccountDetail.value,
+                                            key,
+                                            value,
                                             commitedTransaction
                                         )
                                     )
+                                    if (setAccountDetail.accountId == accountId
+                                        && reducedPayload.creatorAccountId == rateSetterAccoundId
+                                    ) {
+                                        val currentRate = ratesRepository.findById(key)
+                                        if (!currentRate.isPresent
+                                            || key == rateAttributeKey
+                                            || currentRate.get().link != Utils.irohaUnEscape(value)
+                                        ) {
+                                            ratesRepository.save(AssetRate(key, value))
+                                        }
+                                    }
                                 }
                                 command.hasTransferAsset() -> {
                                     val transferAsset = command.transferAsset
