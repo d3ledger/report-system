@@ -184,10 +184,14 @@ class BlockTaskService : Closeable {
                                             commitedTransaction
                                         )
                                     )
+                                    // Update rates table if rateSetter sets datails for dc
                                     if (setAccountDetail.accountId == accountId
                                         && reducedPayload.creatorAccountId == rateSetterAccoundId
                                     ) {
                                         val currentRate = ratesRepository.findById(key)
+                                        // if there is no such asset
+                                        // or if it is not asset but json tag for parsing
+                                        // or if asset link is updated
                                         if (!currentRate.isPresent
                                             || key == rateAttributeKey
                                             || currentRate.get().link != Utils.irohaUnEscape(value)

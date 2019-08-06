@@ -3,6 +3,9 @@ package com.d3.datacollector.model
 import java.util.*
 import javax.persistence.*
 
+/**
+ * Asset rates table entity representation
+ */
 @Entity
 @Table(name = "rates")
 data class AssetRate(

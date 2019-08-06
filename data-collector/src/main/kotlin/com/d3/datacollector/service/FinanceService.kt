@@ -7,10 +7,14 @@ import mu.KLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
+/**
+ * Service for updating assets exchange rates using REST
+ */
 @Service
 class FinanceService(
     private val ratesRepository: RatesRepository
 ) {
+    // tag or tag sequnce to search a value in json
     @Value("\${iroha.rateAttributeKey}")
     private lateinit var rateAttributeKey: String
     private val jsonParser = JsonParser()
@@ -22,6 +26,7 @@ class FinanceService(
             return
         }
         val ratesAttribute = ratesAttributeOptional.get().rate!!
+        // for all assets with relevant url
         ratesRepository.findAll().filter { !it.link.isNullOrBlank() }.forEach { assetRate ->
             try {
                 ratesRepository.save(
