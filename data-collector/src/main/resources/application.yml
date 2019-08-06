@@ -50,6 +50,7 @@ server:
 
 scheduling:
   ratesUpdate: 5000
+#  ratesUpdateEnabled: true
 
 logging:
   level:

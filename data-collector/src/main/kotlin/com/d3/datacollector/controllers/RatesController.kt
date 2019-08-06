@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 
+/**
+ * Controller for endpoints related to asset exchange rates
+ */
 @CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
 @Controller
 @RequestMapping("/rates")
@@ -21,6 +24,12 @@ class RatesController(
     val assetRatesRepository: RatesRepository
 ) {
 
+    /**
+     * GET endpoint for querying an exchange rate of the asset specified
+     * @param assetName Iroha name of the asset
+     * @param assetDomain Iroha domain of the asset
+     * @return [StringWrapper] with decimal exchange rate or with errors if they occur
+     */
     @GetMapping("/{assetName}/{assetDomain}")
     fun getRate(
         @PathVariable("assetName") assetName: String,

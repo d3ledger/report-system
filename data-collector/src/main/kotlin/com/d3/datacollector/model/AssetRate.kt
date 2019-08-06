@@ -5,6 +5,10 @@ import javax.persistence.*
 
 /**
  * Asset rates table entity representation
+ * @param asset Iroha asset id
+ * @param link http url to execute for the asset
+ * @param rate current exchange rate of the asset
+ * @param updated last time in millis the rate was updated
  */
 @Entity
 @Table(name = "rates")

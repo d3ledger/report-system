@@ -19,6 +19,9 @@ class FinanceService(
     private lateinit var rateAttributeKey: String
     private val jsonParser = JsonParser()
 
+    /**
+     * Triggers rest execution for all the assets specified and updates repository correspondingly
+     */
     fun updateRates() {
         val ratesAttributeOptional = ratesRepository.findById(rateAttributeKey)
         if (!ratesAttributeOptional.isPresent || ratesAttributeOptional.get().rate.isNullOrEmpty()) {
@@ -47,7 +50,13 @@ class FinanceService(
             return jsonPrimitive.asString
         }
 
-        fun retrieveRate(jsonElement: JsonElement, rateAttribute: String): String? {
+        /**
+         * Finds nested attribute value in the [JsonElement] specified
+         * @param jsonElement element to examine
+         * @param rateAttribute attribute to find a value for
+         * @throws [JsonParseException] if there is no such attribute in json
+         */
+        fun retrieveRate(jsonElement: JsonElement?, rateAttribute: String): String? {
             return when (jsonElement) {
                 is JsonPrimitive -> retrieveRate(jsonElement)
                 is JsonObject -> retrieveRate(jsonElement.asJsonObject, rateAttribute)
@@ -75,6 +84,9 @@ class FinanceService(
                 } catch (e: Exception) {
                     logger.warn("Json exception during array parsing", e)
                 }
+            }
+            if (result == null) {
+                throw JsonParseException("Couldn't parse json provided")
             }
             return result
         }
