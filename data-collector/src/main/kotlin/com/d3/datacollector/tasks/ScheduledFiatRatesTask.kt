@@ -19,7 +19,7 @@ class ScheduledFiatRatesTask(
             financeService.updateRates()
             logger.debug("Currencies rate update job finished")
         } catch (e: Exception) {
-            logger.debug("Error during currencies rate update job", e)
+            logger.error("Error during currencies rate update job", e)
         }
     }
 

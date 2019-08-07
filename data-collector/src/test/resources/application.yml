@@ -11,7 +11,7 @@ iroha:
     exchangeBilling: exchange_billing@
     withdrawalBilling: withdrawal_billing@
   latticePlaceholder: __
-  rateSetter: notary@notary
+  rateSetter: user_a@bank
   rateAttributeKey: rate_attribute
 
 rmq:
@@ -47,6 +47,7 @@ spring:
 
 scheduling:
   ratesUpdate: 5000
+  ratesUpdateEnabled: true
 
 logging:
   level:

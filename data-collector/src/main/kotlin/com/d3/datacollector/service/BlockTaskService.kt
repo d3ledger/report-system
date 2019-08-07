@@ -188,15 +188,20 @@ class BlockTaskService : Closeable {
                                     if (setAccountDetail.accountId == accountId
                                         && reducedPayload.creatorAccountId == rateSetterAccoundId
                                     ) {
-                                        val currentRate = ratesRepository.findById(key)
-                                        // if there is no such asset
-                                        // or if it is not asset but json tag for parsing
+                                        val transformedKey = key.replaceLatticePlaceholder()
+                                        // if it is not asset but json tag for parsing
+                                        if (transformedKey == rateAttributeKey) {
+                                            ratesRepository.save(AssetRate(transformedKey, rate = value))
+                                        }
+                                        // or if there is no such asset
                                         // or if asset link is updated
-                                        if (!currentRate.isPresent
-                                            || key == rateAttributeKey
-                                            || currentRate.get().link != Utils.irohaUnEscape(value)
-                                        ) {
-                                            ratesRepository.save(AssetRate(key, value))
+                                        else {
+                                            val currentRate = ratesRepository.findById(transformedKey)
+                                            if (!currentRate.isPresent
+                                                || currentRate.get().link != Utils.irohaUnEscape(value)
+                                            ) {
+                                                ratesRepository.save(AssetRate(transformedKey, value))
+                                            }
                                         }
                                     }
                                 }
@@ -273,12 +278,14 @@ class BlockTaskService : Closeable {
                 null,
                 getDomainFromAccountId(ad.accountId),
                 defineBillingType(ad.accountId),
-                ad.key.replace(latticePlaceholder, "#"),
+                ad.key.replaceLatticePlaceholder(),
                 BigDecimal(ad.value)
             )
             performUpdates(billing)
         }
     }
+
+    private fun String.replaceLatticePlaceholder() = this.replace(latticePlaceholder, "#")
 
     private fun isTransactionRejected(
         tx: TransactionOuterClass.Transaction,

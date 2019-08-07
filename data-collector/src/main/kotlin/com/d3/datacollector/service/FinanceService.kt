@@ -32,13 +32,15 @@ class FinanceService(
         // for all assets with relevant url
         ratesRepository.findAll().filter { !it.link.isNullOrBlank() }.forEach { assetRate ->
             try {
+                val rate = retrieveRate(jsonParser.parse(khttp.get(assetRate.link!!).text), ratesAttribute)
                 ratesRepository.save(
                     AssetRate(
                         assetRate.asset,
                         assetRate.link,
-                        retrieveRate(jsonParser.parse(khttp.get(assetRate.link!!).text), ratesAttribute)
+                        rate
                     )
                 )
+                logger.info("Updated rate: ${assetRate.asset} $rate")
             } catch (e: Exception) {
                 logger.error("Couldn't update exchange rate for ${assetRate.asset}")
             }

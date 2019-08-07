@@ -2,6 +2,7 @@ package com.d3.datacollector.model
 
 import java.util.*
 import javax.persistence.*
+import javax.validation.constraints.NotNull
 
 /**
  * Asset rates table entity representation
@@ -14,7 +15,8 @@ import javax.persistence.*
 @Table(name = "rates")
 data class AssetRate(
     @Id
-    val asset: String,
+    @NotNull
+    val asset: String? = null,
     val link: String? = null,
     val rate: String? = null,
     var updated: Long = 0L

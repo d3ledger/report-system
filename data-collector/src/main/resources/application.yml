@@ -49,8 +49,8 @@ server:
   port: 8080
 
 scheduling:
-  ratesUpdate: 5000
-#  ratesUpdateEnabled: true
+  ratesUpdate: 30000
+  ratesUpdateEnabled: true
 
 logging:
   level:
