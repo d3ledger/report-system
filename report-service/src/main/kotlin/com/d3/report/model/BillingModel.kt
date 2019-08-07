@@ -14,15 +14,6 @@ import javax.persistence.PrePersist
 import kotlin.collections.ArrayList
 
 @Entity
-@Table(name = "state")
-data class State(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
-    var title: String = "",
-    var value: String = ""
-)
-
-@Entity
 @Table(name = "billing")
 data class Billing(
     @Id

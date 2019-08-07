@@ -10,11 +10,6 @@ import com.d3.datacollector.service.RabbitMqServiceImpl
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.QueryAPI
 import jp.co.soramitsu.iroha.java.Utils
-import org.springframework.amqp.core.TopicExchange
-import org.springframework.amqp.rabbit.connection.ConnectionFactory
-import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
-import org.springframework.amqp.support.converter.MessageConverter
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -52,31 +47,18 @@ class AppConfig {
     }
 
     @Bean
-    fun exchange(): TopicExchange {
-        return TopicExchange(dataCollectorExchange)
-    }
-
-    @Bean
-    fun rabbitTemplate(connectionFactory: ConnectionFactory): RabbitTemplate {
-        val rabbitTemplate = RabbitTemplate(connectionFactory)
-        rabbitTemplate.messageConverter = producerJackson2MessageConverter()
-        return rabbitTemplate
-    }
-
-    @Bean
-    fun producerJackson2MessageConverter(): MessageConverter {
-        return Jackson2JsonMessageConverter()
-    }
-
-    @Bean
-    fun rabbitService(): RabbitMqService {
-        return RabbitMqServiceImpl()
+    @Lazy
+    fun rabbitService(
+        @Value("\${rmq.host}") rmqHost: String,
+        @Value("\${rmq.port}") rmqPort: String
+    ): RabbitMqService {
+        return RabbitMqServiceImpl(rmqHost, rmqPort, dataCollectorExchange, transferBillingUdateRoutingKey)
     }
 
     companion object {
-        private const val outRoutingKeyPrefix = "d3.data-collector"
-        const val transferBillingUdateRoutingKey = "$outRoutingKeyPrefix.transfer-billing.update"
-        const val dataCollectorExchange = "data-collector"
+        private const val dataCollectorExchange = "data-collector"
+        private const val outRoutingKeyPrefix = "d3.$dataCollectorExchange"
+        private const val transferBillingUdateRoutingKey = "$outRoutingKeyPrefix.transfer-billing.update"
         const val queueName = "DC_QUEUE"
     }
 }
