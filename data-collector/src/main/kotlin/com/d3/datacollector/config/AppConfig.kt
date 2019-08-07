@@ -45,6 +45,7 @@ class AppConfig {
     }
 
     @Bean
+    @Lazy
     fun rabbitService(
         @Value("\${rmq.host}") rmqHost: String,
         @Value("\${rmq.port}") rmqPort: String
