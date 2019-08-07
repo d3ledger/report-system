@@ -6,6 +6,7 @@ package com.d3.datacollector.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.google.gson.annotations.SerializedName
 import java.math.BigDecimal
 import java.util.*
 import javax.persistence.*
@@ -31,17 +32,17 @@ data class Billing(
     var updated: Long = 0L
 ) {
     enum class BillingTypeEnum {
-        @JsonProperty("transfer")
+        @SerializedName("transfer")
         TRANSFER,
-        @JsonProperty("custody")
+        @SerializedName("custody")
         CUSTODY,
-        @JsonProperty("account_creation")
+        @SerializedName("account_creation")
         ACCOUNT_CREATION,
-        @JsonProperty("exchange")
+        @SerializedName("exchange")
         EXCHANGE,
-        @JsonProperty("withdrawal")
+        @SerializedName("withdrawal")
         WITHDRAWAL,
-        @JsonProperty("not_found")
+        @SerializedName("not_found")
         NOT_FOUND
     }
 
