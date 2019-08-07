@@ -50,7 +50,8 @@ server:
 
 scheduling:
   ratesUpdate: 30000
-  ratesUpdateEnabled: true
+#  disabled by default
+#  ratesUpdateEnabled: true
 
 logging:
   level:
