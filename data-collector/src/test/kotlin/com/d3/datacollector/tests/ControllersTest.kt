@@ -94,7 +94,7 @@ class ControllersTest : TestEnv() {
         val postResult: MvcResult = mvc
             .perform(
                 MockMvcRequestBuilders.post("/rates").contentType(MediaType.APPLICATION_JSON_UTF8).content(
-                    mapper.writeValueAsString(SetRateDTO(usdName, bankDomain, "50"))
+                    mapper.writeValueAsString(SetRateDTO(usdName, bankDomain, "50", "passphrase"))
                 )
             )
             .andExpect(MockMvcResultMatchers.status().isOk)

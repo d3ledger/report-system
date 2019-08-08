@@ -8,6 +8,7 @@ package com.d3.datacollector.controllers
 import com.d3.datacollector.model.AssetRate
 import com.d3.datacollector.model.StringWrapper
 import com.d3.datacollector.repository.RatesRepository
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
@@ -20,7 +21,9 @@ import java.math.BigDecimal
 @Controller
 @RequestMapping("/rates")
 class RatesController(
-    val assetRatesRepository: RatesRepository
+    private val assetRatesRepository: RatesRepository,
+    @Value("\${server.passphrase}")
+    private val passphrase: String
 ) {
 
     /**
@@ -64,6 +67,9 @@ class RatesController(
         @RequestBody setRateDTO: SetRateDTO
     ): ResponseEntity<StringWrapper> {
         return try {
+            if (setRateDTO.passphrase != passphrase) {
+                throw IllegalAccessException("Wrong passphrase")
+            }
             val assetId = String.format(
                 "%s#%s",
                 setRateDTO.assetName,
@@ -95,5 +101,7 @@ class RatesController(
 data class SetRateDTO(
     val assetName: String,
     val assetDomain: String,
-    val assetRate: String
+    val assetRate: String,
+    // TODO change to security/auth
+    val passphrase: String
 )

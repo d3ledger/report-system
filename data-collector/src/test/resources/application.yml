@@ -45,6 +45,9 @@ spring:
   liquibase:
     change-log: classpath:liquibase-master.xml
 
+server:
+  passphrase: passphrase
+
 scheduling:
   ratesUpdate: 5000
   ratesUpdateEnabled: true
