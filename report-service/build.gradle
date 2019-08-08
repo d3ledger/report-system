@@ -74,7 +74,7 @@ compileTestKotlin {
 
 mainClassName = "com.d3.report.ReportMain"
 
-task runCollector(type: JavaExec ) {
+task runReportService(type: JavaExec ) {
     main = mainClassName
     classpath = sourceSets.main.runtimeClasspath
     setWorkingDir("$rootDir/")

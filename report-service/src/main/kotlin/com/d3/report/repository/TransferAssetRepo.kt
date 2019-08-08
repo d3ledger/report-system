@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 
+const val CLIENT_DOMAIN = "d3"
+
 interface TransferAssetRepo : CrudRepository<TransferAsset, Long?> {
 
     @Query("SELECT t FROM TransferAsset t WHERE t.transaction.rejected = false " +
@@ -51,5 +53,8 @@ interface TransferAssetRepo : CrudRepository<TransferAsset, Long?> {
             " and t.assetId = :assetId" +
             " and t.transaction.block.blockCreationTime Between :from and :to")
     fun getDataBetweenForAssetOfAccount(assetId:String, accountId:String, billingAccount:String, from: Long, to: Long, pageable: Pageable): Page<TransferAsset>
+
+    @Query("SELECT t FROM TransferAsset t WHERE t.transaction.rejected = false and (t.destAccountId LIKE '%@$CLIENT_DOMAIN' or t.srcAccountId LIKE '%@$CLIENT_DOMAIN') and  t.assetId = :assetId")
+    fun getAllClientTransfersForAsset(assetId:String, pageable: Pageable): Page<TransferAsset>
 
 }

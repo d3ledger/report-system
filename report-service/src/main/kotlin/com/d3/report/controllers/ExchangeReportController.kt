@@ -28,7 +28,7 @@ import javax.validation.constraints.NotNull
 @Controller
 @RequestMapping("/report/billing/exchange")
 class ExchangeReportController(
-    val trasactionBatchRepo: TransactionBatchRepo,
+    val transactionBatchRepo: TransactionBatchRepo,
     val transactionRepo: TransactionRepo,
     val em: EntityManager
 ) {
@@ -50,7 +50,7 @@ class ExchangeReportController(
     ): ResponseEntity<ExchangeReport> {
         return try {
 
-            val page = trasactionBatchRepo
+            val page = transactionBatchRepo
                 .getDataBetweenForBillingAccount(
                     "$exchangeBillingTemplate$domain",
                     from,
@@ -81,7 +81,7 @@ class ExchangeReportController(
     ): ResponseEntity<ExchangeReport> {
         return try {
             val exchangeBillingAccountId = "$exchangeBillingTemplate${getDomain(accountId)}"
-            val page = trasactionBatchRepo
+            val page = transactionBatchRepo
                 .getDataBetweenForBillingAccountAndCustomer(
                     accountId,
                     exchangeBillingAccountId,
@@ -112,7 +112,7 @@ class ExchangeReportController(
         @NotNull @RequestParam pageSize: Int = 20
     ): ResponseEntity<ExchangeReport> {
         return try {
-            val page = trasactionBatchRepo
+            val page = transactionBatchRepo
                 .getDataBetweenForbillingAccountTemplate(
                     exchangeBillingTemplate,
                     from,

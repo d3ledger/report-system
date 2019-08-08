@@ -5,8 +5,8 @@
 
 package com.d3.datacollector.service
 
-import com.d3.commons.config.RMQConfig
-import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
+import com.d3.chainadapter.client.RMQConfig
+import com.d3.chainadapter.client.ReliableIrohaChainListener
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.config.AppConfig.Companion.queueName

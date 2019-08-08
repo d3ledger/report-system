@@ -5,7 +5,6 @@
 package com.d3.report.model
 
 import com.d3.report.dto.Conflict
-import java.lang.RuntimeException
 import java.math.BigDecimal
 
 class InvalidValue(message: String) : RuntimeException(message)
@@ -44,6 +43,16 @@ class TransferReport(
     code: String? = null,
     message: String? = null
 ) : BaseReport(total, pages, code, message)
+
+/**
+ * Class that represents the total sum of assets in Iroha
+ */
+class AssetSumReportReport(
+    val totalSum: BigDecimal = BigDecimal.ZERO,
+    val assetId: String = "",
+    code: String? = null,
+    message: String? = null
+) : BaseReport(0, 0, code, message)
 
 class RegistrationReport(
     val accounts: List<AccountRegistration> = emptyList(),

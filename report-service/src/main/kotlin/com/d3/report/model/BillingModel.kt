@@ -27,6 +27,7 @@ data class Billing(
     val billingType: BillingTypeEnum = BillingTypeEnum.TRANSFER,
     @JsonIgnore
     val asset: String = "",
+    //TODO why 0.015?
     var feeFraction: BigDecimal = BigDecimal("0.015"),
     var created: Long = 0L,
     var updated: Long = 0L
@@ -58,4 +59,4 @@ data class Billing(
     }
 }
 
-class BillingNotFoundException(message:String): Exception(message)
+class BillingNotFoundException(message: String) : Exception(message)
