@@ -18,7 +18,7 @@ data class AssetRate(
     @NotNull
     val asset: String? = null,
     val link: String? = null,
-    val rate: String? = null,
+    var rate: String? = null,
     var updated: Long = 0L
 ) {
     @PrePersist

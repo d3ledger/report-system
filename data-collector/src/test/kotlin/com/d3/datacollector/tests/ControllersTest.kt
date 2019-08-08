@@ -4,14 +4,17 @@
  */
 package com.d3.datacollector.tests
 
+import com.d3.datacollector.controllers.SetRateDTO
 import com.d3.datacollector.engine.TestEnv
 import com.d3.datacollector.model.Billing
 import com.d3.datacollector.model.BillingResponse
 import com.d3.datacollector.model.SingleBillingResponse
+import com.google.gson.JsonParser
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.MediaType
 import org.springframework.test.context.junit4.SpringRunner
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -24,7 +27,7 @@ import kotlin.test.assertNull
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-class CacheControllerTest : TestEnv() {
+class ControllersTest : TestEnv() {
 
     /**
      * TODO Update test. Add all type of fees testing
@@ -83,5 +86,29 @@ class CacheControllerTest : TestEnv() {
             BigDecimal(fee),
             respBody.billing.feeFraction
         )
+    }
+
+    @Test
+    @Transactional
+    fun testSetSingleExchangeRate() {
+        val postResult: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.post("/rates").contentType(MediaType.APPLICATION_JSON_UTF8).content(
+                    mapper.writeValueAsString(SetRateDTO(usdName, bankDomain, "50"))
+                )
+            )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        val resultString =
+            JsonParser().parse(postResult.response.contentAsString).asJsonObject.get("itIs").asString
+        assertEquals("50", resultString)
+
+        val getResult: MvcResult = mvc
+            .perform(MockMvcRequestBuilders.get("/rates/$usdName/$bankDomain"))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        val getResultString =
+            JsonParser().parse(getResult.response.contentAsString).asJsonObject.get("itIs").asString
+        assertEquals("50", getResultString)
     }
 }

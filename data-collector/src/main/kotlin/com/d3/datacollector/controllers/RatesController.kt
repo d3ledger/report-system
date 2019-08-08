@@ -5,14 +5,13 @@
 
 package com.d3.datacollector.controllers
 
+import com.d3.datacollector.model.AssetRate
 import com.d3.datacollector.model.StringWrapper
 import com.d3.datacollector.repository.RatesRepository
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.*
+import java.math.BigDecimal
 
 /**
  * Controller for endpoints related to asset exchange rates
@@ -54,4 +53,47 @@ class RatesController(
             ResponseEntity.ok<StringWrapper>(response)
         }
     }
+
+    /**
+     * POST endpoint for setting an exchange rate of the asset specified
+     * @param setRateDTO JSONed body with asset name, domain and rate
+     * @return [StringWrapper] with decimal exchange rate or with errors if they occur
+     */
+    @PostMapping("", consumes = ["application/json"])
+    fun setRate(
+        @RequestBody setRateDTO: SetRateDTO
+    ): ResponseEntity<StringWrapper> {
+        return try {
+            val assetId = String.format(
+                "%s#%s",
+                setRateDTO.assetName,
+                setRateDTO.assetDomain
+            )
+            // to check number format
+            val assetRate = BigDecimal(setRateDTO.assetRate)
+
+            val currentAssetRecord = assetRatesRepository.findById(assetId)
+            val newAssetRecord: AssetRate
+            newAssetRecord = if (currentAssetRecord.isPresent) {
+                currentAssetRecord.get()
+            } else {
+                AssetRate(assetId)
+            }
+            newAssetRecord.rate = assetRate.toPlainString()
+            assetRatesRepository.save(newAssetRecord)
+
+            ResponseEntity.ok<StringWrapper>(StringWrapper(setRateDTO.assetRate))
+        } catch (e: Exception) {
+            val response = StringWrapper()
+            response.errorCode = e.javaClass.simpleName
+            response.message = e.message
+            ResponseEntity.ok<StringWrapper>(response)
+        }
+    }
 }
+
+data class SetRateDTO(
+    val assetName: String,
+    val assetDomain: String,
+    val assetRate: String
+)
