@@ -11,6 +11,8 @@ iroha:
     exchangeBilling: exchange_billing@
     withdrawalBilling: withdrawal_billing@
   latticePlaceholder: __
+  rateSetter: user_a@bank
+  rateAttributeKey: rate_attribute
 
 rmq:
   host: d3-rmq
@@ -42,6 +44,13 @@ spring:
     show-sql: false
   liquibase:
     change-log: classpath:liquibase-master.xml
+
+server:
+  passphrase: passphrase
+
+scheduling:
+  ratesUpdate: 5000
+  ratesUpdateEnabled: true
 
 logging:
   level:

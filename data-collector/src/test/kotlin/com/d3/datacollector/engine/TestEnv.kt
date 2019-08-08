@@ -26,13 +26,15 @@ open class TestEnv {
     companion object {
         private const val userAName = "user_a"
         private const val userBName = "user_b"
-        const val userAId = "$userAName@bank"
-        const val userBId = "$userBName@bank"
+        private const val dataCollectorName = "data_collector"
+        const val bankDomain = "bank"
+        const val notaryDomain = "notary"
+        const val userAId = "$userAName@$bankDomain"
+        const val userBId = "$userBName@$bankDomain"
+        const val dataCollectorId = "$dataCollectorName@$notaryDomain"
         const val securitiesUser = "assets_list@security"
 
-        const val bankDomain = "bank"
         const val securityDomain = "security"
-        const val notaryDomain = "notary"
         const val userRole = "user"
         const val usdName = "usd"
         const val dataCollectorRole = "dataCollector"
@@ -74,66 +76,69 @@ open class TestEnv {
         )
 
         private val genesisBlock: BlockOuterClass.Block
-            get() = GenesisBlockBuilder()
-                .addTransaction(
-                    Transaction.builder(null)
-                        .addPeer("0.0.0.0:10001", peerKeypair.public)
-                        .createRole(
-                            userRole,
-                            Arrays.asList<Primitive.RolePermission>(
-                                Primitive.RolePermission.can_transfer,
-                                Primitive.RolePermission.can_get_my_acc_ast,
-                                Primitive.RolePermission.can_get_my_txs,
-                                Primitive.RolePermission.can_receive,
-                                Primitive.RolePermission.can_set_quorum,
-                                Primitive.RolePermission.can_add_signatory,
-                                Primitive.RolePermission.can_get_my_acc_detail
+            get() {
+                return GenesisBlockBuilder()
+                    .addTransaction(
+                        Transaction.builder(null)
+                            .addPeer("0.0.0.0:10001", peerKeypair.public)
+                            .createRole(
+                                userRole,
+                                Arrays.asList<Primitive.RolePermission>(
+                                    Primitive.RolePermission.can_transfer,
+                                    Primitive.RolePermission.can_get_my_acc_ast,
+                                    Primitive.RolePermission.can_get_my_txs,
+                                    Primitive.RolePermission.can_receive,
+                                    Primitive.RolePermission.can_set_quorum,
+                                    Primitive.RolePermission.can_add_signatory,
+                                    Primitive.RolePermission.can_get_my_acc_detail,
+                                    Primitive.RolePermission.can_set_detail
+                                )
                             )
-                        )
-                        .createRole(
-                            dataCollectorRole,
-                            Arrays.asList<Primitive.RolePermission>(
-                                Primitive.RolePermission.can_get_blocks
+                            .createRole(
+                                dataCollectorRole,
+                                Arrays.asList<Primitive.RolePermission>(
+                                    Primitive.RolePermission.can_get_blocks
+                                )
                             )
-                        )
-                        .createDomain(bankDomain, userRole)
-                        .createDomain(notaryDomain, dataCollectorRole)
-                        .createDomain(securityDomain, userRole)
-                        .createAccount(transferBillingAccountName, bankDomain, transaferBillingKeyPair.public)
-                        .createAccount(custodyAccountName, bankDomain, custodyKeyPair.public)
-                        .createAccount(exchangeBillingAccountName, bankDomain, exchangeKeyPair.public)
-                        .createAccount(withdrawalBillingAccountName, bankDomain, withdrawalKeyPair.public)
-                        .createAccount(
-                            accountCreationBillingAccountName,
-                            bankDomain,
-                            accountCreationKeyPair.public
-                        )
-                        .createAccount(
-                            "rmq",
-                            notaryDomain,
-                            Utils.parseHexPublicKey("7a4af859a775dd7c7b4024c97c8118f0280455b8135f6f41422101f0397e0fa5")
-                        )
-                        .createAccount(
-                            "data_collector",
-                            notaryDomain,
-                            Utils.parseHexPublicKey("97B888554684FB30F29FAB92991AB7ECEFFFE433AB3AF501E5DEAEE69392518C")
-                        )
-                        .createAccount(userAName, bankDomain, userAKeypair.public)
-                        .createAccount(userBName, bankDomain, userBKeypair.public)
-                        .createAccount("assets_list", securityDomain, securitiesUserKeyPair.public)
-                        .createAsset(usdName, bankDomain, 2)
-                        .setAccountDetail("$userAName@$bankDomain", detailKey, detailValue)
-                        .setAccountQuorum(custodyBillingAccountId, 1)
-                        .build()
-                        .build()
-                )
-                .addTransaction(
-                    Transaction.builder(user(userAName))
-                        .addAssetQuantity(usd, BigDecimal("100"))
-                        .build()
-                        .build()
-                )
-                .build()
+                            .createDomain(bankDomain, userRole)
+                            .createDomain(notaryDomain, dataCollectorRole)
+                            .createDomain(securityDomain, userRole)
+                            .createAccount(transferBillingAccountName, bankDomain, transaferBillingKeyPair.public)
+                            .createAccount(custodyAccountName, bankDomain, custodyKeyPair.public)
+                            .createAccount(exchangeBillingAccountName, bankDomain, exchangeKeyPair.public)
+                            .createAccount(withdrawalBillingAccountName, bankDomain, withdrawalKeyPair.public)
+                            .createAccount(
+                                accountCreationBillingAccountName,
+                                bankDomain,
+                                accountCreationKeyPair.public
+                            )
+                            .createAccount(
+                                "rmq",
+                                notaryDomain,
+                                Utils.parseHexPublicKey("7a4af859a775dd7c7b4024c97c8118f0280455b8135f6f41422101f0397e0fa5")
+                            )
+                            .createAccount(
+                                dataCollectorName,
+                                notaryDomain,
+                                Utils.parseHexPublicKey("97B888554684FB30F29FAB92991AB7ECEFFFE433AB3AF501E5DEAEE69392518C")
+                            )
+                            .createAccount(userAName, bankDomain, userAKeypair.public)
+                            .createAccount(userBName, bankDomain, userBKeypair.public)
+                            .createAccount("assets_list", securityDomain, securitiesUserKeyPair.public)
+                            .createAsset(usdName, bankDomain, 2)
+                            .setAccountDetail("$userAName@$bankDomain", detailKey, detailValue)
+                            .setAccountQuorum(custodyBillingAccountId, 1)
+                            .build()
+                            .build()
+                    )
+                    .addTransaction(
+                        Transaction.builder(user(userAName))
+                            .addAssetQuantity(usd, BigDecimal("100"))
+                            .build()
+                            .build()
+                    )
+                    .build()
+            }
 
         // don't forget to add peer keypair to config
         val peerConfig: PeerConfig

@@ -50,6 +50,12 @@ class BlockTaskService : Closeable {
     private lateinit var withdrawalBillingTemplate: String
     @Value("\${iroha.latticePlaceholder}")
     private lateinit var latticePlaceholder: String
+    @Value("\${iroha.user.id}")
+    private lateinit var accountId: String
+    @Value("\${iroha.rateSetter}")
+    private lateinit var rateSetterAccoundId: String
+    @Value("\${iroha.rateAttributeKey}")
+    private lateinit var rateAttributeKey: String
     @Autowired
     lateinit var rabbitService: RabbitMqService
     @Autowired
@@ -68,6 +74,8 @@ class BlockTaskService : Closeable {
     lateinit var addSignatoryRepo: AddSignatoryRepository
     @Autowired
     lateinit var txBatchRepo: TransactionBatchRepo
+    @Autowired
+    lateinit var ratesRepository: RatesRepository
     @Lazy
     @Autowired
     lateinit var rmqConfig: RMQConfig
@@ -166,14 +174,36 @@ class BlockTaskService : Closeable {
                                 command.hasSetAccountDetail() -> {
                                     processBillingAccountDetail(command.setAccountDetail)
                                     val setAccountDetail = command.setAccountDetail
+                                    val key = setAccountDetail.key
+                                    val value = setAccountDetail.value
                                     accountDetailRepo.save(
                                         SetAccountDetail(
                                             setAccountDetail.accountId,
-                                            setAccountDetail.key,
-                                            setAccountDetail.value,
+                                            key,
+                                            value,
                                             commitedTransaction
                                         )
                                     )
+                                    // Update rates table if rateSetter sets datails for dc
+                                    if (setAccountDetail.accountId == accountId
+                                        && reducedPayload.creatorAccountId == rateSetterAccoundId
+                                    ) {
+                                        val transformedKey = key.replaceLatticePlaceholder()
+                                        // if it is not asset but json tag for parsing
+                                        if (transformedKey == rateAttributeKey) {
+                                            ratesRepository.save(AssetRate(transformedKey, rate = value))
+                                        }
+                                        // or if there is no such asset
+                                        // or if asset link is updated
+                                        else {
+                                            val currentRate = ratesRepository.findById(transformedKey)
+                                            if (!currentRate.isPresent
+                                                || currentRate.get().link != Utils.irohaUnEscape(value)
+                                            ) {
+                                                ratesRepository.save(AssetRate(transformedKey, value))
+                                            }
+                                        }
+                                    }
                                 }
                                 command.hasTransferAsset() -> {
                                     val transferAsset = command.transferAsset
@@ -248,12 +278,14 @@ class BlockTaskService : Closeable {
                 null,
                 getDomainFromAccountId(ad.accountId),
                 defineBillingType(ad.accountId),
-                ad.key.replace(latticePlaceholder, "#"),
+                ad.key.replaceLatticePlaceholder(),
                 BigDecimal(ad.value)
             )
             performUpdates(billing)
         }
     }
+
+    private fun String.replaceLatticePlaceholder() = this.replace(latticePlaceholder, "#")
 
     private fun isTransactionRejected(
         tx: TransactionOuterClass.Transaction,

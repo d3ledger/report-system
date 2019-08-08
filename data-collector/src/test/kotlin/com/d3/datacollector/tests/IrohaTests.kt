@@ -4,6 +4,7 @@ import com.d3.datacollector.config.AppConfig.Companion.queueName
 import com.d3.datacollector.engine.TestEnv
 import com.d3.datacollector.model.*
 import com.d3.datacollector.service.BlockTaskService
+import com.google.gson.JsonParser
 import integration.helper.ContainerHelper
 import integration.helper.KGenericContainer
 import jp.co.soramitsu.iroha.java.IrohaAPI
@@ -308,6 +309,39 @@ class IrohaTests : TestEnv() {
             BigDecimal(fee),
             respBody.billing.feeFraction
         )
+    }
+
+    @Test
+    @Transactional
+    fun testGetSingleExchangeRateWithIroha() {
+        blockTaskService.runService()
+        val url =
+            "https://query1.finance.yahoo.com/v7/finance/quote?formatted=true&symbols=RUB%3DX&fields=regularMarketPrice"
+        val tx1 = Transaction.builder(userAId)
+            .setAccountDetail(
+                dataCollectorId,
+                "rate_attribute",
+                "quoteResponse.result.regularMarketPrice.raw"
+            )
+            .setAccountDetail(
+                dataCollectorId,
+                usd.replace("#", latticePlaceholder),
+                Utils.irohaEscape(url)
+            )
+            .sign(userAKeypair)
+            .build()
+        val txList = listOf(tx1)
+        sendTransactionsAndEnsureBlocks(irohaAPI, txList)
+
+        Thread.sleep(5000)
+
+        val result: MvcResult = mvc
+            .perform(MockMvcRequestBuilders.get("/rates/$usdName/$bankDomain"))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        val resultDecimal =
+            BigDecimal(JsonParser().parse(result.response.contentAsString).asJsonObject.get("itIs").asString)
+        assertTrue(resultDecimal > BigDecimal.valueOf(50))
     }
 
     companion object : KLogging() {

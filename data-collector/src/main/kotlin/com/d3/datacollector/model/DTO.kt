@@ -31,14 +31,29 @@ data class BillingMqDto(
     var created: Long = 0L
 )
 
+/**
+ * [Conflictable] wrapper with a [Boolean] value
+ */
 class BooleanWrapper(
     val itIs: Boolean = false,
     errorCode: String? = null,
     errorMessage: String? = null
 ) : Conflictable(errorCode, errorMessage)
 
+/**
+ * [Conflictable] wrapper with an [Int] value
+ */
 class IntegerWrapper(
     val itIs: Int? = null,
+    errorCode: String? = null,
+    errorMessage: String? = null
+) : Conflictable(errorCode, errorMessage)
+
+/**
+ * [Conflictable] wrapper with a [String] value
+ */
+class StringWrapper(
+    val itIs: String? = null,
     errorCode: String? = null,
     errorMessage: String? = null
 ) : Conflictable(errorCode, errorMessage)

@@ -16,5 +16,6 @@
     <include file="liquibase/indexes.sql"/>
     <include file="liquibase/changelog_billing_domain.sql"/>
     <include file="liquibase/drop_state.sql"/>
+    <include file="liquibase/create_fiat_rates_table.sql"/>
 
 </databaseChangeLog>
