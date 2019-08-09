@@ -81,6 +81,7 @@ class TestAssetSumReport {
             .perform(
                 MockMvcRequestBuilders.get("/report/asset/sum/iroha")
                     .param("assetId", btcAssetId)
+                    .param("domainId", "d3")
             )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
