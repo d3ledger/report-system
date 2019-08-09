@@ -4,7 +4,7 @@
  */
 package com.d3.datacollector.config
 
-import com.d3.commons.config.RMQConfig
+import com.d3.chainadapter.client.RMQConfig
 import com.d3.datacollector.service.RabbitMqService
 import com.d3.datacollector.service.RabbitMqServiceImpl
 import jp.co.soramitsu.iroha.java.IrohaAPI

@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
+import java.math.BigDecimal
+
 
 interface TransferAssetRepo : CrudRepository<TransferAsset, Long?> {
 
@@ -52,4 +54,15 @@ interface TransferAssetRepo : CrudRepository<TransferAsset, Long?> {
             " and t.transaction.block.blockCreationTime Between :from and :to")
     fun getDataBetweenForAssetOfAccount(assetId:String, accountId:String, billingAccount:String, from: Long, to: Long, pageable: Pageable): Page<TransferAsset>
 
+    @Query("""
+            SELECT SUM(CASE
+            WHEN t.srcAccountId NOT LIKE %:domainId and t.destAccountId LIKE %:domainId
+                THEN t.amount
+            WHEN t.srcAccountId LIKE %:domainId and t.destAccountId NOT LIKE %:domainId
+                THEN -t.amount
+            ELSE 0
+            END)
+            as ASSET_SUM FROM TransferAsset t WHERE t.transaction.rejected = false and  t.assetId = :assetId
+             """)
+    fun getSumAsset(assetId: String, domainId: String): BigDecimal
 }

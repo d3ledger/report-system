@@ -39,6 +39,8 @@ soramitsu {
 dependencies {
 
     implementation "com.github.d3ledger.notary:notary-commons:$notary_version"
+    // Chain adapter
+    implementation  "com.github.d3ledger.chain-adapter:chain-adapter-client:$chain_adapter_client_version"
 
     //Spring-boot
     implementation("org.springframework.boot:spring-boot-starter-web:$spring_boot_version") {
