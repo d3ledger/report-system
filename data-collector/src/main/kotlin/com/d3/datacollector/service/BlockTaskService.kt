@@ -197,10 +197,15 @@ class BlockTaskService : Closeable {
                                         // or if asset link is updated
                                         else {
                                             val currentRate = ratesRepository.findById(transformedKey)
-                                            if (!currentRate.isPresent
-                                                || currentRate.get().link != Utils.irohaUnEscape(value)
-                                            ) {
-                                                ratesRepository.save(AssetRate(transformedKey, value))
+                                            val irohaUnEscape = Utils.irohaUnEscape(value)
+                                            if (irohaUnEscape.isNullOrEmpty()) {
+                                                if (currentRate.isPresent) {
+                                                    ratesRepository.delete(currentRate.get())
+                                                }
+                                            } else {
+                                                if (!currentRate.isPresent || currentRate.get().link != irohaUnEscape) {
+                                                    ratesRepository.save(AssetRate(transformedKey, value))
+                                                }
                                             }
                                         }
                                     }
