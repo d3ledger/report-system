@@ -25,12 +25,10 @@ class CacheController(
     val cache: CacheRepository
 ) {
 
-    private val log = KLogging().logger
-
     @GetMapping("/get/billing")
     fun getAllBilling(): ResponseEntity<BillingResponse> {
         return try {
-            ResponseEntity.ok<BillingResponse>(
+            ResponseEntity.ok(
                 BillingResponse(
                     cache.getTransferFee(),
                     cache.getCustodyFee(),
@@ -40,16 +38,15 @@ class CacheController(
                 )
             )
         } catch (e: Exception) {
-            log.error("Error getting Billing data", e)
+            logger.error("Error getting Billing data", e)
             val response = BillingResponse()
-            response.errorCode = e.javaClass.simpleName
-            response.message = e.message
+            response.fill(DcExceptionStatus.UNKNOWN_ERROR, e)
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
         }
     }
 
     @GetMapping("/get/billing/{domain}/{assetName}/{assetDomain}/{billingType}")
-    fun getBillingForTransfer(
+    fun getConcreteBilling(
         @PathVariable("domain") domain: String,
         @PathVariable("assetName") assetName: String,
         @PathVariable("assetDomain") assetDomain: String,
@@ -69,17 +66,18 @@ class CacheController(
                 Billing.BillingTypeEnum.WITHDRAWAL -> cache.getWithdrawalFee(domain, assetId)
                 else -> throw RuntimeException("Unsupported Billing type")
             }
-            ResponseEntity.ok<SingleBillingResponse>(
-                SingleBillingResponse(
-                    billing
-                )
-            )
-        } catch (e: Exception) {
-            log.error("Error getting Billing data", e)
+            ResponseEntity.ok(SingleBillingResponse(billing))
+        } catch (e: IllegalStateException) {
             val response = SingleBillingResponse()
-            response.errorCode = e.javaClass.simpleName
-            response.message = e.message
+            response.fill(DcExceptionStatus.FEE_NOT_SET, e)
+            ResponseEntity.ok(response)
+        } catch (e: Exception) {
+            logger.error("Error getting Billing data", e)
+            val response = SingleBillingResponse()
+            response.fill(DcExceptionStatus.UNKNOWN_ERROR, e)
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
         }
     }
+
+    companion object : KLogging()
 }
