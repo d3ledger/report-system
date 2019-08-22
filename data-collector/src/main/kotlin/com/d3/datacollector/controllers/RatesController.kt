@@ -9,6 +9,7 @@ import com.d3.datacollector.model.AssetRate
 import com.d3.datacollector.model.StringWrapper
 import com.d3.datacollector.repository.RatesRepository
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
@@ -45,15 +46,18 @@ class RatesController(
             )
             val asset = assetRatesRepository.findById(assetId)
             if (asset.isPresent && !asset.get().rate.isNullOrEmpty()) {
-                ResponseEntity.ok<StringWrapper>(StringWrapper(asset.get().rate))
+                ResponseEntity.ok(StringWrapper(asset.get().rate))
             } else {
                 throw IllegalArgumentException("Asset not found")
             }
+        } catch (e: IllegalArgumentException) {
+            val response = StringWrapper()
+            response.fill(DcExceptionStatus.ASSET_NOT_FOUND, e)
+            ResponseEntity.ok(response)
         } catch (e: Exception) {
             val response = StringWrapper()
-            response.errorCode = e.javaClass.simpleName
-            response.message = e.message
-            ResponseEntity.ok<StringWrapper>(response)
+            response.fill(DcExceptionStatus.UNKNOWN_ERROR, e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
         }
     }
 
@@ -88,12 +92,11 @@ class RatesController(
             newAssetRecord.rate = assetRate.toPlainString()
             assetRatesRepository.save(newAssetRecord)
 
-            ResponseEntity.ok<StringWrapper>(StringWrapper(setRateDTO.assetRate))
+            ResponseEntity.ok(StringWrapper(setRateDTO.assetRate))
         } catch (e: Exception) {
             val response = StringWrapper()
-            response.errorCode = e.javaClass.simpleName
-            response.message = e.message
-            ResponseEntity.ok<StringWrapper>(response)
+            response.fill(DcExceptionStatus.UNKNOWN_ERROR, e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response)
         }
     }
 }

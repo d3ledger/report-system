@@ -85,7 +85,7 @@ class CacheRepository {
                 return billingMap[domain]!![assetId]!!
             }
         }
-        throw RuntimeException("No ${title.name} billing found for: $domain, $assetId")
+        throw IllegalStateException("No ${title.name} billing found for: $domain, $assetId")
     }
 
     @PostConstruct
