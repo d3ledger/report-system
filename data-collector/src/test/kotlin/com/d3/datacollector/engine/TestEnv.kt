@@ -56,7 +56,7 @@ open class TestEnv {
         val userAKeypair = crypto.generateKeypair()!!
         val userBKeypair = crypto.generateKeypair()!!
         val securitiesUserKeyPair = crypto.generateKeypair()!!
-        val transaferBillingKeyPair = crypto.generateKeypair()!!
+        val transferBillingKeyPair = crypto.generateKeypair()!!
         val custodyKeyPair = crypto.generateKeypair()!!
         val accountCreationKeyPair = crypto.generateKeypair()!!
         val exchangeKeyPair = crypto.generateKeypair()!!
@@ -103,7 +103,7 @@ open class TestEnv {
                             .createDomain(bankDomain, userRole)
                             .createDomain(notaryDomain, dataCollectorRole)
                             .createDomain(securityDomain, userRole)
-                            .createAccount(transferBillingAccountName, bankDomain, transaferBillingKeyPair.public)
+                            .createAccount(transferBillingAccountName, bankDomain, transferBillingKeyPair.public)
                             .createAccount(custodyAccountName, bankDomain, custodyKeyPair.public)
                             .createAccount(exchangeBillingAccountName, bankDomain, exchangeKeyPair.public)
                             .createAccount(withdrawalBillingAccountName, bankDomain, withdrawalKeyPair.public)
