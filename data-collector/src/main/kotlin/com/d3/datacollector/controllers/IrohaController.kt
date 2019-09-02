@@ -4,6 +4,7 @@
  */
 package com.d3.datacollector.controllers
 
+import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
 import com.d3.datacollector.model.AssetsResponse
 import com.d3.datacollector.model.BooleanWrapper
 import com.d3.datacollector.model.IntegerWrapper
@@ -23,10 +24,11 @@ import javax.validation.constraints.NotNull
 @Controller
 @RequestMapping("/iroha")
 class IrohaController(
-    val accountRepo: CreateAccountRepo,
-    val quorumRepo: SetAccountQuorumRepo,
-    val accountDetailRepo: SetAccountDetailRepo,
-    val assetRepo: CreateAssetRepo
+    private val accountRepo: CreateAccountRepo,
+    private val quorumRepo: SetAccountQuorumRepo,
+    private val accountDetailRepo: SetAccountDetailRepo,
+    private val assetRepo: CreateAssetRepo,
+    private val queryHelper: IrohaQueryHelperImpl
 ) {
 
     companion object : KLogging()
@@ -124,5 +126,15 @@ class IrohaController(
             ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(IntegerWrapper(null, e.javaClass.simpleName, e.message))
         }
+    }
+
+    @GetMapping("/health")
+    fun getIrohaHealthStatus(): ResponseEntity<BooleanWrapper> {
+        return queryHelper.getBlock(1).fold({
+            ResponseEntity.ok(BooleanWrapper(true))
+        }, { e ->
+            logger.error("Error getting Iroha health status", e)
+            ResponseEntity.ok(BooleanWrapper(false))
+        })
     }
 }
