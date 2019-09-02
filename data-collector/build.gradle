@@ -58,7 +58,7 @@ dependencies {
 
     testImplementation "org.springframework.boot:spring-boot-starter-test:$spring_boot_version"
     testImplementation 'com.h2database:h2:1.4.199'
-    testImplementation('com.github.hyperledger.iroha-java:testcontainers:5.1.1') {
+    testImplementation('com.github.hyperledger.iroha-java:testcontainers:6.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-simple'
     }
     testCompile 'com.google.protobuf:protobuf-java-util:3.5.1'

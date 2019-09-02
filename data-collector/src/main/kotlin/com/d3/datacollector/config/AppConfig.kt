@@ -5,6 +5,7 @@
 package com.d3.datacollector.config
 
 import com.d3.chainadapter.client.RMQConfig
+import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
 import com.d3.datacollector.service.RabbitMqService
 import com.d3.datacollector.service.RabbitMqServiceImpl
 import jp.co.soramitsu.iroha.java.IrohaAPI
@@ -33,6 +34,10 @@ class AppConfig {
             pubKey, privKey
         )
     )
+
+    @Bean
+    @Lazy
+    fun queryHelper(queryAPI: QueryAPI) = IrohaQueryHelperImpl(queryAPI)
 
     @Bean
     @Lazy

@@ -160,7 +160,7 @@ class IrohaTests : TestEnv() {
             .build()
         val tx2 = Transaction.builder(transferBillingAccountId)
             .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), "0.6")
-            .sign(transaferBillingKeyPair)
+            .sign(transferBillingKeyPair)
             .build()
         val tx3 = Transaction.builder(custodyBillingAccountId)
             .setAccountDetail(custodyBillingAccountId, usd.replace("#", latticePlaceholder), "0.1")
@@ -180,7 +180,7 @@ class IrohaTests : TestEnv() {
             .build()
         val tx7 = Transaction.builder(transferBillingAccountId)
             .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), "0.5")
-            .sign(transaferBillingKeyPair)
+            .sign(transferBillingKeyPair)
             .build()
         val tx8 = Transaction.builder(custodyBillingAccountId)
             .addSignatory(custodyBillingAccountId, userAKeypair.public)
@@ -226,8 +226,8 @@ class IrohaTests : TestEnv() {
         val usdAssetId = "$usdName#$bankDomain"
 
         try {
-            val transaferBilling = cache.getTransferFee(bankDomain, usdAssetId)
-            assertEquals(BigDecimal("0.5"), transaferBilling.feeFraction)
+            val transferBilling = cache.getTransferFee(bankDomain, usdAssetId)
+            assertEquals(BigDecimal("0.5"), transferBilling.feeFraction)
             val custody = cache.getCustodyFee(bankDomain, usdAssetId)
             assertEquals(BigDecimal("0.1"), custody.feeFraction)
             val accountFee = cache.getAccountCreationFee(bankDomain, usdAssetId)
@@ -264,7 +264,7 @@ class IrohaTests : TestEnv() {
 
         val tx1 = Transaction.builder(transferBillingAccountId)
             .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
-            .sign(transaferBillingKeyPair)
+            .sign(transferBillingKeyPair)
             .build()
         val txList = listOf(tx1)
         sendTransactionsAndEnsureBlocks(irohaAPI, txList)
@@ -290,7 +290,7 @@ class IrohaTests : TestEnv() {
 
         val tx1 = Transaction.builder(transferBillingAccountId)
             .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
-            .sign(transaferBillingKeyPair)
+            .sign(transferBillingKeyPair)
             .build()
         val txList = listOf(tx1)
         sendTransactionsAndEnsureBlocks(irohaAPI, txList)
@@ -358,7 +358,7 @@ class IrohaTests : TestEnv() {
                 .withIrohaAlias("d3-iroha")
                 .start()
 
-            rmq.withCreateContainerCmdModifier { it.withName("d3-rmq") }
+            rmq.withNetworkAliases("d3-rmq")
                 .withNetwork(iroha.network)
                 .start()
 
