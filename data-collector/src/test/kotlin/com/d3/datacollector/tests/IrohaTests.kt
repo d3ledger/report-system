@@ -261,9 +261,14 @@ class IrohaTests : TestEnv() {
     fun testGetBilllingWithIroha() {
         blockTaskService.runService()
         val fee = "0.6"
+        val setAccountDetailsFeeValue = "${Billing.FeeTypeEnum.FIXED.name}$latticePlaceholder$fee"
 
         val tx1 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
+            .setAccountDetail(
+                transferBillingAccountId,
+                usd.replace("#", latticePlaceholder),
+                setAccountDetailsFeeValue
+            )
             .sign(transferBillingKeyPair)
             .build()
         val txList = listOf(tx1)
@@ -287,9 +292,14 @@ class IrohaTests : TestEnv() {
     fun testGetSingleBilllingWithIroha() {
         blockTaskService.runService()
         val fee = "0.6"
+        val setAccountDetailsFeeValue = "${Billing.FeeTypeEnum.FRACTION.name}$latticePlaceholder$fee"
 
         val tx1 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
+            .setAccountDetail(
+                transferBillingAccountId,
+                usd.replace("#", latticePlaceholder),
+                setAccountDetailsFeeValue
+            )
             .sign(transferBillingKeyPair)
             .build()
         val txList = listOf(tx1)
