@@ -36,13 +36,15 @@ class DbServiceTest {
         val found = billingRepo.findById(billing.id!!)
         assertTrue(found.isPresent)
         assertNotNull(found.get().created)
-        val updated = Billing(feeFraction = BigDecimal("0.12"))
+        assertEquals(found.get().feeType, Billing.FeeTypeEnum.FRACTION)
+        val updated = Billing(feeFraction = BigDecimal("0.12"), feeType = Billing.FeeTypeEnum.FIXED)
 
         dbService.updateBillingInDb(updated)
         assertEquals(1, billingRepo.count())
         val found2 = billingRepo.findById(billing.id!!)
         assertTrue(found2.isPresent)
         assertEquals(updated.feeFraction, found2.get().feeFraction.stripTrailingZeros())
+        assertEquals(updated.feeType, Billing.FeeTypeEnum.FIXED)
         assertNotNull(found2.get().created)
         assertNotNull(found2.get().updated)
     }

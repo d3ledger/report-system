@@ -276,17 +276,29 @@ class BlockTaskService : Closeable {
 
     private fun processBillingAccountDetail(ad: Commands.SetAccountDetail) {
         if (filterBillingAccounts(ad)) {
-            if (ad.value.length > 7 || !ad.value.contains('.') || ad.value.indexOf('.') > 2) {
+            // value is of format <TYPE>__<NUMBER>
+            val typeNumberPair = ad.value.split(latticePlaceholder)
+            val feeType = typeNumberPair[0]
+            val feeValue = typeNumberPair[1]
+
+            if (feeValue.length > 7 || !feeValue.contains('.') || feeValue.indexOf('.') > 2) {
+                logger.error("Got incorrect fee value. Omitting. Value: $feeValue")
                 return
             }
-            val billing = Billing(
-                null,
-                getDomainFromAccountId(ad.accountId),
-                defineBillingType(ad.accountId),
-                ad.key.replaceLatticePlaceholder(),
-                BigDecimal(ad.value)
-            )
-            performUpdates(billing)
+            try {
+                val billing = Billing(
+                    null,
+                    getDomainFromAccountId(ad.accountId),
+                    defineBillingType(ad.accountId),
+                    ad.key.replaceLatticePlaceholder(),
+                    Billing.FeeTypeEnum.valueOf(feeType),
+                    BigDecimal(feeValue)
+                )
+                performUpdates(billing)
+            } catch (ex: IllegalArgumentException) {
+                logger.error("Got unknown type of fee. Omitting.", ex)
+                return
+            }
         }
     }
 

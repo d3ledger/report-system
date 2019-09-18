@@ -27,6 +27,9 @@ data class Billing(
     val billingType: BillingTypeEnum = BillingTypeEnum.TRANSFER,
     @JsonIgnore
     val asset: String = "",
+    @JsonIgnore
+    @Enumerated(EnumType.STRING)
+    val feeType: FeeTypeEnum = FeeTypeEnum.FRACTION,
     var feeFraction: BigDecimal = BigDecimal("0.0"),
     var created: Long = 0L,
     var updated: Long = 0L
@@ -44,6 +47,13 @@ data class Billing(
         WITHDRAWAL,
         @SerializedName("not_found")
         NOT_FOUND
+    }
+
+    enum class FeeTypeEnum {
+        @SerializedName("FRACTION")
+        FRACTION,
+        @SerializedName("FIXED")
+        FIXED
     }
 
     @PrePersist
