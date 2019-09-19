@@ -159,27 +159,51 @@ class IrohaTests : TestEnv() {
             ).sign(userAKeypair)
             .build()
         val tx2 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), "0.6")
+            .setAccountDetail(
+                transferBillingAccountId,
+                usd.replace("#", latticePlaceholder),
+                "${Billing.FeeTypeEnum.FRACTION.name}${latticePlaceholder}0.6"
+            )
             .sign(transferBillingKeyPair)
             .build()
         val tx3 = Transaction.builder(custodyBillingAccountId)
-            .setAccountDetail(custodyBillingAccountId, usd.replace("#", latticePlaceholder), "0.1")
+            .setAccountDetail(
+                custodyBillingAccountId,
+                usd.replace("#", latticePlaceholder),
+                "${Billing.FeeTypeEnum.FRACTION.name}${latticePlaceholder}0.1"
+            )
             .sign(custodyKeyPair)
             .build()
         val tx4 = Transaction.builder(accountCreationBillingAccountId)
-            .setAccountDetail(accountCreationBillingAccountId, usd.replace("#", latticePlaceholder), "0.2")
+            .setAccountDetail(
+                accountCreationBillingAccountId,
+                usd.replace("#", latticePlaceholder),
+                "${Billing.FeeTypeEnum.FRACTION.name}${latticePlaceholder}0.2"
+            )
             .sign(accountCreationKeyPair)
             .build()
         val tx5 = Transaction.builder(exchangeBillingAccountId)
-            .setAccountDetail(exchangeBillingAccountId, usd.replace("#", latticePlaceholder), "0.3")
+            .setAccountDetail(
+                exchangeBillingAccountId,
+                usd.replace("#", latticePlaceholder),
+                "${Billing.FeeTypeEnum.FRACTION.name}${latticePlaceholder}0.3"
+            )
             .sign(exchangeKeyPair)
             .build()
         val tx6 = Transaction.builder(withdrawalBillingAccountId)
-            .setAccountDetail(withdrawalBillingAccountId, usd.replace("#", latticePlaceholder), "0.4")
+            .setAccountDetail(
+                withdrawalBillingAccountId,
+                usd.replace("#", latticePlaceholder),
+                "${Billing.FeeTypeEnum.FRACTION.name}${latticePlaceholder}0.4"
+            )
             .sign(withdrawalKeyPair)
             .build()
         val tx7 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), "0.5")
+            .setAccountDetail(
+                transferBillingAccountId,
+                usd.replace("#", latticePlaceholder),
+                "${Billing.FeeTypeEnum.FRACTION.name}${latticePlaceholder}0.5"
+            )
             .sign(transferBillingKeyPair)
             .build()
         val tx8 = Transaction.builder(custodyBillingAccountId)
@@ -261,9 +285,14 @@ class IrohaTests : TestEnv() {
     fun testGetBilllingWithIroha() {
         blockTaskService.runService()
         val fee = "0.6"
+        val setAccountDetailsFeeValue = "${Billing.FeeTypeEnum.FIXED.name}$latticePlaceholder$fee"
 
         val tx1 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
+            .setAccountDetail(
+                transferBillingAccountId,
+                usd.replace("#", latticePlaceholder),
+                setAccountDetailsFeeValue
+            )
             .sign(transferBillingKeyPair)
             .build()
         val txList = listOf(tx1)
@@ -287,9 +316,14 @@ class IrohaTests : TestEnv() {
     fun testGetSingleBilllingWithIroha() {
         blockTaskService.runService()
         val fee = "0.6"
+        val setAccountDetailsFeeValue = "${Billing.FeeTypeEnum.FRACTION.name}$latticePlaceholder$fee"
 
         val tx1 = Transaction.builder(transferBillingAccountId)
-            .setAccountDetail(transferBillingAccountId, usd.replace("#", latticePlaceholder), fee)
+            .setAccountDetail(
+                transferBillingAccountId,
+                usd.replace("#", latticePlaceholder),
+                setAccountDetailsFeeValue
+            )
             .sign(transferBillingKeyPair)
             .build()
         val txList = listOf(tx1)

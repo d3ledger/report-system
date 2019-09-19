@@ -276,17 +276,30 @@ class BlockTaskService : Closeable {
 
     private fun processBillingAccountDetail(ad: Commands.SetAccountDetail) {
         if (filterBillingAccounts(ad)) {
-            if (ad.value.length > 7 || !ad.value.contains('.') || ad.value.indexOf('.') > 2) {
-                return
+            try {
+                // value is of format <TYPE>__<NUMBER>
+                val typeNumberPair = ad.value.split(latticePlaceholder)
+                val feeType = typeNumberPair[0]
+                val feeValue = typeNumberPair[1]
+
+                if (feeValue.length > NUMBER_LENGTH || !feeValue.contains('.') || feeValue.indexOf('.') > MAX_DOT_INDEX) {
+                    logger.error("Got incorrect fee value. Omitting. Value: $feeValue")
+                    return
+                }
+                val billing = Billing(
+                    id = null,
+                    domainName = getDomainFromAccountId(ad.accountId),
+                    billingType = defineBillingType(ad.accountId),
+                    asset = ad.key.replaceLatticePlaceholder(),
+                    feeType = Billing.FeeTypeEnum.valueOf(feeType),
+                    feeFraction = BigDecimal(feeValue)
+                )
+                performUpdates(billing)
+            } catch (ex: IllegalArgumentException) {
+                logger.error("Got unknown type of fee. Omitting.", ex)
+            } catch (ex: IndexOutOfBoundsException) {
+                logger.error("Got wrong value format. Omitting.", ex)
             }
-            val billing = Billing(
-                null,
-                getDomainFromAccountId(ad.accountId),
-                defineBillingType(ad.accountId),
-                ad.key.replaceLatticePlaceholder(),
-                BigDecimal(ad.value)
-            )
-            performUpdates(billing)
         }
     }
 
@@ -371,5 +384,8 @@ class BlockTaskService : Closeable {
         irohaChainListener.close()
     }
 
-    companion object : KLogging()
+    companion object : KLogging() {
+        private const val NUMBER_LENGTH = 7
+        private const val MAX_DOT_INDEX = 2
+    }
 }

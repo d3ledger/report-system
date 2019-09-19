@@ -17,5 +17,6 @@
     <include file="liquibase/changelog_billing_domain.sql"/>
     <include file="liquibase/drop_state.sql"/>
     <include file="liquibase/create_fiat_rates_table.sql"/>
+    <include file="liquibase/add_fee_type.sql"/>
 
 </databaseChangeLog>

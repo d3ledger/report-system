@@ -37,6 +37,7 @@ class DbService {
                 domainName = toUpdate.domainName,
                 billingType = toUpdate.billingType,
                 asset = toUpdate.asset,
+                feeType =  billing.feeType,
                 feeFraction = billing.feeFraction,
                 created = toUpdate.created,
                 updated = Date().time
