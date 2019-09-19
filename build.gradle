@@ -14,6 +14,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "org.sonarqube" version "2.7.1"
+}
+
 group = 'd3'
 version = '1.0'
 
@@ -30,8 +34,6 @@ allprojects {
 }
 
 sourceCompatibility = 1.8
-
-// ------------------| Test dependencies |------------------
 
 allprojects {
     dependencies {
@@ -72,6 +74,52 @@ allprojects {
     }
 }
 
+subprojects {
+    sourceSets {
+        integrationTest {
+            kotlin {
+                compileClasspath += main.output + test.output
+                runtimeClasspath += main.output + test.output
+                srcDirs += 'src/integration-test/kotlin'
+            }
+            resources {
+                srcDirs = ["src/integration-test/resources"]
+            }
+        }
+    }
+
+    task integrationTest(type: Test) {
+        group = LifecycleBasePlugin.VERIFICATION_GROUP
+        description = 'Runs report-system integration tests'
+
+        testClassesDirs = sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
+        // Enable JUnit5 tests
+        useJUnitPlatform {
+        }
+    }
+
+    configurations {
+        integrationTestImplementation.extendsFrom testImplementation
+        integrationTestCompile.extendsFrom testCompile
+        integrationTestRuntime.extendsFrom testRuntime
+    }
+
+    project.afterEvaluate {
+        test.finalizedBy(integrationTest)
+    }
+
+    sonarqube {
+        properties {
+            property "sonar.github.repository", "d3ledger/report-system"
+            property "sonar.projectKey", "d3:report-system"
+            property "sonar.java.binaries", "${project.projectDir}/build/classes"
+            property "sonar.java.libraries", "${project.projectDir}/build/libs"
+            property "sonar.java.test.binaries", "${project.projectDir}/build/test-results/test/binary"
+            property "sonar.exclusions", "**/integration-test/**"
+        }
+    }
+}
 wrapper {
     gradleVersion = 4.10
 }
