@@ -13,6 +13,7 @@ import com.d3.datacollector.config.AppConfig.Companion.queueName
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
 import com.d3.datacollector.utils.getDomainFromAccountId
+import com.d3.datacollector.utils.getNameFromAccountId
 import com.github.kittinunf.result.map
 import com.google.protobuf.ProtocolStringList
 import io.reactivex.schedulers.Schedulers
@@ -56,6 +57,8 @@ class BlockTaskService : Closeable {
     private lateinit var rateSetterAccoundId: String
     @Value("\${iroha.rateAttributeKey}")
     private lateinit var rateAttributeKey: String
+    @Value("\${iroha.adminAccountNameMask}")
+    private lateinit var adminName: String
     @Autowired
     lateinit var rabbitService: RabbitMqService
     @Autowired
@@ -157,10 +160,11 @@ class BlockTaskService : Closeable {
 
                 transactionBatch.forEach { transaction ->
                     val reducedPayload = transaction.payload.reducedPayload
+                    val creatorId = reducedPayload.creatorAccountId
                     val commitedTransaction = transactionRepo.save(
                         Transaction(
                             block = dbBlock,
-                            creatorId = reducedPayload.creatorAccountId,
+                            creatorId = creatorId,
                             quorum = reducedPayload.quorum,
                             rejected = isTransactionRejected(transaction, rejectedTrxs),
                             batch = complexBatch
@@ -172,7 +176,10 @@ class BlockTaskService : Closeable {
                             logger.debug("Command received: $command")
                             when {
                                 command.hasSetAccountDetail() -> {
-                                    processBillingAccountDetail(command.setAccountDetail)
+                                    processBillingAccountDetail(
+                                        command.setAccountDetail,
+                                        creatorId
+                                    )
                                     val setAccountDetail = command.setAccountDetail
                                     val key = setAccountDetail.key
                                     val value = setAccountDetail.value
@@ -186,7 +193,7 @@ class BlockTaskService : Closeable {
                                     )
                                     // Update rates table if rateSetter sets datails for dc
                                     if (setAccountDetail.accountId == accountId
-                                        && reducedPayload.creatorAccountId == rateSetterAccoundId
+                                        && creatorId == rateSetterAccoundId
                                     ) {
                                         val transformedKey = key.replaceLatticePlaceholder()
                                         // if it is not asset but json tag for parsing
@@ -274,32 +281,42 @@ class BlockTaskService : Closeable {
         }
     }
 
-    private fun processBillingAccountDetail(ad: Commands.SetAccountDetail) {
-        if (filterBillingAccounts(ad)) {
-            try {
-                // value is of format <TYPE>__<NUMBER>
-                val typeNumberPair = ad.value.split(latticePlaceholder)
-                val feeType = typeNumberPair[0]
-                val feeValue = typeNumberPair[1]
-
-                if (feeValue.length > NUMBER_LENGTH || !feeValue.contains('.') || feeValue.indexOf('.') > MAX_DOT_INDEX) {
+    private fun processBillingAccountDetail(
+        setAccountDetail: Commands.SetAccountDetail,
+        creatorAccountId: String
+    ) {
+        try {
+            // value is of format <TYPE>__<NUMBER>
+            val typeNumberPair = setAccountDetail.value.split(latticePlaceholder)
+            val feeType = typeNumberPair[0]
+            val feeValue = typeNumberPair[1]
+            val targetDomainName = getDomainFromAccountId(setAccountDetail.accountId)
+            val setterDomainName = getDomainFromAccountId(creatorAccountId)
+            if (getNameFromAccountId(creatorAccountId) == adminName
+                && targetDomainName == setterDomainName
+                && filterBillingAccounts(setAccountDetail)
+            ) {
+                if (feeValue.length > NUMBER_LENGTH
+                    || !feeValue.contains('.')
+                    || feeValue.indexOf('.') > MAX_DOT_INDEX
+                ) {
                     logger.error("Got incorrect fee value. Omitting. Value: $feeValue")
                     return
                 }
                 val billing = Billing(
                     id = null,
-                    domainName = getDomainFromAccountId(ad.accountId),
-                    billingType = defineBillingType(ad.accountId),
-                    asset = ad.key.replaceLatticePlaceholder(),
+                    domainName = targetDomainName,
+                    billingType = defineBillingType(setAccountDetail.accountId),
+                    asset = setAccountDetail.key.replaceLatticePlaceholder(),
                     feeType = Billing.FeeTypeEnum.valueOf(feeType),
                     feeFraction = BigDecimal(feeValue)
                 )
                 performUpdates(billing)
-            } catch (ex: IllegalArgumentException) {
-                logger.error("Got unknown type of fee. Omitting.", ex)
-            } catch (ex: IndexOutOfBoundsException) {
-                logger.error("Got wrong value format. Omitting.", ex)
             }
+        } catch (ex: IllegalArgumentException) {
+            logger.error("Got unknown type of fee. Omitting.", ex)
+        } catch (e: Exception) {
+            logger.error("Encountered exception during details processing. Omitting.", e)
         }
     }
 
@@ -328,6 +345,7 @@ class BlockTaskService : Closeable {
                 created = updated.created
             )
         )
+        logger.info("Updated billing info $updated")
     }
 
     private fun filterBillingAccounts(it: Commands.SetAccountDetail): Boolean {
