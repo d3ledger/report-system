@@ -160,10 +160,11 @@ class BlockTaskService : Closeable {
 
                 transactionBatch.forEach { transaction ->
                     val reducedPayload = transaction.payload.reducedPayload
+                    val creatorId = reducedPayload.creatorAccountId
                     val commitedTransaction = transactionRepo.save(
                         Transaction(
                             block = dbBlock,
-                            creatorId = reducedPayload.creatorAccountId,
+                            creatorId = creatorId,
                             quorum = reducedPayload.quorum,
                             rejected = isTransactionRejected(transaction, rejectedTrxs),
                             batch = complexBatch
@@ -177,7 +178,7 @@ class BlockTaskService : Closeable {
                                 command.hasSetAccountDetail() -> {
                                     processBillingAccountDetail(
                                         command.setAccountDetail,
-                                        transaction.payload.reducedPayload.creatorAccountId
+                                        creatorId
                                     )
                                     val setAccountDetail = command.setAccountDetail
                                     val key = setAccountDetail.key
@@ -192,7 +193,7 @@ class BlockTaskService : Closeable {
                                     )
                                     // Update rates table if rateSetter sets datails for dc
                                     if (setAccountDetail.accountId == accountId
-                                        && reducedPayload.creatorAccountId == rateSetterAccoundId
+                                        && creatorId == rateSetterAccoundId
                                     ) {
                                         val transformedKey = key.replaceLatticePlaceholder()
                                         // if it is not asset but json tag for parsing
@@ -284,13 +285,18 @@ class BlockTaskService : Closeable {
         ad: Commands.SetAccountDetail,
         creatorAccountId: String
     ) {
-        if (getNameFromAccountId(creatorAccountId) == adminName && filterBillingAccounts(ad)) {
+        val targetDomainName = getDomainFromAccountId(ad.accountId)
+        val setterDomainName = getDomainFromAccountId(creatorAccountId)
+        if (getNameFromAccountId(creatorAccountId) == adminName
+            && targetDomainName == setterDomainName
+            && filterBillingAccounts(ad)
+        ) {
             if (ad.value.length > 7 || !ad.value.contains('.') || ad.value.indexOf('.') > 2) {
                 return
             }
             val billing = Billing(
                 null,
-                getDomainFromAccountId(ad.accountId),
+                targetDomainName,
                 defineBillingType(ad.accountId),
                 ad.key.replaceLatticePlaceholder(),
                 BigDecimal(ad.value)
