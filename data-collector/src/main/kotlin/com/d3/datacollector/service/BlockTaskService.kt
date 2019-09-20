@@ -285,26 +285,30 @@ class BlockTaskService : Closeable {
         setAccountDetail: Commands.SetAccountDetail,
         creatorAccountId: String
     ) {
-        val targetDomainName = getDomainFromAccountId(setAccountDetail.accountId)
-        val setterDomainName = getDomainFromAccountId(creatorAccountId)
-        if (getNameFromAccountId(creatorAccountId) == adminName
-            && targetDomainName == setterDomainName
-            && filterBillingAccounts(setAccountDetail)
-        ) {
-            if (setAccountDetail.value.length > 7
-                || !setAccountDetail.value.contains('.')
-                || setAccountDetail.value.indexOf('.') > 2
+        try {
+            val targetDomainName = getDomainFromAccountId(setAccountDetail.accountId)
+            val setterDomainName = getDomainFromAccountId(creatorAccountId)
+            if (getNameFromAccountId(creatorAccountId) == adminName
+                && targetDomainName == setterDomainName
+                && filterBillingAccounts(setAccountDetail)
             ) {
-                return
+                if (setAccountDetail.value.length > 7
+                    || !setAccountDetail.value.contains('.')
+                    || setAccountDetail.value.indexOf('.') > 2
+                ) {
+                    return
+                }
+                val billing = Billing(
+                    null,
+                    targetDomainName,
+                    defineBillingType(setAccountDetail.accountId),
+                    setAccountDetail.key.replaceLatticePlaceholder(),
+                    BigDecimal(setAccountDetail.value)
+                )
+                performUpdates(billing)
             }
-            val billing = Billing(
-                null,
-                targetDomainName,
-                defineBillingType(setAccountDetail.accountId),
-                setAccountDetail.key.replaceLatticePlaceholder(),
-                BigDecimal(setAccountDetail.value)
-            )
-            performUpdates(billing)
+        } catch (e: Exception) {
+            logger.error("Encountered exception during details processing. Omitting.", e)
         }
     }
 
@@ -333,6 +337,7 @@ class BlockTaskService : Closeable {
                 created = updated.created
             )
         )
+        logger.info("Updated billing info $updated")
     }
 
     private fun filterBillingAccounts(it: Commands.SetAccountDetail): Boolean {
