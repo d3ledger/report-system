@@ -13,6 +13,7 @@ iroha:
   latticePlaceholder: __
   rateSetter: user_a@bank
   rateAttributeKey: rate_attribute
+  adminAccountNameMask: admin
 
 rmq:
   host: d3-rmq
