@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service
 
 @Service
 class EthGasPriceProvider {
-    // tag or tag sequnce to search a value in json
     @Value("\${eth.url}")
     private lateinit var url: String
+    // tag or tag sequnce to search a value in json
     @Value("\${eth.key}")
     private lateinit var jsonKey: String
 

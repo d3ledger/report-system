@@ -4,7 +4,7 @@
  */
 package com.d3.datacollector.tests
 
-import com.d3.datacollector.service.FinanceService
+import com.d3.datacollector.utils.AdvancedJsonParser
 import com.d3.datacollector.utils.AdvancedJsonParser.retrieveRate
 import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
@@ -117,7 +117,7 @@ class AdvancedJsonParserTest {
 
     /**
      * @given properly formatted json object
-     * @when [FinanceService] finds a value for quoteResponse.result.regularMarketPrice.raw nested attribute
+     * @when [AdvancedJsonParser] finds a value for quoteResponse.result.regularMarketPrice.raw nested attribute
      * @then the value is correct being equal to 106.404
      */
     @Test
@@ -130,7 +130,7 @@ class AdvancedJsonParserTest {
 
     /**
      * @given properly formatted json object
-     * @when [FinanceService] finds a value for unknown quoteResponse.result.regularMarketPrice.some nested attribute
+     * @when [AdvancedJsonParser] finds a value for unknown quoteResponse.result.regularMarketPrice.some nested attribute
      * @then the value is correct being equal to 106.404
      */
     @Test(expected = JsonParseException::class)
