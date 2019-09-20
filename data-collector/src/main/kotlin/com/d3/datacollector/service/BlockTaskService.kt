@@ -13,6 +13,7 @@ import com.d3.datacollector.config.AppConfig.Companion.queueName
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
 import com.d3.datacollector.utils.getDomainFromAccountId
+import com.d3.datacollector.utils.getNameFromAccountId
 import com.github.kittinunf.result.map
 import com.google.protobuf.ProtocolStringList
 import io.reactivex.schedulers.Schedulers
@@ -56,6 +57,8 @@ class BlockTaskService : Closeable {
     private lateinit var rateSetterAccoundId: String
     @Value("\${iroha.rateAttributeKey}")
     private lateinit var rateAttributeKey: String
+    @Value("\${iroha.adminAccountNameMask}")
+    private lateinit var adminName: String
     @Autowired
     lateinit var rabbitService: RabbitMqService
     @Autowired
@@ -172,7 +175,10 @@ class BlockTaskService : Closeable {
                             logger.debug("Command received: $command")
                             when {
                                 command.hasSetAccountDetail() -> {
-                                    processBillingAccountDetail(command.setAccountDetail)
+                                    processBillingAccountDetail(
+                                        command.setAccountDetail,
+                                        transaction.payload.reducedPayload.creatorAccountId
+                                    )
                                     val setAccountDetail = command.setAccountDetail
                                     val key = setAccountDetail.key
                                     val value = setAccountDetail.value
@@ -274,8 +280,11 @@ class BlockTaskService : Closeable {
         }
     }
 
-    private fun processBillingAccountDetail(ad: Commands.SetAccountDetail) {
-        if (filterBillingAccounts(ad)) {
+    private fun processBillingAccountDetail(
+        ad: Commands.SetAccountDetail,
+        creatorAccountId: String
+    ) {
+        if (getNameFromAccountId(creatorAccountId) == adminName && filterBillingAccounts(ad)) {
             if (ad.value.length > 7 || !ad.value.contains('.') || ad.value.indexOf('.') > 2) {
                 return
             }
