@@ -15,6 +15,7 @@ iroha:
   latticePlaceholder: __
   rateSetter: notary@notary
   rateAttributeKey: rate_attribute
+  adminAccountNameMask: admin
 
 rmq:
   host: d3-rmq
