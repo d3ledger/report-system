@@ -5,4 +5,6 @@
 
 package com.d3.datacollector.utils
 
+fun getNameFromAccountId(accountId: String): String = accountId.split("@")[0]
+
 fun getDomainFromAccountId(accountId: String): String = accountId.split("@")[1]

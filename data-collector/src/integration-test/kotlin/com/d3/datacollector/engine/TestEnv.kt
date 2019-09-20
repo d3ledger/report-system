@@ -24,6 +24,7 @@ import java.util.*
 open class TestEnv {
 
     companion object {
+        const val adminName = "admin"
         private const val userAName = "user_a"
         private const val userBName = "user_b"
         private const val dataCollectorName = "data_collector"
@@ -48,6 +49,7 @@ open class TestEnv {
         const val exchangeBillingAccountId = "$exchangeBillingAccountName@$bankDomain"
         const val withdrawalBillingAccountName = "withdrawal_billing"
         const val withdrawalBillingAccountId = "$withdrawalBillingAccountName@$bankDomain"
+        const val adminAccountId = "$adminName@$bankDomain"
 
         private val crypto = Ed25519Sha3()
 
@@ -55,6 +57,7 @@ open class TestEnv {
 
         val userAKeypair = crypto.generateKeypair()!!
         val userBKeypair = crypto.generateKeypair()!!
+        val adminKeyPair = crypto.generateKeypair()!!
         val securitiesUserKeyPair = crypto.generateKeypair()!!
         val transferBillingKeyPair = crypto.generateKeypair()!!
         val custodyKeyPair = crypto.generateKeypair()!!
@@ -103,6 +106,7 @@ open class TestEnv {
                             .createDomain(bankDomain, userRole)
                             .createDomain(notaryDomain, dataCollectorRole)
                             .createDomain(securityDomain, userRole)
+                            .createAccount(adminName, bankDomain, adminKeyPair.public)
                             .createAccount(transferBillingAccountName, bankDomain, transferBillingKeyPair.public)
                             .createAccount(custodyAccountName, bankDomain, custodyKeyPair.public)
                             .createAccount(exchangeBillingAccountName, bankDomain, exchangeKeyPair.public)
