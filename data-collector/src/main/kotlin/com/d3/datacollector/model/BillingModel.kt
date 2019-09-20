@@ -27,7 +27,6 @@ data class Billing(
     val billingType: BillingTypeEnum = BillingTypeEnum.TRANSFER,
     @JsonIgnore
     val asset: String = "",
-    @JsonIgnore
     @Enumerated(EnumType.STRING)
     val feeType: FeeTypeEnum = FeeTypeEnum.FRACTION,
     var feeFraction: BigDecimal = BigDecimal("0.0"),
