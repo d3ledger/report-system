@@ -282,24 +282,27 @@ class BlockTaskService : Closeable {
     }
 
     private fun processBillingAccountDetail(
-        ad: Commands.SetAccountDetail,
+        setAccountDetail: Commands.SetAccountDetail,
         creatorAccountId: String
     ) {
-        val targetDomainName = getDomainFromAccountId(ad.accountId)
+        val targetDomainName = getDomainFromAccountId(setAccountDetail.accountId)
         val setterDomainName = getDomainFromAccountId(creatorAccountId)
         if (getNameFromAccountId(creatorAccountId) == adminName
             && targetDomainName == setterDomainName
-            && filterBillingAccounts(ad)
+            && filterBillingAccounts(setAccountDetail)
         ) {
-            if (ad.value.length > 7 || !ad.value.contains('.') || ad.value.indexOf('.') > 2) {
+            if (setAccountDetail.value.length > 7
+                || !setAccountDetail.value.contains('.')
+                || setAccountDetail.value.indexOf('.') > 2
+            ) {
                 return
             }
             val billing = Billing(
                 null,
                 targetDomainName,
-                defineBillingType(ad.accountId),
-                ad.key.replaceLatticePlaceholder(),
-                BigDecimal(ad.value)
+                defineBillingType(setAccountDetail.accountId),
+                setAccountDetail.key.replaceLatticePlaceholder(),
+                BigDecimal(setAccountDetail.value)
             )
             performUpdates(billing)
         }
