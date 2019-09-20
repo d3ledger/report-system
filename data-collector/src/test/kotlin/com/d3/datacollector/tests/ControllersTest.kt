@@ -23,6 +23,7 @@ import java.math.BigDecimal
 import javax.transaction.Transactional
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -110,5 +111,17 @@ class ControllersTest : TestEnv() {
         val getResultString =
             JsonParser().parse(getResult.response.contentAsString).asJsonObject.get("itIs").asString
         assertEquals("50", getResultString)
+    }
+
+    @Test
+    @Transactional
+    fun testGetEthGasPrice() {
+        val getResult: MvcResult = mvc
+            .perform(MockMvcRequestBuilders.get("/gas"))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        val getResultString =
+            JsonParser().parse(getResult.response.contentAsString).asJsonObject.get("itIs").asString
+        assertTrue(BigDecimal(getResultString) > BigDecimal(150))
     }
 }

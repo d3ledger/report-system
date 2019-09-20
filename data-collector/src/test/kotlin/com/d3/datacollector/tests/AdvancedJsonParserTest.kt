@@ -5,12 +5,13 @@
 package com.d3.datacollector.tests
 
 import com.d3.datacollector.service.FinanceService
+import com.d3.datacollector.utils.AdvancedJsonParser.retrieveRate
 import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class FinanceServiceTest {
+class AdvancedJsonParserTest {
 
     private val json = JsonParser().parse(
         "{\n" +
@@ -123,7 +124,7 @@ class FinanceServiceTest {
     fun testJsonParsing() {
         assertEquals(
             "106.404",
-            FinanceService.retrieveRate(json, "quoteResponse.result.regularMarketPrice.raw")
+            retrieveRate(json, "quoteResponse.result.regularMarketPrice.raw")
         )
     }
 
@@ -134,6 +135,6 @@ class FinanceServiceTest {
      */
     @Test(expected = JsonParseException::class)
     fun testJsonBadParsing() {
-        FinanceService.retrieveRate(json, "quoteResponse.result.regularMarketPrice.some")
+        retrieveRate(json, "quoteResponse.result.regularMarketPrice.some")
     }
 }
