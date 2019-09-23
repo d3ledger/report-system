@@ -19,6 +19,7 @@ class EthGasPriceProvider {
     /**
      * Triggers rest execution for retrieving eth gas price using link and tag specified
      */
+    @Synchronized
     fun updateGasPrice() {
         try {
             gasPrice = retrieveRate(parseStringToJson(khttp.get(url).text), jsonKey)
@@ -28,6 +29,7 @@ class EthGasPriceProvider {
         }
     }
 
+    @Synchronized
     fun getGasPrice(): String? {
         if (gasPrice == null) {
             updateGasPrice()
