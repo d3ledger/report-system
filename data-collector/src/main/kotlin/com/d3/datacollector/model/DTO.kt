@@ -26,6 +26,7 @@ data class BillingMqDto(
     val domain: String = "",
     val billingType: Billing.BillingTypeEnum = Billing.BillingTypeEnum.TRANSFER,
     val asset: String = "",
+    var feeType: Billing.FeeTypeEnum = Billing.FeeTypeEnum.FRACTION,
     var feeFraction: BigDecimal = BigDecimal("0.015"),
     var updated: Long = 0L,
     var created: Long = 0L

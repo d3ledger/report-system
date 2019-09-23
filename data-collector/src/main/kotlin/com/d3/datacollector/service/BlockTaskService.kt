@@ -340,6 +340,7 @@ class BlockTaskService : Closeable {
                 updated.domainName,
                 updated.billingType,
                 updated.asset,
+                updated.feeType,
                 updated.feeFraction,
                 updated = updated.updated,
                 created = updated.created
