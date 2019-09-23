@@ -54,6 +54,12 @@ scheduling:
   ratesUpdate: 30000
 #  disabled by default
 #  ratesUpdateEnabled: true
+  gasPriceUpdate: 30000
+  gasPriceUpdateEnabled: true
+
+eth:
+  url: https://ethgasstation.info/json/ethgasAPI.json
+  key: fastest
 
 logging:
   level:

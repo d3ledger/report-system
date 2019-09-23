@@ -52,6 +52,12 @@ server:
 scheduling:
   ratesUpdate: 5000
   ratesUpdateEnabled: true
+  gasPriceUpdate: 5000
+  gasPriceUpdateEnabled: true
+
+eth:
+  url: https://ethgasstation.info/json/ethgasAPI.json
+  key: fastest
 
 logging:
   level:
