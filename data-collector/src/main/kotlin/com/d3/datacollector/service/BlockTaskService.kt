@@ -288,6 +288,9 @@ class BlockTaskService : Closeable {
         try {
             // value is of format <TYPE>__<NUMBER>
             val typeNumberPair = setAccountDetail.value.split(latticePlaceholder)
+            if (typeNumberPair.size != 2) {
+                return
+            }
             val feeType = typeNumberPair[0]
             val feeValue = typeNumberPair[1]
             val targetDomainName = getDomainFromAccountId(setAccountDetail.accountId)
