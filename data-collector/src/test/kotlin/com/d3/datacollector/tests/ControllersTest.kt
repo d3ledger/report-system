@@ -122,6 +122,6 @@ class ControllersTest : TestEnv() {
             .andReturn()
         val getResultString =
             JsonParser().parse(getResult.response.contentAsString).asJsonObject.get("itIs").asString
-        assertTrue(BigDecimal(getResultString) > BigDecimal(150))
+        assertTrue(BigDecimal(getResultString) > BigDecimal(100))
     }
 }
