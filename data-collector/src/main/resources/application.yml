@@ -55,7 +55,8 @@ scheduling:
 #  disabled by default
 #  ratesUpdateEnabled: true
   gasPriceUpdate: 30000
-  gasPriceUpdateEnabled: true
+#  disabled by default
+#  gasPriceUpdateEnabled: true
 
 eth:
   url: https://ethgasstation.info/json/ethgasAPI.json
