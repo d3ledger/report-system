@@ -67,8 +67,9 @@ allprojects {
         }
         testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
 
-        // for setting env variables in tests
-        testCompile group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.18.0'
+        testImplementation ('com.github.stefanbirkner:system-rules:1.18.0'){
+            exclude group: 'junit'
+        }
         // to run both junit4 and junit5 tests
         testRuntime("org.junit.vintage:junit-vintage-engine:5.2.0")
     }
