@@ -1,0 +1,84 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        // gradle plugins repository
+        gradlePluginPortal()
+    }
+    dependencies {
+        //Spring-boot
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:$spring_boot_version"
+    }
+}
+
+plugins {
+    id 'jp.co.soramitsu.sora-plugin' version '0.1.2'
+}
+
+group 'd3'
+version '1.0'
+
+// sora-plugin configs
+soramitsu {
+    projectGroup = 'd3-deploy'
+    docker {
+        // docker tag
+        tag = System.getenv("TAG")
+        // jar file that is used in the generated Dockerfile
+        jar = new File("build/libs/${project.name}-${project.version}.jar")
+        // the rest in configured using env variables
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.8
+
+apply plugin: 'application'
+apply plugin: "kotlin-spring" // See https://kotlinlang.org/docs/reference/compiler-plugins.html#kotlin-spring-compiler-plugin
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'org.jetbrains.kotlin.jvm'
+
+dependencies {
+
+    //Spring-boot
+    implementation("org.springframework.boot:spring-boot-starter-webflux:$spring_boot_version") {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+    
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    // RMQ
+    implementation "com.rabbitmq:amqp-client:5.6.0"
+    // Notification events model
+    implementation "com.github.d3ledger.notary:notifications-model:$notary_version"
+    // https://mvnrepository.com/artifact/io.reactivex.rxjava2/rxkotlin
+    compile "io.reactivex.rxjava2:rxjava:2.0.0"
+    compile "io.reactivex.rxjava2:rxkotlin:2.0.0"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+mainClassName = "com.d3.notification.NotificationMain"
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': mainClassName
+        )
+    }
+}
+
+tasks.withType(Test)  {
+    maxParallelForks = 1
+}
