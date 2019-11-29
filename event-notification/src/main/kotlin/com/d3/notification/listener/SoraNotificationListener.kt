@@ -6,11 +6,13 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.Delivery
+import com.rabbitmq.client.impl.DefaultExceptionHandler
 import io.reactivex.subjects.PublishSubject
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.Closeable
+import kotlin.system.exitProcess
 
 private const val SORA_EVENTS_QUEUE_NAME = "sora_notification_events_queue"
 private const val EVENT_TYPE_HEADER = "event_type"
@@ -42,23 +44,38 @@ class SoraNotificationListener(
         connectionFactory.port = rmqPort
         connection = connectionFactory.newConnection()
         channel = connection.createChannel()
+        // Handle connection errors
+        connectionFactory.exceptionHandler = object : DefaultExceptionHandler() {
+            override fun handleConnectionRecoveryException(conn: Connection, exception: Throwable) {
+                logger.error("RMQ connection error", exception)
+                exitProcess(1)
+            }
+
+            override fun handleUnexpectedConnectionDriverException(conn: Connection, exception: Throwable) {
+                logger.error("RMQ connection error", exception)
+                exitProcess(1)
+            }
+        }
         // Create queue that handles duplicates
         channel.queueDeclare(SORA_EVENTS_QUEUE_NAME, true, false, false, createDeduplicationArgs())
-        consumerTag = channel.basicConsume(SORA_EVENTS_QUEUE_NAME, true,
+        consumerTag = channel.basicConsume(SORA_EVENTS_QUEUE_NAME, false,
             { _: String, delivery: Delivery ->
                 val json = String(delivery.body)
                 val eventType = delivery.properties.headers[EVENT_TYPE_HEADER]?.toString() ?: ""
                 logger.info("Got event type $eventType with message ${String(delivery.body)}")
-                when (eventType) {
-                    // Handle proof collection events
-                    SoraEthWithdrawalProofsEvent::class.java.canonicalName -> {
-                        val withdrawalEventProof = gson.fromJson(json, SoraEthWithdrawalProofsEvent::class.java)
-                        //logger.info("Got withdrawal proof event: $withdrawalEventProof")
-                        sourceEthWithdrawalProofs.onNext(withdrawalEventProof)
+                try {
+                    when (eventType) {
+                        // Handle proof collection events
+                        SoraEthWithdrawalProofsEvent::class.java.canonicalName -> {
+                            val withdrawalEventProof = gson.fromJson(json, SoraEthWithdrawalProofsEvent::class.java)
+                            sourceEthWithdrawalProofs.onNext(withdrawalEventProof)
+                        }
+                        else -> {
+                            logger.warn("Event type $eventType is not supported")
+                        }
                     }
-                    else -> {
-                        logger.warn("Event type $eventType is not supported")
-                    }
+                } finally {
+                    channel.basicAck(delivery.envelope.deliveryTag, false)
                 }
             }
             , { _ -> })
