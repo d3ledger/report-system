@@ -23,7 +23,9 @@ data class EthWithdrawalProofs(
     val proofsJson: String,
     val irohaTxHash: String = "",
     val destAddress: String = "",
-    val time: Long = 0
+    val txTime: Long = 0,
+    val blockNum: Long = 0,
+    val txIndex: Int = 0
 ) {
 
     /**
@@ -47,9 +49,11 @@ data class EthWithdrawalProofs(
             relay = this.relay,
             irohaTxHash = this.irohaTxHash,
             to = this.destAddress,
-            time = this.time,
+            txTime = this.txTime,
             amount = BigDecimal(this.amount),
-            proofs = this.getProofs()
+            proofs = this.getProofs(),
+            blockNum = this.blockNum,
+            txIndex = this.txIndex
         )
     }
 
@@ -68,8 +72,10 @@ data class EthWithdrawalProofs(
                 relay = soraEthWithdrawalProofsEvent.relay,
                 irohaTxHash = soraEthWithdrawalProofsEvent.irohaTxHash,
                 destAddress = soraEthWithdrawalProofsEvent.to,
-                time = soraEthWithdrawalProofsEvent.time,
-                proofsJson = gson.toJson(soraEthWithdrawalProofsEvent.proofs)
+                txTime = soraEthWithdrawalProofsEvent.txTime,
+                proofsJson = gson.toJson(soraEthWithdrawalProofsEvent.proofs),
+                blockNum = soraEthWithdrawalProofsEvent.blockNum,
+                txIndex = soraEthWithdrawalProofsEvent.txIndex
             )
         }
     }

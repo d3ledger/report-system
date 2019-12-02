@@ -6,8 +6,9 @@ import org.springframework.data.repository.CrudRepository
 
 interface EthWithdrawalProofRepository : CrudRepository<EthWithdrawalProofs, String> {
 
-    @Query("SELECT e FROM EthWithdrawalProofs e WHERE e.accountIdToNotify=:accountId ORDER BY e.time")
+    @Query("SELECT e FROM EthWithdrawalProofs e WHERE e.accountIdToNotify=:accountId AND e.blockNum>=:sinceBlockNum ORDER BY e.txTime")
     fun getProofsByAccount(
-        accountId: String
+        accountId: String,
+        sinceBlockNum: Long
     ): List<EthWithdrawalProofs>
 }
