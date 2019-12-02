@@ -1,7 +1,6 @@
 package com.d3.notification.listener
 
 import com.d3.notification.domain.EthWithdrawalProofs
-import com.d3.notification.exception.RepeatableError
 import com.d3.notification.repository.EthWithdrawalProofRepository
 import com.d3.notifications.event.SoraEthWithdrawalProofsEvent
 import com.google.gson.Gson
@@ -18,7 +17,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.transaction.CannotCreateTransactionException
 import java.io.Closeable
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.system.exitProcess
 
@@ -46,7 +44,7 @@ class SoraNotificationListener(
     private val sourceEthWithdrawalProofs = PublishSubject.create<SoraEthWithdrawalProofsEvent>()
     private val consumerTags = ArrayList<String>()
     private val persistencyExecutorService = Executors.newSingleThreadExecutor()
-    private val rxExecutorService = Executors.newSingleThreadExecutor()
+    private val rxExecutorService = Executors.newCachedThreadPool()
 
     /**
      * Initiates RabbitMQ connection, creates listeners, etc
@@ -57,7 +55,7 @@ class SoraNotificationListener(
         connectionFactory.port = rmqPort
         connection = connectionFactory.newConnection()
         channel = connection.createChannel()
-        channel.basicQos(16)
+        channel.basicQos(32)
         // Handle connection errors
         connectionFactory.exceptionHandler = object : DefaultExceptionHandler() {
             override fun handleConnectionRecoveryException(conn: Connection, exception: Throwable) {
@@ -75,30 +73,38 @@ class SoraNotificationListener(
         // Create queue that handles duplicates. The queue just publishes incoming events via RX
         channel.queueDeclare(SORA_EVENTS_RX_QUEUE_NAME, true, false, false, createDeduplicationArgs())
         channel.queueBind(SORA_EVENTS_RX_QUEUE_NAME, SORA_EVENTS_EXCHANGE_NAME, "")
-        consumerTags.add(registerEthWithdrawalProofConsumer(SORA_EVENTS_RX_QUEUE_NAME) { event ->
+        consumerTags.add(registerEthWithdrawalProofConsumer(SORA_EVENTS_RX_QUEUE_NAME) { event, ack, _ ->
             rxExecutorService.submit {
-                logger.info("Publish event via RX. Event $event")
-                sourceEthWithdrawalProofs.onNext(event)
+                try {
+                    logger.info("Publish event via RX. Event $event")
+                    sourceEthWithdrawalProofs.onNext(event)
+                } finally {
+                    ack()
+                }
             }
         })
 
         // Create queue that handles duplicates. The queue is responsible for persisting events in the DB
         channel.queueDeclare(SORA_EVENTS_PERSIST_QUEUE_NAME, true, false, false, createDeduplicationArgs())
         channel.queueBind(SORA_EVENTS_PERSIST_QUEUE_NAME, SORA_EVENTS_EXCHANGE_NAME, "")
-        consumerTags.add(registerEthWithdrawalProofConsumer(SORA_EVENTS_PERSIST_QUEUE_NAME) { event ->
+        consumerTags.add(registerEthWithdrawalProofConsumer(SORA_EVENTS_PERSIST_QUEUE_NAME) { event, ack, nack ->
             persistencyExecutorService.submit {
                 try {
                     logger.info("Persist event. Event $event")
                     ethWithdrawalProofRepository.save(EthWithdrawalProofs.mapDomain(event))
                     logger.info("Event $event has been successfully persisted")
+                    ack()
                 } catch (e: CannotCreateTransactionException) {
                     if (e.cause is JDBCConnectionException) {
-                        throw RepeatableError("Cannot connect to DB", e)
+                        logger.error("Cannot persist event. No reason to live anymore. Try to re-queue", e)
+                        nack()
                     } else {
-                        logger.error("Cannot persist event", e)
+                        logger.error("Cannot persist event. No reason to live anymore.", e)
+                        exitProcess(1)
                     }
                 } catch (e: Exception) {
-                    logger.error("Cannot persist event", e)
+                    logger.error("Cannot persist event. No reason to live anymore.", e)
+                    exitProcess(1)
                 }
             }
         })
@@ -126,35 +132,29 @@ class SoraNotificationListener(
     /**
      * Registers 'eth withdrawal proof' event consumer
      * @param queueName - name of queue
-     * @param consumer - the main consumer logic
+     * @param consumer - the main consumer logic. Warning! Responsibility of calling ack() and nack() relies on the consumer code.
      * @return consumer tag
      */
     private fun registerEthWithdrawalProofConsumer(
         queueName: String,
-        consumer: (SoraEthWithdrawalProofsEvent) -> Unit
+        consumer: (SoraEthWithdrawalProofsEvent, ack: () -> Unit, nack: () -> Unit) -> Unit
     ) = channel.basicConsume(queueName, false,
         { _: String, delivery: Delivery ->
             val json = String(delivery.body)
             val eventType = delivery.properties.headers[EVENT_TYPE_HEADER]?.toString() ?: ""
             logger.info("Got event type $eventType with message ${String(delivery.body)}")
-            try {
-                when (eventType) {
-                    // Handle proof collection events
-                    SoraEthWithdrawalProofsEvent::class.java.canonicalName -> {
-                        val withdrawalEventProof = gson.fromJson(json, SoraEthWithdrawalProofsEvent::class.java)
-                        consumer(withdrawalEventProof)
-                    }
-                    else -> {
-                        logger.warn("Event type $eventType is not supported")
-                    }
+
+            when (eventType) {
+                // Handle proof collection events
+                SoraEthWithdrawalProofsEvent::class.java.canonicalName -> {
+                    val withdrawalEventProof = gson.fromJson(json, SoraEthWithdrawalProofsEvent::class.java)
+                    consumer(withdrawalEventProof,
+                        { channel.basicAck(delivery.envelope.deliveryTag, false) },
+                        { channel.basicNack(delivery.envelope.deliveryTag, false, true) })
                 }
-                channel.basicAck(delivery.envelope.deliveryTag, false)
-            } catch (e: RepeatableError) {
-                logger.error("Cannot handle delivery. Message ${String(delivery.body)}. Try to re-queue.", e)
-                channel.basicNack(delivery.envelope.deliveryTag, false, true)
-            } catch (e: Exception) {
-                logger.error("Cannot handle delivery. Message ${String(delivery.body)}", e)
-                channel.basicAck(delivery.envelope.deliveryTag, false)
+                else -> {
+                    logger.warn("Event type $eventType is not supported")
+                }
             }
         }
         , { _ -> })
