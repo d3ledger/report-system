@@ -41,13 +41,17 @@ class NotificationController(
         logger.info("New subscriber. Account id $accountId. Client id $clientID")
         return Flux.create { emitter ->
             val disposable = notificationListener.subscribeWithdrawalProofs { soraWithdrawalProofEvent ->
-                if (soraWithdrawalProofEvent.accountIdToNotify == accountId) {
-                    val event = ServerSentEvent.builder<String>()
-                        .event("sora-withdrawal-proofs-event")
-                        .data(gson.toJson(soraWithdrawalProofEvent))
-                        .build()
-                    logger.info("Publish to client $clientID. Event $soraWithdrawalProofEvent")
-                    emitter.next(event)
+                try {
+                    if (soraWithdrawalProofEvent.accountIdToNotify == accountId) {
+                        val event = ServerSentEvent.builder<String>()
+                            .event("sora-withdrawal-proofs-event")
+                            .data(gson.toJson(soraWithdrawalProofEvent))
+                            .build()
+                        logger.info("Publish to client $clientID. Event $soraWithdrawalProofEvent")
+                        emitter.next(event)
+                    }
+                } catch (e: Exception) {
+                    logger.error("Cannot stream events via SSE for client $clientID", e)
                 }
             }
             emitter.onDispose {
