@@ -18,5 +18,6 @@
     <include file="liquibase/drop_state.sql"/>
     <include file="liquibase/create_fiat_rates_table.sql"/>
     <include file="liquibase/add_fee_type.sql"/>
+    <include file="liquibase/alter_fiat_rates_table.sql"/>
 
 </databaseChangeLog>
