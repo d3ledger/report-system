@@ -19,7 +19,9 @@ pipeline {
                       sh """
                         apk update && apk add docker
                         docker login --username ${login} --password '${password}' https://nexus.iroha.tech:19002
-                        ./gradlew clean test --info
+                        ./gradlew clean build --info
+                        ./gradlew dockerfileCreate --info
+                        ./gradlew test --info
                        """
                     }
                 }

@@ -23,6 +23,8 @@ spring:
   output:
     ansi:
       enabled: NEVER
+  liquibase:
+    change-log: classpath:liquibase-master.xml
 
 hibernate:
   hbm2ddl:

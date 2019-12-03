@@ -10,12 +10,6 @@
    http://www.liquibase.org/xml/ns/dbchangelog
    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-    <include file="liquibase/changelock_primary_key.sql"/>
-    <include file="liquibase/create_tables-1.0.sql"/>
-    <include file="liquibase/iroha-model-1.0.sql"/>
-    <include file="liquibase/indexes.sql"/>
-    <include file="liquibase/changelog_billing_domain.sql"/>
-    <include file="liquibase/drop_state.sql"/>
-    <include file="liquibase/create_fiat_rates_table.sql"/>
+    <include file="liquibase/create_withdrawal_proof_table.sql"/>
 
 </databaseChangeLog>
