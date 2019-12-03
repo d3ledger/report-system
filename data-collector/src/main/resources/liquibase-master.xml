@@ -18,6 +18,5 @@
     <include file="liquibase/drop_state.sql"/>
     <include file="liquibase/create_fiat_rates_table.sql"/>
     <include file="liquibase/create_withdrawal_proof_table.sql"/>
-    <include file="liquibase/change_eth_proofs_table.sql"/>
 
 </databaseChangeLog>
