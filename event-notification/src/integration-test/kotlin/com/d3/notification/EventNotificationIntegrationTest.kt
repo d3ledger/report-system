@@ -17,7 +17,6 @@ import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.Network
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.time.Duration
 import kotlin.test.assertEquals
 
 const val DEFAULT_RMQ_PORT = 5672
@@ -45,8 +44,9 @@ class EventNotificationIntegrationTest {
         KGenericContainer("postgres").withExposedPorts(DEFAULT_POSTGRES_PORT).withNetwork(Network.SHARED)
             .withNetworkAliases("postgres")
 
-    private val notificationContextFolder = "${containerHelper.userDir}/event-notification/build/docker/"
-    private val notificationDockerfile = "${containerHelper.userDir}/event-notification/build/docker/Dockerfile"
+    private val notificationContextFolder = "${containerHelper.userDir}/build/docker/"
+    private val notificationDockerfile = "${containerHelper.userDir}/build/docker/Dockerfile"
+
     private val notificationContainer =
         containerHelper.createSoraPluginContainer(notificationContextFolder, notificationDockerfile)
             .withNetwork(Network.SHARED)
@@ -65,7 +65,7 @@ class EventNotificationIntegrationTest {
             .withEnv("SPRING_DATASOURCE_PASSWORD", "test")
             .withExposedPorts(8080)
             .start()
-        connectionFactory.host = "localhost"
+        connectionFactory.host = rmqContainer.containerIpAddress
         connectionFactory.port = rmqContainer.getMappedPort(DEFAULT_RMQ_PORT)
         connection = connectionFactory.newConnection()
         channel = connection.createChannel()
