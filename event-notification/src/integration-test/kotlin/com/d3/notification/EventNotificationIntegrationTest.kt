@@ -19,7 +19,6 @@ import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
 import org.testcontainers.containers.Network
 import java.math.BigDecimal
-import java.math.BigInteger
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
@@ -100,7 +99,7 @@ class EventNotificationIntegrationTest {
             tokenContractAddress = "0x123",
             amount = BigDecimal("1.5"),
             relay = "some relay",
-            proofs = listOf(SoraECDSASignature("r", "s", BigInteger.TEN)),
+            proofs = listOf(SoraECDSASignature("r", "s", "some value")),
             irohaTxHash = "hash",
             to = "to address",
             id = "some id",
@@ -154,7 +153,7 @@ class EventNotificationIntegrationTest {
             tokenContractAddress = "0x123",
             amount = BigDecimal("1.5"),
             relay = "some relay",
-            proofs = listOf(SoraECDSASignature("r", "s", BigInteger.TEN)),
+            proofs = listOf(SoraECDSASignature("r", "s", "some value")),
             irohaTxHash = "hash",
             to = "to address",
             id = "some id",
