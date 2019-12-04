@@ -118,8 +118,7 @@ class EventNotificationIntegrationTest {
         val listType = object : TypeToken<List<SoraEthWithdrawalProofsEvent>>() {}.type
         val resultList: List<SoraEthWithdrawalProofsEvent> = gson.fromJson(result.text, listType)
         assertEquals(1, resultList.size)
-        // TODO .toString() returns JSON. Add .toJson() function to Sora event
-        assertEquals(event.toString(), resultList[0].toString())
+        assertEquals(event.toJson(), resultList[0].toJson())
     }
 
     /**
@@ -166,8 +165,7 @@ class EventNotificationIntegrationTest {
         Thread.sleep(5_000)
         publishWithdrawalProofEvent(event)
         eventWaiter.await()
-        // TODO .toString() returns JSON. Add .toJson() function to Sora event
-        assertEquals(event.toString(), eventReference.get().toString())
+        assertEquals(event.toJson(), eventReference.get().toJson())
     }
 
     /**
