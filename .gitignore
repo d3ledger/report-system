@@ -28,3 +28,4 @@ build/
 
 data-collector/out/
 report-service/out/
+event-notification/out/
