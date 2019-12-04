@@ -3,7 +3,6 @@ package com.d3.notification.controller
 import com.d3.notification.listener.SoraNotificationListener
 import com.d3.notification.repository.EthWithdrawalProofRepository
 import com.d3.notifications.event.SoraEthWithdrawalProofsEvent
-import com.google.gson.Gson
 import mu.KLogging
 import org.springframework.http.MediaType
 import org.springframework.http.codec.ServerSentEvent
@@ -21,8 +20,6 @@ class NotificationController(
     private val notificationListener: SoraNotificationListener,
     private val ethWithdrawalProofRepository: EthWithdrawalProofRepository
 ) {
-
-    private val gson = Gson()
 
     /**
      * Returns withdrawal proofs for a given account id
@@ -48,7 +45,7 @@ class NotificationController(
                     if (soraWithdrawalProofEvent.accountIdToNotify == accountId) {
                         val event = ServerSentEvent.builder<String>()
                             .event("sora-withdrawal-proofs-event")
-                            .data(gson.toJson(soraWithdrawalProofEvent))
+                            .data(soraWithdrawalProofEvent.toJson())
                             .build()
                         logger.info("Publish to client $clientID. Event $soraWithdrawalProofEvent")
                         emitter.next(event)
