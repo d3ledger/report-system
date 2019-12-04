@@ -10,13 +10,18 @@ import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.MessageProperties
 import integration.helper.ContainerHelper
 import integration.helper.KGenericContainer
+import mu.KLogging
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.springframework.http.MediaType
+import org.springframework.web.reactive.function.client.WebClient
 import org.testcontainers.containers.Network
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
 
 const val DEFAULT_RMQ_PORT = 5672
@@ -25,7 +30,6 @@ const val DEFAULT_POSTGRES_PORT = 5432
 private const val SORA_EVENTS_EXCHANGE_NAME = "sora_notification_events_exchange"
 private const val EVENT_TYPE_HEADER = "event_type"
 
-//TODO add stream tests
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class EventNotificationIntegrationTest {
 
@@ -89,7 +93,7 @@ class EventNotificationIntegrationTest {
      * @then the proof is persisted properly
      */
     @Test
-    fun testGetWithdrawalProofsHistory() {
+    fun testGetWithdrawalProofsHistoryPersist() {
         val accountId = "account@domain"
         val event = SoraEthWithdrawalProofsEvent(
             accountIdToNotify = accountId,
@@ -119,6 +123,54 @@ class EventNotificationIntegrationTest {
     }
 
     /**
+     * @given running instance of the 'event-notification' service
+     * @when a client connects to the streaming endpoint and a new proof appears in the queue
+     * @then the proof is sent to the client via SSE
+     */
+    @Test
+    fun testGetWithdrawalProofsHistoryStream() {
+        val eventReference = AtomicReference<SoraEthWithdrawalProofsEvent>()
+        val eventWaiter = CountDownLatch(1)
+        val accountId = "account@domain"
+        val client = WebClient.create(
+            "http://${notificationContainer.containerIpAddress}:${notificationContainer.getMappedPort(8080)}"
+        )
+        val eventStream = client.get()
+            .uri("/notification/subscribe/withdrawalProofs/$accountId")
+            .accept(MediaType.TEXT_EVENT_STREAM)
+            .retrieve()
+            .bodyToFlux(String::class.java)
+
+        eventStream.subscribe(
+            { content ->
+                val event = gson.fromJson(content, SoraEthWithdrawalProofsEvent::class.java)
+                eventReference.set(event)
+                eventWaiter.countDown()
+            },
+            { error -> logger.error("Cannot read from stream", error) },
+            { logger.info("Done reading from stream") })
+
+        val event = SoraEthWithdrawalProofsEvent(
+            accountIdToNotify = accountId,
+            tokenContractAddress = "0x123",
+            amount = BigDecimal("1.5"),
+            relay = "some relay",
+            proofs = listOf(SoraECDSASignature("r", "s", BigInteger.TEN)),
+            irohaTxHash = "hash",
+            to = "to address",
+            id = "some id",
+            txTime = System.currentTimeMillis(),
+            blockNum = 3,
+            txIndex = 123
+        )
+        Thread.sleep(5_000)
+        publishWithdrawalProofEvent(event)
+        eventWaiter.await()
+        // TODO .toString() returns JSON. Add .toJson() function to Sora event
+        assertEquals(event.toString(), eventReference.get().toString())
+    }
+
+    /**
      * Publishes 'withdrawal proof' event
      * @param event - event to publish
      */
@@ -137,5 +189,7 @@ class EventNotificationIntegrationTest {
             event.toString().toByteArray()
         )
     }
+
+    companion object : KLogging()
 
 }
