@@ -4,7 +4,7 @@ rmq:
 
 postgres:
   host:     localhost
-  port:     15432
+  port:     5432
   database: postgres
 
 spring:
