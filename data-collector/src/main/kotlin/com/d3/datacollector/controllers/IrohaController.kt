@@ -37,7 +37,7 @@ class IrohaController(
     val privateAccount = "$assetList@private"
 
     @GetMapping("eth/masterContract")
-    fun getMasterContractAddress(): ResponseEntity<MasterContractAddressResponse> {
+    fun getMasterContractAddress(): ResponseEntity<StringWrapper> {
         return try {
             val detail =
                 queryHelper.getAccountDetails(
@@ -46,14 +46,14 @@ class IrohaController(
                     key = "eth_master_address"
                 ).get()
             if (detail.isPresent) {
-                ResponseEntity.ok(MasterContractAddressResponse(detail.get()))
+                ResponseEntity.ok(StringWrapper(detail.get()))
             } else {
                 throw IllegalStateException("There is no master contract address")
             }
         } catch (e: Exception) {
             logger.error("Error querying master contract address", e)
             ResponseEntity.status(HttpStatus.CONFLICT).body(
-                MasterContractAddressResponse(
+                StringWrapper(
                     errorCode = e.javaClass.simpleName,
                     errorMessage = e.message
                 )
