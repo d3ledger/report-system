@@ -39,14 +39,13 @@ class IrohaController(
     @GetMapping("eth/masterContract")
     fun getMasterContractAddress(): ResponseEntity<StringWrapper> {
         return try {
-            val detail =
-                queryHelper.getAccountDetails(
-                    storageAccountId = "notary@notary",
-                    writerAccountId = "superuser@bootstrap",
-                    key = "eth_master_address"
-                ).get()
-            if (detail.isPresent) {
-                ResponseEntity.ok(StringWrapper(detail.get()))
+            val detail = accountDetailRepo.getAccountDetail(
+                accountId = "notary@notary",
+                detailKey = "eth_master_address",
+                creatorId = "superuser@bootstrap"
+            )
+            if (detail != null) {
+                ResponseEntity.ok(StringWrapper(detail.detailValue))
             } else {
                 throw IllegalStateException("There is no master contract address")
             }
