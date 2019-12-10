@@ -12,4 +12,7 @@ interface SetAccountDetailRepo : CrudRepository<SetAccountDetail, Long?> {
 
     @Query("SELECT d FROM SetAccountDetail d WHERE d.accountId = :accountId")
     fun getAllDetailsForAccountId(accountId: String): List<SetAccountDetail>
+
+    @Query("SELECT d FROM SetAccountDetail d WHERE d.accountId=:accountId and d.detailKey=:detailKey and d.transaction.creatorId=:creatorId")
+    fun getAccountDetail(accountId: String, detailKey: String, creatorId: String): SetAccountDetail?
 }
