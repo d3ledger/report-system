@@ -21,7 +21,6 @@ data class SingleBillingResponse(
     val billing: Billing = Billing()
 ) : Conflictable()
 
-
 data class BillingMqDto(
     val domain: String = "",
     val billingType: Billing.BillingTypeEnum = Billing.BillingTypeEnum.TRANSFER,

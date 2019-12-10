@@ -53,12 +53,6 @@ class IrohaControllerTest {
 
     @Test
     @Transactional
-    fun testGetAllAssets() {
-
-    }
-
-    @Test
-    @Transactional
     fun testFindAccountQuorumNoAccount() {
         val result: MvcResult = mvc
             .perform(
