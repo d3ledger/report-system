@@ -21,6 +21,11 @@ data class SingleBillingResponse(
     val billing: Billing = Billing()
 ) : Conflictable()
 
+class MasterContractAddressResponse(
+    val address: String? = null,
+    errorCode: String? = null,
+    errorMessage: String? = null
+) : Conflictable(errorCode, errorMessage)
 
 data class BillingMqDto(
     val domain: String = "",

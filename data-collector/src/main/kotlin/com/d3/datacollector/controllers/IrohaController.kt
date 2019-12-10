@@ -5,10 +5,7 @@
 package com.d3.datacollector.controllers
 
 import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
-import com.d3.datacollector.model.AssetsResponse
-import com.d3.datacollector.model.BooleanWrapper
-import com.d3.datacollector.model.IntegerWrapper
-import com.d3.datacollector.model.SetAccountDetail
+import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.CreateAccountRepo
 import com.d3.datacollector.repository.CreateAssetRepo
 import com.d3.datacollector.repository.SetAccountDetailRepo
@@ -39,6 +36,30 @@ class IrohaController(
     val utilityAccount = "$assetList@utility"
     val privateAccount = "$assetList@private"
 
+    @GetMapping("eth/masterContract")
+    fun getMasterContractAddress(): ResponseEntity<MasterContractAddressResponse> {
+        return try {
+            val detail =
+                queryHelper.getAccountDetails(
+                    storageAccountId = "notary@notary",
+                    writerAccountId = "superuser@bootstrap",
+                    key = "eth_master_address"
+                ).get()
+            if (detail.isPresent) {
+                ResponseEntity.ok(MasterContractAddressResponse(detail.get()))
+            } else {
+                throw IllegalStateException("There is no master contract address")
+            }
+        } catch (e: Exception) {
+            logger.error("Error querying master contract address", e)
+            ResponseEntity.status(HttpStatus.CONFLICT).body(
+                MasterContractAddressResponse(
+                    errorCode = e.javaClass.simpleName,
+                    errorMessage = e.message
+                )
+            )
+        }
+    }
 
     @GetMapping("/asset/getAll")
     fun getAllAssets(): ResponseEntity<AssetsResponse> {
