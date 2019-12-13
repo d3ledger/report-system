@@ -11,10 +11,7 @@ import com.rabbitmq.client.MessageProperties
 import integration.helper.ContainerHelper
 import integration.helper.KGenericContainer
 import mu.KLogging
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.*
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
 import org.testcontainers.containers.Network
@@ -29,6 +26,7 @@ const val DEFAULT_POSTGRES_PORT = 5432
 private const val SORA_EVENTS_EXCHANGE_NAME = "sora_notification_events_exchange"
 private const val EVENT_TYPE_HEADER = "event_type"
 
+@Disabled
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class EventNotificationIntegrationTest {
 

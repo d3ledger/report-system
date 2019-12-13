@@ -55,8 +55,6 @@ dependencies {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
 
-    implementation 'org.liquibase:liquibase-maven-plugin:3.6.3'
-
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:$spring_boot_version"
     implementation 'org.postgresql:postgresql:42.2.5'
 
