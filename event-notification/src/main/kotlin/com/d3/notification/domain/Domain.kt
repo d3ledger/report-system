@@ -16,6 +16,7 @@ private val gson = Gson()
 data class EthWithdrawalProofs(
     @Id
     val id: String = "",
+    val ack: Boolean?,
     val accountIdToNotify: String = "",
     val tokenContractAddress: String = "",
     val amount: BigDecimal = BigDecimal.ZERO,
@@ -75,7 +76,8 @@ data class EthWithdrawalProofs(
                 txTime = soraEthWithdrawalProofsEvent.txTime,
                 proofsJson = gson.toJson(soraEthWithdrawalProofsEvent.proofs),
                 blockNum = soraEthWithdrawalProofsEvent.blockNum,
-                txIndex = soraEthWithdrawalProofsEvent.txIndex
+                txIndex = soraEthWithdrawalProofsEvent.txIndex,
+                ack = false
             )
         }
     }

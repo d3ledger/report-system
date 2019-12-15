@@ -29,7 +29,7 @@ class NotificationController(
         @PathVariable accountId: String,
         @RequestParam(value = "sinceBlockNum", defaultValue = "0", required = false) sinceBlockNum: Long
     ): List<SoraEthWithdrawalProofsEvent> {
-        return ethWithdrawalProofRepository.getProofsByAccount(accountId, sinceBlockNum).map { it.mapToEvent() }
+        return ethWithdrawalProofRepository.getNoAckProofsByAccount(accountId, sinceBlockNum).map { it.mapToEvent() }
     }
 
     /**

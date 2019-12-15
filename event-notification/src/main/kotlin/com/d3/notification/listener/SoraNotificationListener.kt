@@ -2,6 +2,7 @@ package com.d3.notification.listener
 
 import com.d3.notification.domain.EthWithdrawalProofs
 import com.d3.notification.repository.EthWithdrawalProofRepository
+import com.d3.notifications.event.SoraAckEthWithdrawalProofEvent
 import com.d3.notifications.event.SoraEthWithdrawalProofsEvent
 import com.google.gson.Gson
 import com.rabbitmq.client.Channel
@@ -25,7 +26,7 @@ private const val SORA_EVENTS_PERSIST_QUEUE_NAME = "sora_notification_events_per
 private const val SORA_EVENTS_EXCHANGE_NAME = "sora_notification_events_exchange"
 private const val EVENT_TYPE_HEADER = "event_type"
 
-/**o
+/**
  * Listener that listens to Sora events that comes through RabbitMQ
  */
 @Component
@@ -69,11 +70,71 @@ class SoraNotificationListener(
             }
         }
         channel.exchangeDeclare(SORA_EVENTS_EXCHANGE_NAME, "fanout", true)
+        registerRxListener()
+        registerPersistencyListener()
+    }
 
+    /**
+     * Registers a listener that works with DB
+     */
+    private fun registerPersistencyListener() {
+        // Create queue that handles duplicates. The queue is responsible for persisting events in the DB
+        channel.queueDeclare(SORA_EVENTS_PERSIST_QUEUE_NAME, true, false, false, createDeduplicationArgs())
+        channel.queueBind(SORA_EVENTS_PERSIST_QUEUE_NAME, SORA_EVENTS_EXCHANGE_NAME, "")
+        consumerTags.add(
+            registerSoraEventConsumer(
+                SORA_EVENTS_PERSIST_QUEUE_NAME,
+                ethProofEventConsumer = { event, ack, nack ->
+                    persistSafely({
+                        logger.info("Persist 'Eth withdrawal proof' event. Event $event")
+                        ethWithdrawalProofRepository.save(EthWithdrawalProofs.mapDomain(event))
+                        logger.info("Event $event has been successfully persisted")
+                        ack()
+                    }, nack)
+
+                }, ackEthProofEventConsumer = { event, ack, nack ->
+                    persistSafely({
+                        logger.info("Persist 'Ack Eth withdrawal proof' event. Event $event")
+                        ethWithdrawalProofRepository.ackProofByEventId(event.proofEventId)
+                        logger.info("'Eth withdrawal proof' event with id ${event.proofEventId} has been successfully acknowledged")
+                        ack()
+                    }, nack)
+                })
+        )
+    }
+
+    /**
+     * Persists event into DB safely
+     * @param persistLogic - the main persist logic
+     * @param nackLogic - the main DB error recovery logic
+     */
+    private fun persistSafely(persistLogic: () -> Unit, nackLogic: () -> Unit) {
+        persistencyExecutorService.submit {
+            try {
+                persistLogic()
+            } catch (e: CannotCreateTransactionException) {
+                if (e.cause is JDBCConnectionException) {
+                    logger.error("Cannot persist event. No reason to live anymore. Try to re-queue", e)
+                    nackLogic()
+                } else {
+                    logger.error("Cannot persist event. No reason to live anymore.", e)
+                    exitProcess(1)
+                }
+            } catch (e: Exception) {
+                logger.error("Cannot persist event. No reason to live anymore.", e)
+                exitProcess(1)
+            }
+        }
+    }
+
+    /**
+     * Register a listener that works with RX
+     */
+    private fun registerRxListener() {
         // Create queue that handles duplicates. The queue just publishes incoming events via RX
         channel.queueDeclare(SORA_EVENTS_RX_QUEUE_NAME, true, false, false, createDeduplicationArgs())
         channel.queueBind(SORA_EVENTS_RX_QUEUE_NAME, SORA_EVENTS_EXCHANGE_NAME, "")
-        consumerTags.add(registerEthWithdrawalProofConsumer(SORA_EVENTS_RX_QUEUE_NAME) { event, ack, _ ->
+        consumerTags.add(registerSoraEventConsumer(SORA_EVENTS_RX_QUEUE_NAME, ethProofEventConsumer = { event, ack, _ ->
             rxExecutorService.submit {
                 try {
                     logger.info("Publish event via RX. Event $event")
@@ -82,32 +143,7 @@ class SoraNotificationListener(
                     ack()
                 }
             }
-        })
-
-        // Create queue that handles duplicates. The queue is responsible for persisting events in the DB
-        channel.queueDeclare(SORA_EVENTS_PERSIST_QUEUE_NAME, true, false, false, createDeduplicationArgs())
-        channel.queueBind(SORA_EVENTS_PERSIST_QUEUE_NAME, SORA_EVENTS_EXCHANGE_NAME, "")
-        consumerTags.add(registerEthWithdrawalProofConsumer(SORA_EVENTS_PERSIST_QUEUE_NAME) { event, ack, nack ->
-            persistencyExecutorService.submit {
-                try {
-                    logger.info("Persist event. Event $event")
-                    ethWithdrawalProofRepository.save(EthWithdrawalProofs.mapDomain(event))
-                    logger.info("Event $event has been successfully persisted")
-                    ack()
-                } catch (e: CannotCreateTransactionException) {
-                    if (e.cause is JDBCConnectionException) {
-                        logger.error("Cannot persist event. No reason to live anymore. Try to re-queue", e)
-                        nack()
-                    } else {
-                        logger.error("Cannot persist event. No reason to live anymore.", e)
-                        exitProcess(1)
-                    }
-                } catch (e: Exception) {
-                    logger.error("Cannot persist event. No reason to live anymore.", e)
-                    exitProcess(1)
-                }
-            }
-        })
+        }))
     }
 
     /**
@@ -120,7 +156,7 @@ class SoraNotificationListener(
     /**
      * Creates RabbitMQ queue arguments for deduplication
      */
-    private fun createDeduplicationArgs() = hashMapOf<String, Any>(
+    private fun createDeduplicationArgs() = hashMapOf(
         // enable deduplication
         Pair("x-message-deduplication", true),
         // save deduplication data on disk rather that memory
@@ -130,14 +166,16 @@ class SoraNotificationListener(
     )
 
     /**
-     * Registers 'eth withdrawal proof' event consumer
+     * Registers Sora event consumers
      * @param queueName - name of queue
-     * @param consumer - the main consumer logic. Warning! Responsibility of calling ack() and nack() relies on the consumer code.
+     * @param ethProofEventConsumer - `Eth withdrawal proof` event consumer logic. Warning! Responsibility of calling ack() and nack() relies on the consumer code.
+     * @param ackEthProofEventConsumer - Ack `Eth withdrawal proof` event consumer logic. Warning! Responsibility of calling ack() and nack() relies on the consumer code.
      * @return consumer tag
      */
-    private fun registerEthWithdrawalProofConsumer(
+    private fun registerSoraEventConsumer(
         queueName: String,
-        consumer: (SoraEthWithdrawalProofsEvent, ack: () -> Unit, nack: () -> Unit) -> Unit
+        ethProofEventConsumer: (SoraEthWithdrawalProofsEvent, ack: () -> Unit, nack: () -> Unit) -> Unit = { _, _, _ -> },
+        ackEthProofEventConsumer: (SoraAckEthWithdrawalProofEvent, ack: () -> Unit, nack: () -> Unit) -> Unit = { _, _, _ -> }
     ) = channel.basicConsume(queueName, false,
         { _: String, delivery: Delivery ->
             val json = String(delivery.body)
@@ -145,13 +183,21 @@ class SoraNotificationListener(
             logger.info("Got event type $eventType with message ${String(delivery.body)}")
 
             when (eventType) {
-                // Handle proof collection events
+                // Handle Eth withdrawal proof collection events
                 SoraEthWithdrawalProofsEvent::class.java.canonicalName -> {
                     val withdrawalEventProof = gson.fromJson(json, SoraEthWithdrawalProofsEvent::class.java)
-                    consumer(withdrawalEventProof,
+                    ethProofEventConsumer(withdrawalEventProof,
                         { channel.basicAck(delivery.envelope.deliveryTag, false) },
                         { channel.basicNack(delivery.envelope.deliveryTag, false, true) })
                 }
+                // Handle Eth withdrawal proof acknowledgment events
+                SoraAckEthWithdrawalProofEvent::class.java.canonicalName -> {
+                    val ackWithdrawalEventProof = gson.fromJson(json, SoraAckEthWithdrawalProofEvent::class.java)
+                    ackEthProofEventConsumer(ackWithdrawalEventProof,
+                        { channel.basicAck(delivery.envelope.deliveryTag, false) },
+                        { channel.basicNack(delivery.envelope.deliveryTag, false, true) })
+                }
+
                 else -> {
                     logger.warn("Event type $eventType is not supported")
                 }
