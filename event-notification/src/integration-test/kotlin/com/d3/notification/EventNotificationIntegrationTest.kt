@@ -11,7 +11,10 @@ import com.rabbitmq.client.MessageProperties
 import integration.helper.ContainerHelper
 import integration.helper.KGenericContainer
 import mu.KLogging
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
 import org.testcontainers.containers.Network
@@ -26,7 +29,6 @@ const val DEFAULT_POSTGRES_PORT = 5432
 private const val SORA_EVENTS_EXCHANGE_NAME = "sora_notification_events_exchange"
 private const val EVENT_TYPE_HEADER = "event_type"
 
-@Disabled
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class EventNotificationIntegrationTest {
 
@@ -45,6 +47,9 @@ class EventNotificationIntegrationTest {
         KGenericContainer("postgres").withExposedPorts(DEFAULT_POSTGRES_PORT).withNetwork(Network.SHARED)
             .withNetworkAliases("postgres")
 
+    private val dataCollectorContainer =
+        KGenericContainer("nexus.iroha.tech:19002/d3-deploy/data-collector:develop").withNetwork(Network.SHARED)
+
     private val notificationContextFolder = "${containerHelper.userDir}/build/docker/"
     private val notificationDockerfile = "${containerHelper.userDir}/build/docker/Dockerfile"
 
@@ -56,6 +61,19 @@ class EventNotificationIntegrationTest {
     fun setUp() {
         rmqContainer.start()
         postgresContainer.withEnv("POSTGRES_PASSWORD", "test").withEnv("POSTGRES_USER", "test").start()
+        dataCollectorContainer
+            .withEnv("POSTGRES_HOST", "postgres")
+            .withEnv("POSTGRES_DATABASE", "postgres")
+            .withEnv("POSTGRES_PORT", DEFAULT_POSTGRES_PORT.toString())
+            .withEnv("RMQ_HOST", "rmq")
+            .withEnv("RMQ_PORT", DEFAULT_RMQ_PORT.toString())
+            .withEnv("SPRING_DATASOURCE_USERNAME", "test")
+            .withEnv("SPRING_DATASOURCE_PASSWORD", "test").withLogConsumer { print(it.utf8String) }
+            .start()
+
+        // let data-collector create the database scheme
+        Thread.sleep(30_000)
+
         notificationContainer
             .withEnv("POSTGRES_HOST", "postgres")
             .withEnv("POSTGRES_DATABASE", "postgres")
@@ -82,6 +100,7 @@ class EventNotificationIntegrationTest {
         }
         rmqContainer.stop()
         postgresContainer.stop()
+        dataCollectorContainer.stop()
     }
 
     /**
