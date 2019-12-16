@@ -68,7 +68,7 @@ class EventNotificationIntegrationTest {
             .withEnv("RMQ_HOST", "rmq")
             .withEnv("RMQ_PORT", DEFAULT_RMQ_PORT.toString())
             .withEnv("SPRING_DATASOURCE_USERNAME", "test")
-            .withEnv("SPRING_DATASOURCE_PASSWORD", "test")
+            .withEnv("SPRING_DATASOURCE_PASSWORD", "test").withLogConsumer { print(it.utf8String) }
             .start()
 
         // let data-collector create the database scheme
