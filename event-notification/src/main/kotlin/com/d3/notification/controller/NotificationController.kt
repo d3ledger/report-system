@@ -26,10 +26,10 @@ class NotificationController(
      */
     @GetMapping(path = ["/find/withdrawalProofs/{accountId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getProofsByAccountId(
-        @PathVariable accountId: String,
-        @RequestParam(value = "sinceBlockNum", defaultValue = "0", required = false) sinceBlockNum: Long
+        @PathVariable accountId: String
     ): List<SoraEthWithdrawalProofsEvent> {
-        return ethWithdrawalProofRepository.getNoAckProofsByAccount(accountId, sinceBlockNum).map { it.mapToEvent() }
+        logger.info("Query proofs for account id '$accountId'")
+        return ethWithdrawalProofRepository.getProofsByAccount(accountId).map { it.mapToEvent() }
     }
 
     /**

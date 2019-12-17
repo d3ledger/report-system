@@ -91,14 +91,6 @@ class SoraNotificationListener(
                         logger.info("Event $event has been successfully persisted")
                         ack()
                     }, nack)
-
-                }, ackEthProofEventConsumer = { event, ack, nack ->
-                    persistSafely({
-                        logger.info("Persist 'Ack Eth withdrawal proof' event. Event $event")
-                        ethWithdrawalProofRepository.ackProofByEventId(event.proofEventId)
-                        logger.info("'Eth withdrawal proof' event with id ${event.proofEventId} has been successfully acknowledged")
-                        ack()
-                    }, nack)
                 })
         )
     }
