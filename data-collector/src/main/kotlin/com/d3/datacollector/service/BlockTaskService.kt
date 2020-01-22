@@ -14,6 +14,7 @@ import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
 import com.d3.datacollector.utils.getDomainFromAccountId
 import com.d3.datacollector.utils.getNameFromAccountId
+import com.d3.datacollector.utils.gson
 import com.github.kittinunf.result.map
 import com.google.protobuf.ProtocolStringList
 import io.reactivex.schedulers.Schedulers
@@ -286,40 +287,31 @@ class BlockTaskService : Closeable {
         creatorAccountId: String
     ) {
         try {
-            // value is of format <TYPE>__<NUMBER>
-            val typeNumberPair = setAccountDetail.value.split(latticePlaceholder)
-            if (typeNumberPair.size != 2) {
-                return
-            }
-            val feeType = typeNumberPair[0]
-            val feeValue = typeNumberPair[1]
             val targetDomainName = getDomainFromAccountId(setAccountDetail.accountId)
+            val billingType = defineBillingType(setAccountDetail.accountId)
             val setterDomainName = getDomainFromAccountId(creatorAccountId)
             if (getNameFromAccountId(creatorAccountId) == adminName
                 && targetDomainName == setterDomainName
-                && filterBillingAccounts(setAccountDetail)
+                && billingType != Billing.BillingTypeEnum.NOT_FOUND
             ) {
-                if (feeValue.length > NUMBER_LENGTH
-                    || !feeValue.contains('.')
-                    || feeValue.indexOf('.') > MAX_DOT_INDEX
-                ) {
-                    logger.error("Got incorrect fee value. Omitting. Value: $feeValue")
-                    return
-                }
-                val billing = Billing(
-                    id = null,
-                    domainName = targetDomainName,
-                    billingType = defineBillingType(setAccountDetail.accountId),
-                    asset = setAccountDetail.key.replaceLatticePlaceholder(),
-                    feeType = Billing.FeeTypeEnum.valueOf(feeType),
-                    feeFraction = BigDecimal(feeValue)
+                val valueDTO = gson.fromJson(
+                    Utils.irohaUnEscape(setAccountDetail.value),
+                    IrohaDetailValueDTO::class.java
                 )
-                performUpdates(billing)
+                performUpdates(
+                    valueDTO.toBilling(
+                        billingType,
+                        setAccountDetail.key.replaceLatticePlaceholder(),
+                        targetDomainName
+                    )
+                )
             }
+        } catch (ex: IndexOutOfBoundsException) {
+            logger.warn("Got malformed block, probably genesis")
         } catch (ex: IllegalArgumentException) {
-            logger.error("Got unknown type of fee. Omitting.", ex)
+            logger.warn("Got unknown type of fee. Omitting.", ex)
         } catch (e: Exception) {
-            logger.error("Encountered exception during details processing. Omitting.", e)
+            logger.warn("Encountered exception during details processing. Omitting.", e)
         }
     }
 
@@ -337,34 +329,28 @@ class BlockTaskService : Closeable {
 
     private fun performUpdates(billing: Billing) {
         val updated = dbService.updateBillingInDb(billing)
-        cache.addFeeByType(updated)
+        cache.addBillingByType(updated)
         rabbitService.sendBillingUpdate(
             BillingMqDto(
+                updated.feeDescription,
                 updated.domainName,
                 updated.billingType,
                 updated.asset,
+                updated.destination,
                 updated.feeType,
+                updated.feeNature,
+                updated.feeComputation,
+                updated.feeAccount,
                 updated.feeFraction,
-                updated = updated.updated,
-                created = updated.created
+                updated.minAmount,
+                updated.maxAmount,
+                updated.minFee,
+                updated.maxFee,
+                updated.updated,
+                updated.created
             )
         )
         logger.info("Updated billing info $updated")
-    }
-
-    private fun filterBillingAccounts(it: Commands.SetAccountDetail): Boolean {
-        val accountId = it.accountId
-        return accountId.startsWith(
-            transferBillingTemplate
-        ) || accountId.startsWith(
-            custodyBillingTemplate
-        ) || accountId.startsWith(
-            accountCreationBillingTemplate
-        ) || accountId.startsWith(
-            exchangeBillingTemplate
-        ) || accountId.startsWith(
-            withdrawalBillingTemplate
-        )
     }
 
     private fun defineBillingType(accountId: String): Billing.BillingTypeEnum = when {
@@ -406,8 +392,5 @@ class BlockTaskService : Closeable {
         irohaChainListener.close()
     }
 
-    companion object : KLogging() {
-        private const val NUMBER_LENGTH = 7
-        private const val MAX_DOT_INDEX = 2
-    }
+    companion object : KLogging()
 }

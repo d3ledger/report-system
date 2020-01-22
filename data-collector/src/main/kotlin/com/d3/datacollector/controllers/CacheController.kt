@@ -9,6 +9,7 @@ import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.model.Billing
 import com.d3.datacollector.model.BillingResponse
 import com.d3.datacollector.model.SingleBillingResponse
+import com.d3.datacollector.repository.CreateAssetRepo
 import mu.KLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -22,7 +23,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 @Controller
 @RequestMapping("/cache")
 class CacheController(
-    val cache: CacheRepository
+    private val cache: CacheRepository,
+    private val assetRepo: CreateAssetRepo
 ) {
 
     @GetMapping("/get/billing")
@@ -30,11 +32,11 @@ class CacheController(
         return try {
             ResponseEntity.ok(
                 BillingResponse(
-                    cache.getTransferFee(),
-                    cache.getCustodyFee(),
-                    cache.getAccountCreationFee(),
-                    cache.getExchangeFee(),
-                    cache.getWithdrawalFee()
+                    cache.getTransferBilling(),
+                    cache.getCustodyBilling(),
+                    cache.getAccountCreationBilling(),
+                    cache.getExchangeBilling(),
+                    cache.getWithdrawalBilling()
                 )
             )
         } catch (e: Exception) {
@@ -53,20 +55,22 @@ class CacheController(
         @PathVariable("billingType") billingType: Billing.BillingTypeEnum
     ): ResponseEntity<SingleBillingResponse> {
         return try {
-            val assetId = String.format(
-                "%s#%s",
-                assetName,
-                assetDomain
-            )
+            val assetId = "$assetName#$assetDomain"
             val billing = when (billingType) {
-                Billing.BillingTypeEnum.TRANSFER -> cache.getTransferFee(domain, assetId)
-                Billing.BillingTypeEnum.CUSTODY -> cache.getCustodyFee(domain, assetId)
-                Billing.BillingTypeEnum.ACCOUNT_CREATION -> cache.getAccountCreationFee(domain, assetId)
-                Billing.BillingTypeEnum.EXCHANGE -> cache.getExchangeFee(domain, assetId)
-                Billing.BillingTypeEnum.WITHDRAWAL -> cache.getWithdrawalFee(domain, assetId)
+                Billing.BillingTypeEnum.TRANSFER -> cache.getTransferBilling(domain, assetId)
+                Billing.BillingTypeEnum.CUSTODY -> cache.getCustodyBilling(domain, assetId)
+                Billing.BillingTypeEnum.ACCOUNT_CREATION -> cache.getAccountCreationBilling(domain, assetId)
+                Billing.BillingTypeEnum.EXCHANGE -> cache.getExchangeBilling(domain, assetId)
+                Billing.BillingTypeEnum.WITHDRAWAL -> cache.getWithdrawalBilling(domain, assetId)
                 else -> throw RuntimeException("Unsupported Billing type")
             }
-            ResponseEntity.ok(SingleBillingResponse(billing))
+            val asset = assetRepo.findByAssetId(assetId)
+                .orElseThrow { IllegalArgumentException("No such asset: $assetId") }
+            ResponseEntity.ok(SingleBillingResponse(billing, asset.decimalPrecision))
+        } catch (e: IllegalArgumentException) {
+            val response = SingleBillingResponse()
+            response.fill(DcExceptionStatus.ASSET_NOT_FOUND, e)
+            ResponseEntity.ok(response)
         } catch (e: IllegalStateException) {
             val response = SingleBillingResponse()
             response.fill(DcExceptionStatus.FEE_NOT_SET, e)
@@ -80,4 +84,5 @@ class CacheController(
     }
 
     companion object : KLogging()
+
 }

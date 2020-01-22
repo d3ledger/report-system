@@ -1,5 +1,7 @@
 iroha:
-  toriiAddress: grpc://127.0.0.1:50051
+  host: d3-iroha
+  port: 50051
+  toriiAddress: grpc://${iroha.host}:${iroha.port}
   user:
     privateKeyHex: 37C2070BD7C628B2ABA61F6C353DF06504A92F6997D8658F3EE69DC598B57CA2
     publicKeyHex: 97B888554684FB30F29FAB92991AB7ECEFFFE433AB3AF501E5DEAEE69392518C

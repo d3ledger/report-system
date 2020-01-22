@@ -5,7 +5,7 @@
 package com.d3.datacollector.service
 
 import com.d3.datacollector.model.BillingMqDto
-import com.google.gson.Gson
+import com.d3.datacollector.utils.gson
 import com.rabbitmq.client.BuiltinExchangeType
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
@@ -22,7 +22,6 @@ class RabbitMqServiceImpl(
 ) : RabbitMqService {
 
     private val connectionFactory = ConnectionFactory()
-    private val gson = Gson()
 
     init {
         connectionFactory.exceptionHandler = object : DefaultExceptionHandler() {

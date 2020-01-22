@@ -107,7 +107,11 @@ open class TestEnv {
                             .createDomain(notaryDomain, dataCollectorRole)
                             .createDomain(securityDomain, userRole)
                             .createAccount(adminName, bankDomain, adminKeyPair.public)
-                            .createAccount(transferBillingAccountName, bankDomain, transferBillingKeyPair.public)
+                            .createAccount(
+                                transferBillingAccountName,
+                                bankDomain,
+                                transferBillingKeyPair.public
+                            )
                             .createAccount(custodyAccountName, bankDomain, custodyKeyPair.public)
                             .createAccount(exchangeBillingAccountName, bankDomain, exchangeKeyPair.public)
                             .createAccount(withdrawalBillingAccountName, bankDomain, withdrawalKeyPair.public)
@@ -173,11 +177,15 @@ open class TestEnv {
     @Autowired
     lateinit var createAccountRepo: CreateAccountRepo
     @Autowired
+    lateinit var createAssetRepo: CreateAssetRepo
+    @Autowired
     lateinit var accountDetailRepo: SetAccountDetailRepo
     @Autowired
     lateinit var accountQuorumRepo: SetAccountQuorumRepo
     @Autowired
     lateinit var addSignatoryRepo: AddSignatoryRepository
+    @Autowired
+    lateinit var transactionRepo: TransactionRepo
     @Autowired
     lateinit var txBatchRepo: TransactionBatchRepo
     @Autowired

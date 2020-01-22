@@ -6,9 +6,7 @@ package com.d3.datacollector.tests
 
 import com.d3.datacollector.controllers.SetRateDTO
 import com.d3.datacollector.engine.TestEnv
-import com.d3.datacollector.model.Billing
-import com.d3.datacollector.model.BillingResponse
-import com.d3.datacollector.model.SingleBillingResponse
+import com.d3.datacollector.model.*
 import com.google.gson.JsonParser
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,23 +28,28 @@ import kotlin.test.assertTrue
 @AutoConfigureMockMvc
 class ControllersTest : TestEnv() {
 
-    /**
-     * TODO Update test. Add all type of fees testing
-     */
+    // TODO Update test. Add all type of fees testing
     @Test
     @Transactional
     fun testGetBillling() {
-        val globbaly = "globbaly"
-        val someAsset = "someAsset"
-        val fee = "0.5"
+        val anyDestination = "*"
+        val domainName = "global"
+        val feeAccountId = "account@$domainName"
+        val assetId = "asset#$domainName"
+        val feeFraction = BigDecimal("1000000000.12345678")
+        val feeDescription = "FEE-1"
 
-        cache.addFeeByType(
-            Billing(
-                domainName = globbaly,
-                asset = someAsset,
-                feeFraction = BigDecimal(fee)
-            )
+        val billing = Billing(
+            feeDescription = feeDescription,
+            domainName = domainName,
+            asset = assetId,
+            destination = anyDestination,
+            feeType = Billing.FeeTypeEnum.FIXED,
+            feeNature = Billing.FeeNatureEnum.TRANSFER,
+            feeAccount = feeAccountId,
+            feeFraction = feeFraction
         )
+        cache.addBillingByType(billing)
 
         val result: MvcResult = mvc
             .perform(MockMvcRequestBuilders.get("/cache/get/billing"))
@@ -55,38 +58,44 @@ class ControllersTest : TestEnv() {
         val respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        assertEquals(
-            BigDecimal(fee),
-            respBody.transfer[globbaly]!![someAsset]!!.feeFraction
-        )
+        assertTrue(respBody.transfer[domainName]!![assetId]!!.contains(billing.toDefaultBilling()))
     }
 
     @Test
     @Transactional
     fun testGetSingleBillling() {
-        val domain = "globbaly"
-        val someAsset = "someAsset"
-        val fee = "0.5"
+        val domainName = "global"
+        val assetName = "asset"
+        val feeFraction = BigDecimal("1000000000.12345678")
+        val precision = 0
 
-        cache.addFeeByType(
-            Billing(
-                domainName = domain,
-                asset = "$someAsset#$domain",
-                feeFraction = BigDecimal(fee)
+        val billing = Billing(
+            domainName = domainName,
+            billingType = Billing.BillingTypeEnum.TRANSFER,
+            asset = "$assetName#$domainName",
+            feeFraction = feeFraction
+        )
+        val transaction = Transaction()
+        transactionRepo.save(transaction)
+        createAssetRepo.save(
+            CreateAsset(
+                assetName,
+                domainName,
+                precision,
+                transaction
             )
         )
+        cache.addBillingByType(billing)
 
         val result: MvcResult = mvc
-            .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domain/$someAsset/$domain/TRANSFER"))
+            .perform(MockMvcRequestBuilders.get("/cache/get/billing/$domainName/$assetName/$domainName/TRANSFER"))
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andReturn()
         val respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        assertEquals(
-            BigDecimal(fee),
-            respBody.billing.feeFraction
-        )
+        assertTrue(respBody.feeInfo.contains(billing.toDefaultBilling()))
+        assertEquals(precision, respBody.assetPrecision)
     }
 
     @Test
@@ -122,6 +131,23 @@ class ControllersTest : TestEnv() {
             .andReturn()
         val getResultString =
             JsonParser().parse(getResult.response.contentAsString).asJsonObject.get("itIs").asString
-        assertTrue(BigDecimal(getResultString) > BigDecimal(100))
+        assertTrue(BigDecimal(getResultString) > BigDecimal.ZERO)
     }
 }
+
+fun Billing.toDefaultBilling() =
+    Billing(
+        feeDescription = feeDescription,
+        destination = destination,
+        feeType = feeType,
+        feeNature = feeNature,
+        feeFraction = feeFraction,
+        feeComputation = feeComputation,
+        feeAccount = feeAccount,
+        minAmount = minAmount,
+        maxAmount = maxAmount,
+        minFee = minFee,
+        maxFee = maxFee,
+        created = created,
+        updated = updated
+    )

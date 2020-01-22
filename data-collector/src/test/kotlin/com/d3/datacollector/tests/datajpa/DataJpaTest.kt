@@ -7,7 +7,6 @@ package com.d3.datacollector.tests.datajpa
 
 import com.d3.datacollector.model.*
 import com.d3.datacollector.repository.*
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -104,7 +103,15 @@ class DataJpaTest {
 
         assertTrue(found.isPresent)
 
-        found = billingRepo.selectByDomainBillingTypeAndAsset(billing.domainName, billing.asset, billing.billingType)
+        found = billingRepo.selectExistingBillingInfo(
+            billing.domainName,
+            billing.asset,
+            billing.billingType,
+            billing.destination,
+            billing.feeDescription,
+            billing.minAmount,
+            billing.maxAmount
+        )
         assertTrue(found.isPresent)
         assertEquals(billing.id, found.get().id)
 

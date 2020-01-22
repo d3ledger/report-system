@@ -9,89 +9,92 @@ import com.d3.datacollector.service.DbService
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import java.util.concurrent.ConcurrentHashMap
 import javax.annotation.PostConstruct
 
 @Component
 class CacheRepository {
-    private val transferFee = HashMap<String, HashMap<String, Billing>>()
-    private val custodyFee = HashMap<String, HashMap<String, Billing>>()
-    private val accountCreationFee = HashMap<String, HashMap<String, Billing>>()
-    private val exchangeFee = HashMap<String, HashMap<String, Billing>>()
-    private val withdrawalFee = HashMap<String, HashMap<String, Billing>>()
+    private val transferFee = getNewBillingMap()
+    private val custodyFee = getNewBillingMap()
+    private val accountCreationFee = getNewBillingMap()
+    private val exchangeFee = getNewBillingMap()
+    private val withdrawalFee = getNewBillingMap()
     @Autowired
     private lateinit var dbService: DbService
 
-    fun addFeeByType(billing: Billing) {
+    fun addBillingByType(billing: Billing) {
         when (billing.billingType) {
-            Billing.BillingTypeEnum.TRANSFER -> addTransferFee(billing)
-            Billing.BillingTypeEnum.CUSTODY -> addCustodyFee(billing)
-            Billing.BillingTypeEnum.ACCOUNT_CREATION -> addAccountCreationFee(billing)
-            Billing.BillingTypeEnum.EXCHANGE -> addExchangeFee(billing)
-            Billing.BillingTypeEnum.WITHDRAWAL -> addWithdrawalFee(billing)
+            Billing.BillingTypeEnum.TRANSFER -> addBilling(transferFee, billing)
+            Billing.BillingTypeEnum.CUSTODY -> addBilling(custodyFee, billing)
+            Billing.BillingTypeEnum.ACCOUNT_CREATION -> addBilling(accountCreationFee, billing)
+            Billing.BillingTypeEnum.EXCHANGE -> addBilling(exchangeFee, billing)
+            Billing.BillingTypeEnum.WITHDRAWAL -> addBilling(withdrawalFee, billing)
             else -> logger.error { "Can't match billing type ${billing.billingType} from database." }
         }
     }
 
-    private fun addTransferFee(billing: Billing) = addBilling(transferFee, billing)
-    fun getTransferFee(): HashMap<String, HashMap<String, Billing>> = getBilling(transferFee)
-    fun getTransferFee(domain: String, asset: String): Billing =
-        getBilling(transferFee, domain, asset, Billing.BillingTypeEnum.TRANSFER)
+    fun getTransferBilling(): Map<String, Map<String, Set<Billing>>> = getBilling(transferFee)
+    fun getTransferBilling(domain: String, asset: String): Set<Billing> =
+        getBilling(transferFee, domain, asset)
 
-    private fun addCustodyFee(billing: Billing) = addBilling(custodyFee, billing)
-    fun getCustodyFee(): HashMap<String, HashMap<String, Billing>> = getBilling(custodyFee)
-    fun getCustodyFee(domain: String, asset: String): Billing =
-        getBilling(custodyFee, domain, asset, Billing.BillingTypeEnum.CUSTODY)
+    fun getCustodyBilling(): Map<String, Map<String, Set<Billing>>> = getBilling(custodyFee)
+    fun getCustodyBilling(domain: String, asset: String): Set<Billing> =
+        getBilling(custodyFee, domain, asset)
 
-    private fun addAccountCreationFee(billing: Billing) = addBilling(accountCreationFee, billing)
-    fun getAccountCreationFee(): HashMap<String, HashMap<String, Billing>> = getBilling(accountCreationFee)
-    fun getAccountCreationFee(domain: String, asset: String): Billing =
-        getBilling(accountCreationFee, domain, asset, Billing.BillingTypeEnum.ACCOUNT_CREATION)
+    fun getAccountCreationBilling(): Map<String, Map<String, Set<Billing>>> = getBilling(accountCreationFee)
+    fun getAccountCreationBilling(domain: String, asset: String): Set<Billing> =
+        getBilling(accountCreationFee, domain, asset)
 
-    private fun addExchangeFee(billing: Billing) = addBilling(exchangeFee, billing)
-    fun getExchangeFee(): HashMap<String, HashMap<String, Billing>> = getBilling(exchangeFee)
-    fun getExchangeFee(domain: String, asset: String): Billing =
-        getBilling(exchangeFee, domain, asset, Billing.BillingTypeEnum.EXCHANGE)
+    fun getExchangeBilling(): Map<String, Map<String, Set<Billing>>> = getBilling(exchangeFee)
+    fun getExchangeBilling(domain: String, asset: String): Set<Billing> =
+        getBilling(exchangeFee, domain, asset)
 
-    private fun addWithdrawalFee(billing: Billing) = addBilling(withdrawalFee, billing)
-    fun getWithdrawalFee(): HashMap<String, HashMap<String, Billing>> = getBilling(withdrawalFee)
-    fun getWithdrawalFee(domain: String, asset: String): Billing =
-        getBilling(withdrawalFee, domain, asset, Billing.BillingTypeEnum.WITHDRAWAL)
+    fun getWithdrawalBilling(): Map<String, Map<String, Set<Billing>>> = getBilling(withdrawalFee)
+    fun getWithdrawalBilling(domain: String, asset: String): Set<Billing> =
+        getBilling(withdrawalFee, domain, asset)
 
     @Synchronized
-    private fun addBilling(billingMap: HashMap<String, HashMap<String, Billing>>, billing: Billing) {
+    private fun addBilling(
+        billingMap: MutableMap<String, MutableMap<String, MutableSet<Billing>>>,
+        billing: Billing
+    ) {
         val domain = billing.domainName
-        if (!billingMap.contains(domain)) {
-            billingMap[domain] = HashMap()
+        if (!billingMap.containsKey(domain)) {
+            billingMap[domain] = ConcurrentHashMap<String, MutableSet<Billing>>()
         }
-        billingMap[domain]!![billing.asset] = billing
+        if (!billingMap[domain]!!.containsKey(billing.asset)) {
+            billingMap[domain]!![billing.asset] = ConcurrentHashMap.newKeySet<Billing>()
+        }
+        billingMap[domain]!![billing.asset]!!.remove(billing)
+        billingMap[domain]!![billing.asset]!!.add(billing)
     }
 
-    @Synchronized
-    private fun getBilling(billingMap: HashMap<String, HashMap<String, Billing>>): HashMap<String, HashMap<String, Billing>> {
-        val copy = HashMap<String, HashMap<String, Billing>>()
+    private fun getBilling(billingMap: Map<String, Map<String, Set<Billing>>>): Map<String, Map<String, Set<Billing>>> {
+        val copy = HashMap<String, Map<String, Set<Billing>>>()
         copy.putAll(billingMap)
         return copy
     }
 
-    @Synchronized
     private fun getBilling(
-        billingMap: HashMap<String, HashMap<String, Billing>>,
+        billingMap: Map<String, Map<String, Set<Billing>>>,
         domain: String,
-        assetId: String,
-        title: Billing.BillingTypeEnum
-    ): Billing {
+        assetId: String
+    ): Set<Billing> {
         if (billingMap.contains(domain)) {
             if (billingMap[domain]!!.contains(assetId)) {
                 return billingMap[domain]!![assetId]!!
             }
         }
-        throw IllegalStateException("No ${title.name} billing found for: $domain, $assetId")
+        throw IllegalStateException("No requested type billing found for: $domain, $assetId")
     }
+
+    // Domain -> <Asset -> Set<Billing>>
+    private fun getNewBillingMap() = ConcurrentHashMap<String, MutableMap<String, MutableSet<Billing>>>()
 
     @PostConstruct
     fun init() {
         dbService.billingRepo.findAll().forEach {
-            addFeeByType(it)
+            addBillingByType(it)
         }
     }
 

@@ -4,14 +4,12 @@
  */
 package com.d3.datacollector.model
 
+import com.d3.datacollector.utils.toDcBigDecimal
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.gson.annotations.SerializedName
 import java.math.BigDecimal
 import java.util.*
 import javax.persistence.*
-import javax.persistence.PreUpdate
-import javax.persistence.PrePersist
 
 @Entity
 @Table(name = "billing")
@@ -20,6 +18,7 @@ data class Billing(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     val id: Long? = null,
+    val feeDescription: String = "",
     @JsonIgnore
     val domainName: String = "",
     @JsonIgnore
@@ -27,9 +26,19 @@ data class Billing(
     val billingType: BillingTypeEnum = BillingTypeEnum.TRANSFER,
     @JsonIgnore
     val asset: String = "",
+    val destination: String = "",
     @Enumerated(EnumType.STRING)
     val feeType: FeeTypeEnum = FeeTypeEnum.FRACTION,
-    var feeFraction: BigDecimal = BigDecimal("0.0"),
+    @Enumerated(EnumType.STRING)
+    val feeNature: FeeNatureEnum = FeeNatureEnum.SUBTRACT,
+    @Enumerated(EnumType.STRING)
+    val feeComputation: FeeComputationEnum = FeeComputationEnum.FEE,
+    val feeAccount: String? = null,
+    var feeFraction: BigDecimal = "0.0".toDcBigDecimal(),
+    val minAmount: BigDecimal = "0".toDcBigDecimal(),
+    val maxAmount: BigDecimal = "-1".toDcBigDecimal(),
+    var minFee: BigDecimal = "0".toDcBigDecimal(),
+    var maxFee: BigDecimal = "-1".toDcBigDecimal(),
     var created: Long = 0L,
     var updated: Long = 0L
 ) {
@@ -55,6 +64,20 @@ data class Billing(
         FIXED
     }
 
+    enum class FeeNatureEnum {
+        @SerializedName("SUBTRACT")
+        SUBTRACT,
+        @SerializedName("TRANSFER")
+        TRANSFER
+    }
+
+    enum class FeeComputationEnum {
+        @SerializedName("FEE")
+        FEE,
+        @SerializedName("TAX")
+        TAX
+    }
+
     @PrePersist
     protected fun onCreate() {
         created = Date().time
@@ -64,5 +87,23 @@ data class Billing(
     @PreUpdate
     protected fun onUpdate() {
         updated = Date().time
+    }
+
+    override fun hashCode() =
+        (feeDescription + domainName + billingType + asset + destination +
+                minAmount.toPlainString() + maxAmount.toPlainString()).hashCode()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (this::class != other!!::class) return false
+        val otherBilling = other as Billing
+        return this.feeDescription == otherBilling.feeDescription &&
+                this.domainName == other.domainName &&
+                this.billingType == other.billingType &&
+                this.asset == other.asset &&
+                this.destination == other.destination &&
+                // BigDecimal equals is awful
+                this.minAmount.compareTo(other.minAmount) == 0 &&
+                this.maxAmount.compareTo(other.maxAmount) == 0
     }
 }

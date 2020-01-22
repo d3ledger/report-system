@@ -25,22 +25,34 @@ class DbService {
         billing: Billing
     ): Billing {
         val found =
-            billingRepo.selectByDomainBillingTypeAndAsset(
+            billingRepo.selectExistingBillingInfo(
                 billing.domainName,
                 billing.asset,
-                billing.billingType
+                billing.billingType,
+                billing.destination,
+                billing.feeDescription,
+                billing.minAmount,
+                billing.maxAmount
             )
         return if (found.isPresent) {
             val toUpdate = found.get()
             val updated = Billing(
                 id = toUpdate.id,
+                feeDescription = toUpdate.feeDescription,
                 domainName = toUpdate.domainName,
                 billingType = toUpdate.billingType,
                 asset = toUpdate.asset,
-                feeType =  billing.feeType,
+                destination = toUpdate.destination,
+                feeType = billing.feeType,
+                feeNature = billing.feeNature,
+                feeComputation = billing.feeComputation,
+                feeAccount = billing.feeAccount,
                 feeFraction = billing.feeFraction,
-                created = toUpdate.created,
-                updated = Date().time
+                minAmount = billing.minAmount,
+                maxAmount = billing.maxAmount,
+                minFee = billing.minFee,
+                maxFee = billing.maxFee,
+                created = toUpdate.created
             )
             billingRepo.save(updated)
         } else {
@@ -52,7 +64,8 @@ class DbService {
     fun saveNewBlock(block: Block): Block {
         val currentBlockHeight = getLastBlockProcessedHeight()
         if (block.blockNumber!! - currentBlockHeight != 1L) {
-            throw IllegalArgumentException("Blocks must be processed sequentially (current ${block.blockNumber}, last processed $currentBlockHeight})")
+            throw IllegalArgumentException("Blocks must be processed sequentially " +
+                    "(current ${block.blockNumber}, last processed $currentBlockHeight})")
         }
         return blockRepo.save(block)
     }

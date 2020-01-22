@@ -72,7 +72,7 @@ open class Command(
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "transactionId")
-    val transaction: Transaction
+    open val transaction: Transaction
 )
 
 @Entity

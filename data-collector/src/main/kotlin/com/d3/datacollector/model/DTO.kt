@@ -4,31 +4,42 @@
  */
 package com.d3.datacollector.model
 
+import com.d3.datacollector.utils.toDcBigDecimal
 import java.math.BigDecimal
 import java.util.*
 
 open class Conflictable(var errorCode: String? = null, var message: String? = null)
 
 data class BillingResponse(
-    val transfer: HashMap<String, HashMap<String, Billing>> = HashMap(),
-    val custody: HashMap<String, HashMap<String, Billing>> = HashMap(),
-    val accountCreation: HashMap<String, HashMap<String, Billing>> = HashMap(),
-    val exchange: HashMap<String, HashMap<String, Billing>> = HashMap(),
-    val withdrawal: HashMap<String, HashMap<String, Billing>> = HashMap()
+    val transfer: Map<String, Map<String, Set<Billing>>> = HashMap(),
+    val custody: Map<String, Map<String, Set<Billing>>> = HashMap(),
+    val accountCreation: Map<String, Map<String, Set<Billing>>> = HashMap(),
+    val exchange: Map<String, Map<String, Set<Billing>>> = HashMap(),
+    val withdrawal: Map<String, Map<String, Set<Billing>>> = HashMap()
 ) : Conflictable()
 
 data class SingleBillingResponse(
-    val billing: Billing = Billing()
+    val feeInfo: Set<Billing> = emptySet(),
+    val assetPrecision: Int = 0
 ) : Conflictable()
 
 data class BillingMqDto(
-    val domain: String = "",
+    val feeDescription: String = "",
+    val domainName: String = "",
     val billingType: Billing.BillingTypeEnum = Billing.BillingTypeEnum.TRANSFER,
     val asset: String = "",
-    var feeType: Billing.FeeTypeEnum = Billing.FeeTypeEnum.FRACTION,
-    var feeFraction: BigDecimal = BigDecimal("0.015"),
-    var updated: Long = 0L,
-    var created: Long = 0L
+    val destination: String = "",
+    val feeType: Billing.FeeTypeEnum = Billing.FeeTypeEnum.FRACTION,
+    val feeNature: Billing.FeeNatureEnum = Billing.FeeNatureEnum.SUBTRACT,
+    val feeComputation: Billing.FeeComputationEnum = Billing.FeeComputationEnum.FEE,
+    val feeAccount: String? = null,
+    var feeFraction: BigDecimal = "0.0".toDcBigDecimal(),
+    val minAmount: BigDecimal = "0".toDcBigDecimal(),
+    val maxAmount: BigDecimal = "-1".toDcBigDecimal(),
+    var minFee: BigDecimal = "0".toDcBigDecimal(),
+    var maxFee: BigDecimal = "-1".toDcBigDecimal(),
+    var created: Long = 0L,
+    var updated: Long = 0L
 )
 
 /**
@@ -66,3 +77,35 @@ class AssetsResponse(
     errorCode: String? = null,
     errorMessage: String? = null
 ) : Conflictable(errorCode, errorMessage)
+
+data class IrohaDetailValueDTO(
+    val feeDescription: String,
+    val destination: String,
+    val feeType: String,
+    val feeFraction: String,
+    val feeNature: String,
+    val feeComputation: String,
+    val feeAccount: String,
+    val minAmount: String,
+    val maxAmount: String,
+    val minFee: String,
+    val maxFee: String
+)
+
+fun IrohaDetailValueDTO.toBilling(billingType: Billing.BillingTypeEnum, assetId: String, domain: String) =
+    Billing(
+        feeDescription = feeDescription,
+        domainName = domain,
+        billingType = billingType,
+        asset = assetId,
+        destination = destination,
+        feeType = Billing.FeeTypeEnum.valueOf(feeType),
+        feeFraction = feeFraction.toDcBigDecimal(),
+        feeNature = Billing.FeeNatureEnum.valueOf(feeNature),
+        feeComputation = Billing.FeeComputationEnum.valueOf(feeComputation),
+        feeAccount = feeAccount,
+        minAmount = minAmount.toDcBigDecimal(),
+        maxAmount = maxAmount.toDcBigDecimal(),
+        minFee = minFee.toDcBigDecimal(),
+        maxFee = maxFee.toDcBigDecimal()
+    )

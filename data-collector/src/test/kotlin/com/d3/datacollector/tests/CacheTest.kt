@@ -28,7 +28,7 @@ class CacheTest {
     @Transactional
     @Ignore
     fun testInitCache() {
-        assertEquals(0, cache.getTransferFee().size)
+        assertEquals(0, cache.getTransferBilling().size)
 
         billingRepo.save(
             Billing(
@@ -53,7 +53,7 @@ class CacheTest {
 
         cache.init()
 
-        assertEquals(2, cache.getTransferFee().size)
-        assertEquals(1, cache.getWithdrawalFee().size)
+        assertEquals(2, cache.getTransferBilling().size)
+        assertEquals(1, cache.getWithdrawalBilling().size)
     }
 }
