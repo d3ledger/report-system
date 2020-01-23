@@ -13,9 +13,9 @@ import java.util.*
 interface BillingRepository : CrudRepository<Billing, Long> {
 
     @Query("SELECT b FROM Billing b " +
-            "WHERE b.domainName = ?1 and b.asset = ?2 and b.billingType = ?3" +
-            " and b.destination = ?4 and b.feeDescription= ?5" +
-            " and b.minAmount = ?6 and b.maxAmount = ?7")
+            "WHERE b.domainName = :domainName and b.asset = :asset and b.billingType = :billingType" +
+            " and b.destination = :destination and b.feeDescription= :feeDescription" +
+            " and b.minAmount = :minAmount and b.maxAmount = :maxAmount")
     fun selectExistingBillingInfo(
         domainName: String,
         asset: String,
