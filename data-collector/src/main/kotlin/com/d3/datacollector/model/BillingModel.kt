@@ -94,8 +94,9 @@ data class Billing(
                 minAmount.toPlainString() + maxAmount.toPlainString()).hashCode()
 
     override fun equals(other: Any?): Boolean {
+        if (other == null) return false
         if (this === other) return true
-        if (this::class != other!!::class) return false
+        if (this::class != other::class) return false
         val otherBilling = other as Billing
         return this.feeDescription == otherBilling.feeDescription &&
                 this.domainName == other.domainName &&
