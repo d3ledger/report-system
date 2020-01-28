@@ -301,7 +301,7 @@ class BlockTaskService : Closeable {
                 performUpdates(
                     valueDTO.toBilling(
                         billingType,
-                        setAccountDetail.key.replaceLatticePlaceholder(),
+                        setAccountDetail.key,
                         targetDomainName
                     )
                 )

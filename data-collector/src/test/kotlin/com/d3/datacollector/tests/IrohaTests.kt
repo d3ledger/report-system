@@ -163,11 +163,11 @@ class IrohaTests : TestEnv() {
         val tx2 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 transferBillingAccountId,
-                usd.replace("#", latticePlaceholder),
+                feeDescription,
                 Utils.irohaEscape(
                     gson.toJson(
                         IrohaDetailValueDTO(
-                            "",
+                            usd,
                             "*",
                             Billing.FeeTypeEnum.FIXED.name,
                             "0.6",
@@ -185,7 +185,7 @@ class IrohaTests : TestEnv() {
             .sign(adminKeyPair)
             .build()
         val custodyBillingDTO = IrohaDetailValueDTO(
-            "",
+            usd,
             "*",
             Billing.FeeTypeEnum.FIXED.name,
             "0.1",
@@ -200,13 +200,13 @@ class IrohaTests : TestEnv() {
         val tx3 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 custodyBillingAccountId,
-                usd.replace("#", latticePlaceholder),
+                feeDescription,
                 Utils.irohaEscape(gson.toJson(custodyBillingDTO))
             )
             .sign(adminKeyPair)
             .build()
         val accountCreationBillingDTO = IrohaDetailValueDTO(
-            "",
+            usd,
             "*",
             Billing.FeeTypeEnum.FIXED.name,
             "0.3",
@@ -221,13 +221,13 @@ class IrohaTests : TestEnv() {
         val tx4 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 accountCreationBillingAccountId,
-                usd.replace("#", latticePlaceholder),
+                feeDescription,
                 Utils.irohaEscape(gson.toJson(accountCreationBillingDTO))
             )
             .sign(adminKeyPair)
             .build()
         val exchangeBillingDTO = IrohaDetailValueDTO(
-            "",
+            usd,
             "*",
             Billing.FeeTypeEnum.FIXED.name,
             "0.2",
@@ -242,13 +242,13 @@ class IrohaTests : TestEnv() {
         val tx5 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 exchangeBillingAccountId,
-                usd.replace("#", latticePlaceholder),
+                feeDescription,
                 Utils.irohaEscape(gson.toJson(exchangeBillingDTO))
             )
             .sign(adminKeyPair)
             .build()
         val withdrawalBillingDTO = IrohaDetailValueDTO(
-            "",
+            usd,
             "*",
             Billing.FeeTypeEnum.FIXED.name,
             "0.111",
@@ -263,13 +263,13 @@ class IrohaTests : TestEnv() {
         val tx6 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 withdrawalBillingAccountId,
-                usd.replace("#", latticePlaceholder),
+                feeDescription,
                 Utils.irohaEscape(gson.toJson(withdrawalBillingDTO))
             )
             .sign(adminKeyPair)
             .build()
         val transferBillingDTO = IrohaDetailValueDTO(
-            "",
+            usd,
             "*",
             Billing.FeeTypeEnum.FIXED.name,
             "0.22",
@@ -284,7 +284,7 @@ class IrohaTests : TestEnv() {
         val tx7 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 transferBillingAccountId,
-                usd.replace("#", latticePlaceholder),
+                feeDescription,
                 Utils.irohaEscape(gson.toJson(transferBillingDTO))
             )
             .sign(adminKeyPair)
@@ -333,60 +333,74 @@ class IrohaTests : TestEnv() {
         try {
             val transferBilling = cache.getTransferBilling(bankDomain, usd)
             assertTrue(
-                transferBilling.contains(
-                    transferBillingDTO.toBilling(
-                        Billing.BillingTypeEnum.TRANSFER,
-                        usd,
-                        bankDomain
+                transferBilling.any { (_, v) ->
+                    v.contains(
+                        transferBillingDTO.toBilling(
+                            Billing.BillingTypeEnum.TRANSFER,
+                            feeDescription,
+                            bankDomain
+                        )
                     )
-                )
+                }
             )
-            assertEquals(1, transferBilling.size)
-            transferBilling.forEach {
-                assertEquals(
-                    0,
-                    it.feeFraction.compareTo(BigDecimal(transferBillingDTO.feeFraction))
-                )
+            transferBilling.forEach { (_, v) ->
+                run {
+                    assertEquals(
+                        1,
+                        v.size
+                    )
+                    assertTrue(
+                        v.any { it.feeFraction.compareTo(BigDecimal(transferBillingDTO.feeFraction)) == 0 }
+                    )
+                }
             }
             val custody = cache.getCustodyBilling(bankDomain, usd)
             assertTrue(
-                custody.contains(
-                    custodyBillingDTO.toBilling(
-                        Billing.BillingTypeEnum.CUSTODY,
-                        usd,
-                        bankDomain
+                custody.any { (_, v) ->
+                    v.contains(
+                        custodyBillingDTO.toBilling(
+                            Billing.BillingTypeEnum.CUSTODY,
+                            feeDescription,
+                            bankDomain
+                        )
                     )
-                )
+                }
             )
             val accountFee = cache.getAccountCreationBilling(bankDomain, usd)
             assertTrue(
-                accountFee.contains(
-                    accountCreationBillingDTO.toBilling(
-                        Billing.BillingTypeEnum.ACCOUNT_CREATION,
-                        usd,
-                        bankDomain
+                accountFee.any { (_, v) ->
+                    v.contains(
+                        accountCreationBillingDTO.toBilling(
+                            Billing.BillingTypeEnum.ACCOUNT_CREATION,
+                            feeDescription,
+                            bankDomain
+                        )
                     )
-                )
+                }
             )
             val exchangeFee = cache.getExchangeBilling(bankDomain, usd)
             assertTrue(
-                exchangeFee.contains(
-                    exchangeBillingDTO.toBilling(
-                        Billing.BillingTypeEnum.EXCHANGE,
-                        usd,
-                        bankDomain
+                exchangeFee.any { (_, v) ->
+                    v.contains(
+                        exchangeBillingDTO.toBilling(
+                            Billing.BillingTypeEnum.EXCHANGE,
+                            feeDescription,
+                            bankDomain
+                        )
                     )
-                )
+                }
             )
             val withdrawalFee = cache.getWithdrawalBilling(bankDomain, usd)
             assertTrue(
-                withdrawalFee.contains(
-                    withdrawalBillingDTO.toBilling(
-                        Billing.BillingTypeEnum.WITHDRAWAL,
-                        usd,
-                        bankDomain
+                withdrawalFee.any { (_, v) ->
+                    v.contains(
+                        withdrawalBillingDTO.toBilling(
+                            Billing.BillingTypeEnum.WITHDRAWAL,
+                            feeDescription,
+                            bankDomain
+                        )
                     )
-                )
+                }
             )
             billingRepo.findAll().forEach {
                 logger.info("Received asset: ${it.asset}")
@@ -413,7 +427,7 @@ class IrohaTests : TestEnv() {
     fun testGetBilllingWithIroha() {
         blockTaskService.runService()
         val setAccountDetailsFeeValue = IrohaDetailValueDTO(
-            "",
+            usd,
             "*",
             Billing.FeeTypeEnum.FIXED.name,
             "0.22",
@@ -428,7 +442,7 @@ class IrohaTests : TestEnv() {
         val tx1 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 transferBillingAccountId,
-                usd.replace("#", latticePlaceholder),
+                feeDescription,
                 Utils.irohaEscape(gson.toJson(setAccountDetailsFeeValue))
             )
             .sign(adminKeyPair)
@@ -443,7 +457,7 @@ class IrohaTests : TestEnv() {
         val respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        assertTrue(respBody.transfer[bankDomain]!![usd]!!.contains(setAccountDetailsFeeValue.toBilling()))
+        assertTrue(respBody.transfer[bankDomain]!![feeDescription]!!.contains(setAccountDetailsFeeValue.toBilling()))
     }
 
     @Test
@@ -451,7 +465,7 @@ class IrohaTests : TestEnv() {
     fun testGetSingleBilllingWithIroha() {
         blockTaskService.runService()
         val setAccountDetailsFeeValue = IrohaDetailValueDTO(
-            "",
+            usd,
             "*",
             Billing.FeeTypeEnum.FIXED.name,
             "0.22",
@@ -467,7 +481,7 @@ class IrohaTests : TestEnv() {
         val tx1 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 transferBillingAccountId,
-                usd.replace("#", latticePlaceholder),
+                feeDescription,
                 Utils.irohaEscape(gson.toJson(setAccountDetailsFeeValue))
             )
             .sign(adminKeyPair)
@@ -482,7 +496,8 @@ class IrohaTests : TestEnv() {
         val respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        assertTrue(respBody.feeInfo.contains(setAccountDetailsFeeValue.toBilling()))
+        assertEquals(1, respBody.feeInfo.size)
+        assertTrue(respBody.feeInfo.any { it.feeEntries.contains(setAccountDetailsFeeValue.toBilling()) })
         assertEquals(2, respBody.assetPrecision)
     }
 
@@ -563,7 +578,6 @@ class IrohaTests : TestEnv() {
 fun IrohaDetailValueDTO.toBilling() =
     // Does not reuse toBilling with params method because of default values
     Billing(
-        feeDescription = feeDescription,
         destination = destination,
         feeType = Billing.FeeTypeEnum.valueOf(feeType),
         feeFraction = feeFraction.toDcBigDecimal(),

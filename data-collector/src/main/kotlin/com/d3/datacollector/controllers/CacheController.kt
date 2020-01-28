@@ -56,7 +56,7 @@ class CacheController(
     ): ResponseEntity<SingleBillingResponse> {
         return try {
             val assetId = "$assetName#$assetDomain"
-            val billing = when (billingType) {
+            val billingMap = when (billingType) {
                 Billing.BillingTypeEnum.TRANSFER -> cache.getTransferBilling(domain, assetId)
                 Billing.BillingTypeEnum.CUSTODY -> cache.getCustodyBilling(domain, assetId)
                 Billing.BillingTypeEnum.ACCOUNT_CREATION -> cache.getAccountCreationBilling(domain, assetId)
@@ -66,7 +66,7 @@ class CacheController(
             }
             val asset = assetRepo.findByAssetId(assetId)
                 .orElseThrow { IllegalArgumentException("No such asset: $assetId") }
-            ResponseEntity.ok(SingleBillingResponse(billing, asset.decimalPrecision))
+            ResponseEntity.ok(SingleBillingResponse(billingMap, asset.decimalPrecision))
         } catch (e: IllegalArgumentException) {
             val response = SingleBillingResponse()
             response.fill(DcExceptionStatus.ASSET_NOT_FOUND, e)

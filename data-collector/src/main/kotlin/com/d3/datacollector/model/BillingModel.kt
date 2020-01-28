@@ -18,6 +18,7 @@ data class Billing(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     val id: Long? = null,
+    @JsonIgnore
     val feeDescription: String = "",
     @JsonIgnore
     val domainName: String = "",
@@ -39,7 +40,9 @@ data class Billing(
     val maxAmount: BigDecimal = "-1".toDcBigDecimal(),
     var minFee: BigDecimal = "0".toDcBigDecimal(),
     var maxFee: BigDecimal = "-1".toDcBigDecimal(),
+    @JsonIgnore
     var created: Long = 0L,
+    @JsonIgnore
     var updated: Long = 0L
 ) {
     enum class BillingTypeEnum {

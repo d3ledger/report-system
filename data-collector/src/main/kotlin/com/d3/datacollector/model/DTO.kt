@@ -11,17 +11,38 @@ import java.util.*
 open class Conflictable(var errorCode: String? = null, var message: String? = null)
 
 data class BillingResponse(
-    val transfer: Map<String, Map<String, Set<Billing>>> = HashMap(),
-    val custody: Map<String, Map<String, Set<Billing>>> = HashMap(),
-    val accountCreation: Map<String, Map<String, Set<Billing>>> = HashMap(),
-    val exchange: Map<String, Map<String, Set<Billing>>> = HashMap(),
-    val withdrawal: Map<String, Map<String, Set<Billing>>> = HashMap()
+    val transfer: Map<String, Map<String, Set<Billing>>> = emptyMap(),
+    val custody: Map<String, Map<String, Set<Billing>>> = emptyMap(),
+    val accountCreation: Map<String, Map<String, Set<Billing>>> = emptyMap(),
+    val exchange: Map<String, Map<String, Set<Billing>>> = emptyMap(),
+    val withdrawal: Map<String, Map<String, Set<Billing>>> = emptyMap()
 ) : Conflictable()
 
 data class SingleBillingResponse(
-    val feeInfo: Set<Billing> = emptySet(),
+    val feeInfo: MutableSet<BillingInfoEntry> = mutableSetOf(),
     val assetPrecision: Int = 0
-) : Conflictable()
+) : Conflictable() {
+    constructor(
+        billingMap: Map<String, Set<Billing>>,
+        assetPrecision: Int
+    ) : this(assetPrecision = assetPrecision) {
+        feeInfo.addAll(billingMap.map { (description, billingSet) ->
+            BillingInfoEntry(
+                feeDescription = description,
+                feeEntries = billingSet,
+                updated = billingSet.maxBy { it.updated }!!.updated,
+                created = billingSet.minBy { it.created }!!.created
+            )
+        })
+    }
+}
+
+data class BillingInfoEntry(
+    val feeDescription: String = "",
+    val feeEntries: Set<Billing> = emptySet(),
+    val created: Long = 0,
+    val updated: Long = 0
+)
 
 data class BillingMqDto(
     val feeDescription: String = "",
@@ -79,7 +100,7 @@ class AssetsResponse(
 ) : Conflictable(errorCode, errorMessage)
 
 data class IrohaDetailValueDTO(
-    val feeDescription: String,
+    val assetId: String,
     val destination: String,
     val feeType: String,
     val feeFraction: String,
@@ -92,20 +113,23 @@ data class IrohaDetailValueDTO(
     val maxFee: String
 )
 
-fun IrohaDetailValueDTO.toBilling(billingType: Billing.BillingTypeEnum, assetId: String, domain: String) =
-    Billing(
-        feeDescription = feeDescription,
-        domainName = domain,
-        billingType = billingType,
-        asset = assetId,
-        destination = destination,
-        feeType = Billing.FeeTypeEnum.valueOf(feeType),
-        feeFraction = feeFraction.toDcBigDecimal(),
-        feeNature = Billing.FeeNatureEnum.valueOf(feeNature),
-        feeComputation = Billing.FeeComputationEnum.valueOf(feeComputation),
-        feeAccount = feeAccount,
-        minAmount = minAmount.toDcBigDecimal(),
-        maxAmount = maxAmount.toDcBigDecimal(),
-        minFee = minFee.toDcBigDecimal(),
-        maxFee = maxFee.toDcBigDecimal()
-    )
+fun IrohaDetailValueDTO.toBilling(
+    billingType: Billing.BillingTypeEnum,
+    feeDescription: String,
+    domain: String
+) = Billing(
+    feeDescription = feeDescription,
+    domainName = domain,
+    billingType = billingType,
+    asset = this.assetId,
+    destination = destination,
+    feeType = Billing.FeeTypeEnum.valueOf(feeType),
+    feeFraction = feeFraction.toDcBigDecimal(),
+    feeNature = Billing.FeeNatureEnum.valueOf(feeNature),
+    feeComputation = Billing.FeeComputationEnum.valueOf(feeComputation),
+    feeAccount = feeAccount,
+    minAmount = minAmount.toDcBigDecimal(),
+    maxAmount = maxAmount.toDcBigDecimal(),
+    minFee = minFee.toDcBigDecimal(),
+    maxFee = maxFee.toDcBigDecimal()
+)

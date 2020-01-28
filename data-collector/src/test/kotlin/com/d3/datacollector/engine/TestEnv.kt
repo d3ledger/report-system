@@ -78,6 +78,8 @@ open class TestEnv {
             bankDomain
         )
 
+        val feeDescription = "FEE_123"
+
         private val genesisBlock: BlockOuterClass.Block
             get() {
                 return GenesisBlockBuilder()

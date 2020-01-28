@@ -6,6 +6,7 @@ package com.d3.datacollector.cache
 
 import com.d3.datacollector.model.Billing
 import com.d3.datacollector.service.DbService
+import jp.co.soramitsu.iroha.java.detail.Const.assetIdDelimiter
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -34,23 +35,23 @@ class CacheRepository {
     }
 
     fun getTransferBilling(): Map<String, Map<String, Set<Billing>>> = getBilling(transferFee)
-    fun getTransferBilling(domain: String, asset: String): Set<Billing> =
+    fun getTransferBilling(domain: String, asset: String): Map<String, Set<Billing>> =
         getBilling(transferFee, domain, asset)
 
     fun getCustodyBilling(): Map<String, Map<String, Set<Billing>>> = getBilling(custodyFee)
-    fun getCustodyBilling(domain: String, asset: String): Set<Billing> =
+    fun getCustodyBilling(domain: String, asset: String): Map<String, Set<Billing>> =
         getBilling(custodyFee, domain, asset)
 
     fun getAccountCreationBilling(): Map<String, Map<String, Set<Billing>>> = getBilling(accountCreationFee)
-    fun getAccountCreationBilling(domain: String, asset: String): Set<Billing> =
+    fun getAccountCreationBilling(domain: String, asset: String): Map<String, Set<Billing>> =
         getBilling(accountCreationFee, domain, asset)
 
     fun getExchangeBilling(): Map<String, Map<String, Set<Billing>>> = getBilling(exchangeFee)
-    fun getExchangeBilling(domain: String, asset: String): Set<Billing> =
+    fun getExchangeBilling(domain: String, asset: String): Map<String, Set<Billing>> =
         getBilling(exchangeFee, domain, asset)
 
     fun getWithdrawalBilling(): Map<String, Map<String, Set<Billing>>> = getBilling(withdrawalFee)
-    fun getWithdrawalBilling(domain: String, asset: String): Set<Billing> =
+    fun getWithdrawalBilling(domain: String, asset: String): Map<String, Set<Billing>> =
         getBilling(withdrawalFee, domain, asset)
 
     @Synchronized
@@ -62,11 +63,11 @@ class CacheRepository {
         if (!billingMap.containsKey(domain)) {
             billingMap[domain] = ConcurrentHashMap<String, MutableSet<Billing>>()
         }
-        if (!billingMap[domain]!!.containsKey(billing.asset)) {
-            billingMap[domain]!![billing.asset] = ConcurrentHashMap.newKeySet<Billing>()
+        if (!billingMap[domain]!!.containsKey(billing.feeDescription)) {
+            billingMap[domain]!![billing.feeDescription] = ConcurrentHashMap.newKeySet<Billing>()
         }
-        billingMap[domain]!![billing.asset]!!.remove(billing)
-        billingMap[domain]!![billing.asset]!!.add(billing)
+        billingMap[domain]!![billing.feeDescription]!!.remove(billing)
+        billingMap[domain]!![billing.feeDescription]!!.add(billing)
     }
 
     private fun getBilling(billingMap: Map<String, Map<String, Set<Billing>>>): Map<String, Map<String, Set<Billing>>> {
@@ -79,16 +80,36 @@ class CacheRepository {
         billingMap: Map<String, Map<String, Set<Billing>>>,
         domain: String,
         assetId: String
-    ): Set<Billing> {
+    ): Map<String, Set<Billing>> {
         if (billingMap.contains(domain)) {
-            if (billingMap[domain]!!.contains(assetId)) {
-                return billingMap[domain]!![assetId]!!
+            val resultMap = mutableMapOf<String, Set<Billing>>()
+            val domainMap = billingMap[domain]!!
+            domainMap.keys.forEach { feeDescription ->
+                val billingSet = domainMap[feeDescription]!!
+                var toAdd = filterToAdd(billingSet, assetId)
+                if (toAdd.isEmpty()) {
+                    val anyDomainAsset =
+                        "$ANY_ASSET_SYMBOL$assetIdDelimiter${assetId.split(assetIdDelimiter)[1]}"
+                    toAdd = filterToAdd(billingSet, anyDomainAsset)
+                    if (toAdd.isEmpty()) {
+                        toAdd = filterToAdd(billingSet, ANY_ASSET_SYMBOL)
+                    }
+                }
+                if (toAdd.isNotEmpty()) {
+                    resultMap[feeDescription] = toAdd
+                }
+            }
+            if (resultMap.isNotEmpty()) {
+                return resultMap
             }
         }
         throw IllegalStateException("No requested type billing found for: $domain, $assetId")
     }
 
-    // Domain -> <Asset -> Set<Billing>>
+    private fun filterToAdd(billingSet: Set<Billing>, assetId: String): Set<Billing> =
+        billingSet.filter { billing -> assetId == billing.asset }.toSet()
+
+    // Domain -> <Fee description -> Set<Billing>>
     private fun getNewBillingMap() = ConcurrentHashMap<String, MutableMap<String, MutableSet<Billing>>>()
 
     @PostConstruct
@@ -98,5 +119,7 @@ class CacheRepository {
         }
     }
 
-    companion object : KLogging()
+    companion object : KLogging() {
+        const val ANY_ASSET_SYMBOL = "*"
+    }
 }

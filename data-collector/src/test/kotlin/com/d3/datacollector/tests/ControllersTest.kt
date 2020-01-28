@@ -58,18 +58,20 @@ class ControllersTest : TestEnv() {
         val respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        assertTrue(respBody.transfer[domainName]!![assetId]!!.contains(billing.toDefaultBilling()))
+        assertTrue(respBody.transfer[domainName]!![feeDescription]!!.contains(billing.toDefaultBilling()))
     }
 
     @Test
     @Transactional
     fun testGetSingleBillling() {
         val domainName = "global"
+        val description = "global"
         val assetName = "asset"
         val feeFraction = BigDecimal("1000000000.12345678")
         val precision = 0
 
         val billing = Billing(
+            feeDescription = description,
             domainName = domainName,
             billingType = Billing.BillingTypeEnum.TRANSFER,
             asset = "$assetName#$domainName",
@@ -94,7 +96,7 @@ class ControllersTest : TestEnv() {
         val respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        assertTrue(respBody.feeInfo.contains(billing.toDefaultBilling()))
+        assertTrue(respBody.feeInfo.any { it.feeEntries.contains(billing.toDefaultBilling()) })
         assertEquals(precision, respBody.assetPrecision)
     }
 
@@ -137,7 +139,6 @@ class ControllersTest : TestEnv() {
 
 fun Billing.toDefaultBilling() =
     Billing(
-        feeDescription = feeDescription,
         destination = destination,
         feeType = feeType,
         feeNature = feeNature,
