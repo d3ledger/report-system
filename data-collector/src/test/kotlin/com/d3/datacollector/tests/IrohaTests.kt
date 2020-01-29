@@ -163,7 +163,7 @@ class IrohaTests : TestEnv() {
         val tx2 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 transferBillingAccountId,
-                feeDescription,
+                feeCode,
                 Utils.irohaEscape(
                     gson.toJson(
                         IrohaDetailValueDTO(
@@ -200,7 +200,7 @@ class IrohaTests : TestEnv() {
         val tx3 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 custodyBillingAccountId,
-                feeDescription,
+                feeCode,
                 Utils.irohaEscape(gson.toJson(custodyBillingDTO))
             )
             .sign(adminKeyPair)
@@ -221,7 +221,7 @@ class IrohaTests : TestEnv() {
         val tx4 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 accountCreationBillingAccountId,
-                feeDescription,
+                feeCode,
                 Utils.irohaEscape(gson.toJson(accountCreationBillingDTO))
             )
             .sign(adminKeyPair)
@@ -242,7 +242,7 @@ class IrohaTests : TestEnv() {
         val tx5 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 exchangeBillingAccountId,
-                feeDescription,
+                feeCode,
                 Utils.irohaEscape(gson.toJson(exchangeBillingDTO))
             )
             .sign(adminKeyPair)
@@ -263,7 +263,7 @@ class IrohaTests : TestEnv() {
         val tx6 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 withdrawalBillingAccountId,
-                feeDescription,
+                feeCode,
                 Utils.irohaEscape(gson.toJson(withdrawalBillingDTO))
             )
             .sign(adminKeyPair)
@@ -284,7 +284,7 @@ class IrohaTests : TestEnv() {
         val tx7 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 transferBillingAccountId,
-                feeDescription,
+                feeCode,
                 Utils.irohaEscape(gson.toJson(transferBillingDTO))
             )
             .sign(adminKeyPair)
@@ -337,7 +337,7 @@ class IrohaTests : TestEnv() {
                     v.contains(
                         transferBillingDTO.toBilling(
                             Billing.BillingTypeEnum.TRANSFER,
-                            feeDescription,
+                            feeCode,
                             bankDomain
                         )
                     )
@@ -360,7 +360,7 @@ class IrohaTests : TestEnv() {
                     v.contains(
                         custodyBillingDTO.toBilling(
                             Billing.BillingTypeEnum.CUSTODY,
-                            feeDescription,
+                            feeCode,
                             bankDomain
                         )
                     )
@@ -372,7 +372,7 @@ class IrohaTests : TestEnv() {
                     v.contains(
                         accountCreationBillingDTO.toBilling(
                             Billing.BillingTypeEnum.ACCOUNT_CREATION,
-                            feeDescription,
+                            feeCode,
                             bankDomain
                         )
                     )
@@ -384,7 +384,7 @@ class IrohaTests : TestEnv() {
                     v.contains(
                         exchangeBillingDTO.toBilling(
                             Billing.BillingTypeEnum.EXCHANGE,
-                            feeDescription,
+                            feeCode,
                             bankDomain
                         )
                     )
@@ -396,7 +396,7 @@ class IrohaTests : TestEnv() {
                     v.contains(
                         withdrawalBillingDTO.toBilling(
                             Billing.BillingTypeEnum.WITHDRAWAL,
-                            feeDescription,
+                            feeCode,
                             bankDomain
                         )
                     )
@@ -442,7 +442,7 @@ class IrohaTests : TestEnv() {
         val tx1 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 transferBillingAccountId,
-                feeDescription,
+                feeCode,
                 Utils.irohaEscape(gson.toJson(setAccountDetailsFeeValue))
             )
             .sign(adminKeyPair)
@@ -457,7 +457,7 @@ class IrohaTests : TestEnv() {
         val respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        assertTrue(respBody.transfer[bankDomain]!![feeDescription]!!.contains(setAccountDetailsFeeValue.toBilling()))
+        assertTrue(respBody.transfer[bankDomain]!![feeCode]!!.contains(setAccountDetailsFeeValue.toBilling()))
     }
 
     @Test
@@ -481,7 +481,7 @@ class IrohaTests : TestEnv() {
         val tx1 = Transaction.builder(adminAccountId)
             .setAccountDetail(
                 transferBillingAccountId,
-                feeDescription,
+                feeCode,
                 Utils.irohaEscape(gson.toJson(setAccountDetailsFeeValue))
             )
             .sign(adminKeyPair)

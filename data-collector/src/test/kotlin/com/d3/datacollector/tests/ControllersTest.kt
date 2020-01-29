@@ -37,10 +37,10 @@ class ControllersTest : TestEnv() {
         val feeAccountId = "account@$domainName"
         val assetId = "asset#$domainName"
         val feeFraction = BigDecimal("1000000000.12345678")
-        val feeDescription = "FEE-1"
+        val feeCode = "FEE-1"
 
         val billing = Billing(
-            feeDescription = feeDescription,
+            feeDescription = feeCode,
             domainName = domainName,
             asset = assetId,
             destination = anyDestination,
@@ -58,20 +58,20 @@ class ControllersTest : TestEnv() {
         val respBody = mapper.readValue(result.response.contentAsString, BillingResponse::class.java)
         assertNull(respBody.errorCode)
         assertNull(respBody.message)
-        assertTrue(respBody.transfer[domainName]!![feeDescription]!!.contains(billing.toDefaultBilling()))
+        assertTrue(respBody.transfer[domainName]!![feeCode]!!.contains(billing.toDefaultBilling()))
     }
 
     @Test
     @Transactional
     fun testGetSingleBillling() {
         val domainName = "global"
-        val description = "global"
+        val feeCode = "global"
         val assetName = "asset"
         val feeFraction = BigDecimal("1000000000.12345678")
         val precision = 0
 
         val billing = Billing(
-            feeDescription = description,
+            feeDescription = feeCode,
             domainName = domainName,
             billingType = Billing.BillingTypeEnum.TRANSFER,
             asset = "$assetName#$domainName",

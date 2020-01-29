@@ -28,7 +28,7 @@ data class SingleBillingResponse(
     ) : this(assetPrecision = assetPrecision) {
         feeInfo.addAll(billingMap.map { (description, billingSet) ->
             BillingInfoEntry(
-                feeDescription = description,
+                feeCode = description,
                 feeEntries = billingSet,
                 updated = billingSet.maxBy { it.updated }!!.updated,
                 created = billingSet.minBy { it.created }!!.created
@@ -38,14 +38,14 @@ data class SingleBillingResponse(
 }
 
 data class BillingInfoEntry(
-    val feeDescription: String = "",
+    val feeCode: String = "",
     val feeEntries: Set<Billing> = emptySet(),
     val created: Long = 0,
     val updated: Long = 0
 )
 
 data class BillingMqDto(
-    val feeDescription: String = "",
+    val feeCode: String = "",
     val domainName: String = "",
     val billingType: Billing.BillingTypeEnum = Billing.BillingTypeEnum.TRANSFER,
     val asset: String = "",
@@ -115,10 +115,10 @@ data class IrohaDetailValueDTO(
 
 fun IrohaDetailValueDTO.toBilling(
     billingType: Billing.BillingTypeEnum,
-    feeDescription: String,
+    feeCode: String,
     domain: String
 ) = Billing(
-    feeDescription = feeDescription,
+    feeDescription = feeCode,
     domainName = domain,
     billingType = billingType,
     asset = this.assetId,

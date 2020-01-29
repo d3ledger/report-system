@@ -84,8 +84,8 @@ class CacheRepository {
         if (billingMap.contains(domain)) {
             val resultMap = mutableMapOf<String, Set<Billing>>()
             val domainMap = billingMap[domain]!!
-            domainMap.keys.forEach { feeDescription ->
-                val billingSet = domainMap[feeDescription]!!
+            domainMap.keys.forEach { feeCode ->
+                val billingSet = domainMap[feeCode]!!
                 var toAdd = filterToAdd(billingSet, assetId)
                 if (toAdd.isEmpty()) {
                     val anyDomainAsset =
@@ -96,7 +96,7 @@ class CacheRepository {
                     }
                 }
                 if (toAdd.isNotEmpty()) {
-                    resultMap[feeDescription] = toAdd
+                    resultMap[feeCode] = toAdd
                 }
             }
             if (resultMap.isNotEmpty()) {
@@ -109,7 +109,7 @@ class CacheRepository {
     private fun filterToAdd(billingSet: Set<Billing>, assetId: String): Set<Billing> =
         billingSet.filter { billing -> assetId == billing.asset }.toSet()
 
-    // Domain -> <Fee description -> Set<Billing>>
+    // Domain -> <Fee code/billing description -> Set<Billing>>
     private fun getNewBillingMap() = ConcurrentHashMap<String, MutableMap<String, MutableSet<Billing>>>()
 
     @PostConstruct
