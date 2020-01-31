@@ -114,7 +114,7 @@ class EventNotificationIntegrationTest {
         val event = SoraEthWithdrawalProofsEvent(
             accountIdToNotify = accountId,
             tokenContractAddress = "0x123",
-            amount = BigDecimal("1.5"),
+            amount = "1.5",
             relay = "some relay",
             proofs = listOf(SoraECDSASignature("r", "s", "some value")),
             irohaTxHash = "hash",
@@ -168,7 +168,7 @@ class EventNotificationIntegrationTest {
         val event = SoraEthWithdrawalProofsEvent(
             accountIdToNotify = accountId,
             tokenContractAddress = "0x123",
-            amount = BigDecimal("1.5"),
+            amount = "1.5",
             relay = "some relay",
             proofs = listOf(SoraECDSASignature("r", "s", "some value")),
             irohaTxHash = "hash",

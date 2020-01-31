@@ -51,7 +51,7 @@ data class EthWithdrawalProofs(
             irohaTxHash = this.irohaTxHash,
             to = this.destAddress,
             txTime = this.txTime,
-            amount = this.amount,
+            amount = this.amount.toPlainString(),
             proofs = this.getProofs(),
             blockNum = this.blockNum,
             txIndex = this.txIndex
@@ -69,7 +69,7 @@ data class EthWithdrawalProofs(
                 id = soraEthWithdrawalProofsEvent.id,
                 accountIdToNotify = soraEthWithdrawalProofsEvent.accountIdToNotify,
                 tokenContractAddress = soraEthWithdrawalProofsEvent.tokenContractAddress,
-                amount = soraEthWithdrawalProofsEvent.amount,
+                amount = BigDecimal(soraEthWithdrawalProofsEvent.amount),
                 relay = soraEthWithdrawalProofsEvent.relay,
                 irohaTxHash = soraEthWithdrawalProofsEvent.irohaTxHash,
                 destAddress = soraEthWithdrawalProofsEvent.to,
