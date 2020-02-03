@@ -46,17 +46,17 @@ data class Billing(
     var updated: Long = 0L
 ) {
     enum class BillingTypeEnum {
-        @SerializedName("transfer")
+        @SerializedName("TRANSFER")
         TRANSFER,
-        @SerializedName("custody")
+        @SerializedName("CUSTODY")
         CUSTODY,
-        @SerializedName("account_creation")
+        @SerializedName("ACCOUNT_CREATION")
         ACCOUNT_CREATION,
-        @SerializedName("exchange")
+        @SerializedName("EXCHANGE")
         EXCHANGE,
-        @SerializedName("withdrawal")
+        @SerializedName("WITHDRAWAL")
         WITHDRAWAL,
-        @SerializedName("not_found")
+        @SerializedName("NOT_FOUND")
         NOT_FOUND
     }
 

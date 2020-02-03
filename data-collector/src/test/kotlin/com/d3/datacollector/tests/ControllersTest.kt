@@ -102,6 +102,57 @@ class ControllersTest : TestEnv() {
 
     @Test
     @Transactional
+    fun testGetSingleBilllingUsingPost() {
+        val domainName = "global"
+        val feeCode = "global"
+        val assetName = "asset"
+        val feeFraction = BigDecimal("12345678.12345678")
+        val precision = 0
+        val billingType = Billing.BillingTypeEnum.TRANSFER
+
+        val billing = Billing(
+            feeDescription = feeCode,
+            domainName = domainName,
+            billingType = billingType,
+            asset = "$assetName#$domainName",
+            feeFraction = feeFraction
+        )
+        val transaction = Transaction()
+        transactionRepo.save(transaction)
+        createAssetRepo.save(
+            CreateAsset(
+                assetName,
+                domainName,
+                precision,
+                transaction
+            )
+        )
+        cache.addBillingByType(billing)
+
+        val result: MvcResult = mvc
+            .perform(
+                MockMvcRequestBuilders.post("/cache/post/billing")
+                    .content(mapper.writeValueAsString(
+                        PostBillingRequestDTO(
+                            domainName,
+                            assetName,
+                            domainName,
+                            billingType
+                        )
+                    ))
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+        val respBody = mapper.readValue(result.response.contentAsString, SingleBillingResponse::class.java)
+        assertNull(respBody.errorCode)
+        assertNull(respBody.message)
+        assertTrue(respBody.feeInfo.any { it.feeEntries.contains(billing.toDefaultBilling()) })
+        assertEquals(precision, respBody.assetPrecision)
+    }
+
+    @Test
+    @Transactional
     fun testSetSingleExchangeRate() {
         val postResult: MvcResult = mvc
             .perform(

@@ -8,16 +8,15 @@ package com.d3.datacollector.controllers
 import com.d3.datacollector.cache.CacheRepository
 import com.d3.datacollector.model.Billing
 import com.d3.datacollector.model.BillingResponse
+import com.d3.datacollector.model.PostBillingRequestDTO
 import com.d3.datacollector.model.SingleBillingResponse
 import com.d3.datacollector.repository.CreateAssetRepo
 import mu.KLogging
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.*
 
 @CrossOrigin(origins = ["*"], allowCredentials = "true", allowedHeaders = ["*"])
 @Controller
@@ -28,6 +27,7 @@ class CacheController(
 ) {
 
     @GetMapping("/get/billing")
+    @ResponseBody
     fun getAllBilling(): ResponseEntity<BillingResponse> {
         return try {
             ResponseEntity.ok(
@@ -48,6 +48,7 @@ class CacheController(
     }
 
     @GetMapping("/get/billing/{domain}/{assetName}/{assetDomain}/{billingType}")
+    @ResponseBody
     fun getConcreteBilling(
         @PathVariable("domain") domain: String,
         @PathVariable("assetName") assetName: String,
@@ -83,6 +84,15 @@ class CacheController(
         }
     }
 
-    companion object : KLogging()
+    @PostMapping("/post/billing", consumes = [APPLICATION_JSON_VALUE])
+    @ResponseBody
+    fun postConcreteBilling(@RequestBody postBillingRequest: PostBillingRequestDTO): ResponseEntity<SingleBillingResponse> =
+        getConcreteBilling(
+            postBillingRequest.domain,
+            postBillingRequest.assetName,
+            postBillingRequest.assetDomain,
+            postBillingRequest.billingType
+        )
 
+    companion object : KLogging()
 }

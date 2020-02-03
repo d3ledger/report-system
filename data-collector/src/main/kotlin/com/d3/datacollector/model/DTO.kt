@@ -133,3 +133,10 @@ fun IrohaDetailValueDTO.toBilling(
     minFee = minFee.toDcBigDecimal(),
     maxFee = maxFee.toDcBigDecimal()
 )
+
+data class PostBillingRequestDTO(
+    val domain: String,
+    val assetName: String,
+    val assetDomain: String,
+    val billingType: Billing.BillingTypeEnum
+)
